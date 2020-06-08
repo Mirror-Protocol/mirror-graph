@@ -1,0 +1,102 @@
+{
+  "name": "asset-server",
+  "version": "0.1.0",
+  "main": "src/main.ts",
+  "license": "MIT",
+  "scripts": {
+    "dev": "better-npm-run start-dev",
+    "start": "better-npm-run start-prod",
+    "workerdev": "better-npm-run start-worker-dev",
+    "worker": "better-npm-run start-worker",
+    "test": "jest",
+    "lint": "eslint src --ext .js,.ts",
+    "prettier": "prettier --write src/**/*.ts"
+  },
+  "betterScripts": {
+    "start-dev": {
+      "command": "nodemon --signal SIGINT --exec ts-node -e ts,json,R --files -r tsconfig-paths/register src/main.ts"
+    },
+    "start-prod": {
+      "command": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
+      "env": {
+        "NODE_ENV": "production"
+      }
+    },
+    "start-worker-dev": {
+      "command": "nodemon --signal SIGINT --exec ts-node -e ts,json --files -r tsconfig-paths/register src/scripts/worker.ts"
+    },
+    "start-worker": {
+      "command": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/scripts/worker.ts",
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  },
+  "dependencies": {
+    "@sentry/node": "5.13.0",
+    "apollo-server": "^2.11.0",
+    "apollo-server-express": "^2.11.0",
+    "better-npm-run": "^0.1.1",
+    "bignumber.js": "^9.0.0",
+    "bluebird": "^3.7.2",
+    "body-parser": "^1.19.0",
+    "config": "^3.3.0",
+    "date-fns": "^2.10.0",
+    "form-data": "^3.0.0",
+    "graphql": "^14.1.1",
+    "graphql-type-json": "^0.3.1",
+    "koa": "^2.11.0",
+    "koa-router": "^8.0.8",
+    "node-cron": "^2.0.3",
+    "node-fetch": "^2.6.0",
+    "pg": "^7.18.2",
+    "polka": "^0.5.2",
+    "reflect-metadata": "^0.1.13",
+    "subscriptions-transport-ws": "^0.9.16",
+    "ts-node": "^8.0.3",
+    "tsconfig-paths": "^3.9.0",
+    "type-graphql": "^0.17.6",
+    "typedi": "^0.8.0",
+    "typeorm": "^0.2.24",
+    "typeorm-typedi-extensions": "^0.2.3",
+    "typescript": "^3.4.3"
+  },
+  "devDependencies": {
+    "@types/bignumber.js": "^5.0.0",
+    "@types/bluebird": "^3.5.30",
+    "@types/graphql": "^14.5.0",
+    "@types/jest": "^25.1.3",
+    "@types/node-fetch": "^2.5.5",
+    "@types/pg": "^7.14.3",
+    "@types/sinon": "^7.5.2",
+    "@typescript-eslint/eslint-plugin": "^2.29.0",
+    "@typescript-eslint/parser": "^2.29.0",
+    "eslint": "^6.8.0",
+    "husky": "^3",
+    "jest": "^25.1.0",
+    "lint-staged": "^9",
+    "nodemon": "^2.0.3",
+    "prettier": "^2",
+    "sinon": "^9.0.0",
+    "ts-jest": "^25.2.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "post-checkout": "yarn"
+    }
+  },
+  "lint-staged": {
+    "./src/**/*.ts": [
+      "prettier --write",
+      "eslint .",
+      "git add"
+    ]
+  },
+  "prettier": {
+    "parser": "typescript",
+    "printWidth": 100,
+    "singleQuote": true,
+    "semi": false
+  }
+}
