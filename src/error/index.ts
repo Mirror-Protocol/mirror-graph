@@ -3,13 +3,10 @@ import * as logger from '../lib/logger'
 
 export function init(
   opts: {
-    sentry?: {
-      enable: boolean
-      dsn: string
-    }
+    sentryDsn?: string
   } = undefined
 ): void {
-  opts?.sentry?.enable && sentry.init({ dsn: opts.sentry.dsn })
+  opts?.sentryDsn && sentry.init({ dsn: opts.sentryDsn })
 
   process.on('unhandledRejection', (error) => {
     logger.error(error)
