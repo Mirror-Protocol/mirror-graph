@@ -4,7 +4,7 @@ import BN = require('bn.js')
 /**
  * Some amount
  */
-export class AmountBuffer extends BN {
+export class Amount extends BN {
   constructor(
     number: number | string | number[] | Uint8Array | Buffer | BN,
     base?: number | 'hex',
@@ -32,9 +32,9 @@ export class AmountBuffer extends BN {
   /**
    * Construct a TokenAmount from Buffer representation
    */
-  static fromBuffer(buffer: Buffer): AmountBuffer {
+  static fromBuffer(buffer: Buffer): Amount {
     assert(buffer.length === 8, `Invalid buffer length: ${buffer.length}`)
-    return new AmountBuffer(
+    return new Amount(
       [...buffer]
         .reverse()
         .map((i) => `00${i.toString(16)}`.slice(-2))

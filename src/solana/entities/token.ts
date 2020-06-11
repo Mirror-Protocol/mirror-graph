@@ -9,7 +9,7 @@ import {
 import type { Connection } from '@solana/web3.js'
 
 import * as Layout from '../lib/layout'
-import { sendAndConfirmTransaction, AmountBuffer } from '../lib'
+import { sendAndConfirmTransaction, Amount } from '../lib'
 
 /**
  * Information about a token
@@ -18,7 +18,7 @@ type TokenInfo = {
   /**
    * Total supply of tokens
    */
-  supply: AmountBuffer
+  supply: Amount
 
   /**
    * Number of base 10 digits to the right of the decimal place
@@ -59,7 +59,7 @@ type TokenAccountInfo = {
   /**
    * Amount of tokens this account holds
    */
-  amount: AmountBuffer
+  amount: Amount
 
   /**
    * The source account for the tokens.
@@ -74,7 +74,7 @@ type TokenAccountInfo = {
    * Original amount of tokens this delegate account was authorized to spend
    * If `source` is null, originalAmount is zero
    */
-  originalAmount: AmountBuffer
+  originalAmount: Amount
 }
 
 /**
@@ -159,7 +159,7 @@ export class Token {
       const encodeLength = dataLayout.encode(
         {
           instruction: 0, // NewToken instruction
-          supply: new AmountBuffer(0).toBuffer(),
+          supply: new Amount(0).toBuffer(),
           decimals: 6,
         },
         data
@@ -240,7 +240,7 @@ export class Token {
   static async createNewToken(
     connection: Connection,
     owner: Account,
-    supply: AmountBuffer,
+    supply: Amount,
     decimals: number,
     programID: PublicKey,
     isOwned = false
@@ -397,7 +397,7 @@ export class Token {
       throw new Error('Invalid token account data')
     }
 
-    tokenInfo.supply = AmountBuffer.fromBuffer(tokenInfo.supply)
+    tokenInfo.supply = Amount.fromBuffer(tokenInfo.supply)
     if (tokenInfo.option === 0) {
       tokenInfo.owner = null
     } else {
@@ -429,13 +429,13 @@ export class Token {
     }
     tokenAccountInfo.token = new PublicKey(tokenAccountInfo.token)
     tokenAccountInfo.owner = new PublicKey(tokenAccountInfo.owner)
-    tokenAccountInfo.amount = AmountBuffer.fromBuffer(tokenAccountInfo.amount)
+    tokenAccountInfo.amount = Amount.fromBuffer(tokenAccountInfo.amount)
     if (tokenAccountInfo.sourceOption === 0) {
       tokenAccountInfo.source = null
-      tokenAccountInfo.originalAmount = new AmountBuffer(0)
+      tokenAccountInfo.originalAmount = new Amount(0)
     } else {
       tokenAccountInfo.source = new PublicKey(tokenAccountInfo.source)
-      tokenAccountInfo.originalAmount = AmountBuffer.fromBuffer(tokenAccountInfo.originalAmount)
+      tokenAccountInfo.originalAmount = Amount.fromBuffer(tokenAccountInfo.originalAmount)
     }
 
     if (!tokenAccountInfo.token.equals(this.token)) {
@@ -460,7 +460,7 @@ export class Token {
     owner: Account,
     source: PublicKey,
     destination: PublicKey,
-    amount: number | AmountBuffer
+    amount: number | Amount
   ): Promise<void> {
     return await sendAndConfirmTransaction(
       'transfer',
@@ -484,7 +484,7 @@ export class Token {
     owner: Account,
     account: PublicKey,
     delegate: PublicKey,
-    amount: number | AmountBuffer
+    amount: number | Amount
   ): Promise<void> {
     await sendAndConfirmTransaction(
       'approve',
@@ -566,7 +566,7 @@ export class Token {
     owner: PublicKey,
     source: PublicKey,
     destination: PublicKey,
-    amount: number | AmountBuffer
+    amount: number | Amount
   ): Promise<TransactionInstruction> {
     const accountInfo = await this.accountInfo(source)
     if (!owner.equals(accountInfo.owner)) {
@@ -582,7 +582,7 @@ export class Token {
     dataLayout.encode(
       {
         instruction: 2, // Transfer instruction
-        amount: new AmountBuffer(amount).toBuffer(),
+        amount: new Amount(amount).toBuffer(),
       },
       data
     )
@@ -618,7 +618,7 @@ export class Token {
     owner: PublicKey,
     account: PublicKey,
     delegate: PublicKey,
-    amount: number | AmountBuffer
+    amount: number | Amount
   ): TransactionInstruction {
     const dataLayout = BufferLayout.struct([
       BufferLayout.u8('instruction'),
@@ -629,7 +629,7 @@ export class Token {
     dataLayout.encode(
       {
         instruction: 3, // Approve instruction
-        amount: new AmountBuffer(amount).toBuffer(),
+        amount: new Amount(amount).toBuffer(),
       },
       data
     )
@@ -716,7 +716,7 @@ export class Token {
     dataLayout.encode(
       {
         instruction: 5, // MintTo instruction
-        amount: new AmountBuffer(amount).toBuffer(),
+        amount: new Amount(amount).toBuffer(),
       },
       data
     )
@@ -755,7 +755,7 @@ export class Token {
     dataLayout.encode(
       {
         instruction: 6, // Burn instruction
-        amount: new AmountBuffer(amount).toBuffer(),
+        amount: new Amount(amount).toBuffer(),
       },
       data
     )

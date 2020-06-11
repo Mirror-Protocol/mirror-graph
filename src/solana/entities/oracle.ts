@@ -1,13 +1,13 @@
 import * as BufferLayout from 'buffer-layout'
 import { Account, PublicKey, Connection, Transaction, SystemProgram } from '@solana/web3.js'
-import { sendAndConfirmTransaction, AmountBuffer, SymbolBuffer } from '../lib'
+import { sendAndConfirmTransaction, Amount, SymbolBuffer } from '../lib'
 import * as Layout from '../lib/layout'
 
 /**
  * Information about a mint config
  */
 type OracleInfo = {
-  price: AmountBuffer
+  price: Amount
   decimals: number
   assetToken: PublicKey
   baseToken: PublicKey
@@ -86,7 +86,7 @@ export class Oracle {
       const encodeLength = dataLayout.encode(
         {
           instruction: 0,
-          decimals: new AmountBuffer(decimals).toBuffer(),
+          decimals: new Amount(decimals).toBuffer(),
           symbol: symbol.toBuffer(),
         },
         data
@@ -123,7 +123,7 @@ export class Oracle {
     return oracle
   }
 
-  async updatePrice(price: AmountBuffer): Promise<void> {
+  async updatePrice(price: Amount): Promise<void> {
     let transaction: Transaction = null
 
     const dataLayout = BufferLayout.struct([
@@ -178,8 +178,8 @@ export class Oracle {
     }
 
     oracleInfo.symbol = SymbolBuffer.fromBuffer(oracleInfo.symbol)
-    oracleInfo.decimals = AmountBuffer.fromBuffer(oracleInfo.decimals).toNumber()
-    oracleInfo.price = AmountBuffer.fromBuffer(oracleInfo.price)
+    oracleInfo.decimals = Amount.fromBuffer(oracleInfo.decimals).toNumber()
+    oracleInfo.price = Amount.fromBuffer(oracleInfo.price)
     return oracleInfo
   }
 }

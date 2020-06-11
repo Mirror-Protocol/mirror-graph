@@ -1,10 +1,10 @@
 import { PublicKey, Account } from '@solana/web3.js'
-import { getConnection, newAccountWithLamports, AmountBuffer } from './lib'
+import { getConnection, newAccountWithLamports, Amount } from './lib'
 import { Token } from './entities'
 
 export async function createToken(
   programID: PublicKey,
-  supply: AmountBuffer,
+  supply: Amount,
   decimals: number
 ): Promise<[Token, Account, PublicKey]> {
   const connection = await getConnection()

@@ -1,6 +1,6 @@
 import * as BufferLayout from 'buffer-layout'
 import { Account, PublicKey, Connection, Transaction, SystemProgram } from '@solana/web3.js'
-import { sendAndConfirmTransaction, AmountBuffer, SymbolBuffer, ProgramAddress } from '../lib'
+import { sendAndConfirmTransaction, Amount, SymbolBuffer, ProgramAddress } from '../lib'
 import * as Layout from '../lib/layout'
 import { Token } from './token'
 
@@ -10,8 +10,8 @@ import { Token } from './token'
 type ConfigInfo = {
   owner: Account
   decimals: number
-  mintCapacity: AmountBuffer
-  whitelistThreshold: AmountBuffer
+  mintCapacity: Amount
+  whitelistThreshold: Amount
   collateralToken: PublicKey
   depositToken: PublicKey
 }
@@ -41,9 +41,9 @@ type BoardInfo = {
   collateralHolder: PublicKey
   oracle: PublicKey
   isMintable: boolean
-  totalDepositAmount: AmountBuffer
-  totalMintAmount: AmountBuffer
-  totalCollateralAmount: AmountBuffer
+  totalDepositAmount: Amount
+  totalMintAmount: Amount
+  totalCollateralAmount: Amount
 }
 
 /**
@@ -70,7 +70,7 @@ const BoardInfoLayout = BufferLayout.struct([
 type DepositInfo = {
   owner: PublicKey
   mintBoard: PublicKey
-  depositAmount: AmountBuffer
+  depositAmount: Amount
 }
 
 /**
@@ -159,8 +159,8 @@ export class Minter {
     depositTokenProgramID: PublicKey,
     depositToken: PublicKey,
     decimals: number,
-    mintCapacity: AmountBuffer,
-    whitelistThreshold: AmountBuffer,
+    mintCapacity: Amount,
+    whitelistThreshold: Amount,
     programID: PublicKey
   ): Promise<Minter> {
     const configAccount = new Account()
@@ -202,7 +202,7 @@ export class Minter {
       const encodeLength = dataLayout.encode(
         {
           instruction: 0,
-          decimals: new AmountBuffer(decimals).toBuffer(),
+          decimals: new Amount(decimals).toBuffer(),
           mintCapacity: mintCapacity.toBuffer(),
           whitelistThreshold: whitelistThreshold.toBuffer(),
         },
@@ -339,7 +339,7 @@ export class Minter {
     depositTokenOwner: Account,
     depositTokenSource: PublicKey,
     symbol: SymbolBuffer,
-    amount: AmountBuffer
+    amount: Amount
   ): Promise<PublicKey> {
     const board: PublicKey = this.boards[symbol.toString()]
     const boardInfo: BoardInfo = await this.boardInfo(symbol)
@@ -416,7 +416,7 @@ export class Minter {
     depositAcc: PublicKey,
     tokenDest: PublicKey,
     symbol: SymbolBuffer,
-    amount: AmountBuffer
+    amount: Amount
   ): Promise<PublicKey> {
     const board: PublicKey = this.boards[symbol.toString()]
     const boardInfo: BoardInfo = await this.boardInfo(symbol)
@@ -470,7 +470,7 @@ export class Minter {
     assetTokenProgramID: PublicKey,
     assetTokenDest: PublicKey,
     symbol: SymbolBuffer,
-    amount: AmountBuffer
+    amount: Amount
   ): Promise<PublicKey> {
     const board: PublicKey = this.boards[symbol.toString()]
     const boardInfo: BoardInfo = await this.boardInfo(symbol)
@@ -571,9 +571,9 @@ export class Minter {
       throw new Error('Invalid config account data')
     }
 
-    configInfo.decimals = AmountBuffer.fromBuffer(configInfo.decimals).toNumber()
-    configInfo.mintCapacity = AmountBuffer.fromBuffer(configInfo.mintCapacity)
-    configInfo.whitelistThreshold = AmountBuffer.fromBuffer(configInfo.whitelistThreshold)
+    configInfo.decimals = Amount.fromBuffer(configInfo.decimals).toNumber()
+    configInfo.mintCapacity = Amount.fromBuffer(configInfo.mintCapacity)
+    configInfo.whitelistThreshold = Amount.fromBuffer(configInfo.whitelistThreshold)
     configInfo.collateralToken = new PublicKey(configInfo.collateralToken)
     configInfo.depositToken = new PublicKey(configInfo.depositToken)
     return configInfo
@@ -601,9 +601,9 @@ export class Minter {
 
     boardInfo.symbol = SymbolBuffer.fromBuffer(boardInfo.symbol)
     boardInfo.isMintable = boardInfo.isMintable[0] != 0
-    boardInfo.totalDepositAmount = AmountBuffer.fromBuffer(boardInfo.totalDepositAmount)
-    boardInfo.totalCollateralAmount = AmountBuffer.fromBuffer(boardInfo.totalCollateralAmount)
-    boardInfo.totalMintAmount = AmountBuffer.fromBuffer(boardInfo.totalMintAmount)
+    boardInfo.totalDepositAmount = Amount.fromBuffer(boardInfo.totalDepositAmount)
+    boardInfo.totalCollateralAmount = Amount.fromBuffer(boardInfo.totalCollateralAmount)
+    boardInfo.totalMintAmount = Amount.fromBuffer(boardInfo.totalMintAmount)
     boardInfo.depositHolder = new PublicKey(boardInfo.depositHolder)
     boardInfo.collateralHolder = new PublicKey(boardInfo.collateralHolder)
     boardInfo.assetHolder = new PublicKey(boardInfo.assetHolder)
@@ -635,7 +635,7 @@ export class Minter {
 
     depositInfo.owner = new PublicKey(depositInfo.owner)
     depositInfo.mintBoard = new PublicKey(depositInfo.mintBoard)
-    depositInfo.depositAmount = AmountBuffer.fromBuffer(depositInfo.depositAmount)
+    depositInfo.depositAmount = Amount.fromBuffer(depositInfo.depositAmount)
 
     return depositInfo
   }

@@ -1,5 +1,5 @@
 import { PublicKey, Account } from '@solana/web3.js'
-import { getConnection, newAccountWithLamports, AmountBuffer, SymbolBuffer } from './lib'
+import { getConnection, newAccountWithLamports, Amount, SymbolBuffer } from './lib'
 import { Minter, Token } from './entities'
 
 export async function createMinter(
@@ -8,8 +8,8 @@ export async function createMinter(
   depositTokenProgramID: PublicKey,
   depositToken: PublicKey,
   decimals: number,
-  mintCapacity: AmountBuffer,
-  whitelistThreshold: AmountBuffer,
+  mintCapacity: Amount,
+  whitelistThreshold: Amount,
   programID: PublicKey
 ): Promise<[Minter, Account]> {
   const connection = await getConnection()
@@ -42,7 +42,7 @@ export async function createDeposit(
   depositTokenOwner: Account,
   depositTokenSource: PublicKey,
   symbol: SymbolBuffer,
-  amount: AmountBuffer
+  amount: Amount
 ): Promise<[Account, PublicKey]> {
   const connection = await getConnection()
   const balanceNeeded = 1000000 + (await Minter.getMinBalanceRentForExemptMinter(connection))
@@ -61,7 +61,7 @@ export async function createMintPosition(
   assetTokenProgramID: PublicKey,
   assetTokenDest: PublicKey,
   symbol: SymbolBuffer,
-  amount: AmountBuffer
+  amount: Amount
 ): Promise<[Account, PublicKey]> {
   const connection = await getConnection()
   const balanceNeeded = 1000000 + (await Minter.getMinBalanceRentForExemptMinter(connection))
