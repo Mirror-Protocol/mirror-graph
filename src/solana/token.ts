@@ -1,5 +1,5 @@
 import { PublicKey, Account } from '@solana/web3.js'
-import { getConnection, newAccountWithLamports, Amount } from './lib'
+import { getConnection, newSystemAccount, Amount } from './lib'
 import { Token } from './entities'
 
 export async function createToken(
@@ -12,7 +12,7 @@ export async function createToken(
     (await Token.getMinBalanceRentForExemptToken(connection)) +
     (await Token.getMinBalanceRentForExemptTokenAccount(connection))
 
-  const initialOwner = await newAccountWithLamports(connection, balanceNeeded)
+  const initialOwner = await newSystemAccount(connection, balanceNeeded)
   const [token, initialOwnerAccount] = await Token.createNewToken(
     connection,
     initialOwner,
@@ -27,7 +27,7 @@ export async function createToken(
 export async function createTokenAccount(token: Token): Promise<[Account, PublicKey]> {
   const connection = await getConnection()
   const balanceNeeded = await Token.getMinBalanceRentForExemptTokenAccount(connection)
-  const accountOwner = await newAccountWithLamports(connection, balanceNeeded)
+  const accountOwner = await newSystemAccount(connection, balanceNeeded)
   const account = await token.newAccount(accountOwner)
 
   return [accountOwner, account]

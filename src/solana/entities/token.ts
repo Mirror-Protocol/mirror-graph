@@ -8,8 +8,8 @@ import {
 } from '@solana/web3.js'
 import type { Connection } from '@solana/web3.js'
 
-import * as Layout from '../lib/layout'
-import { sendAndConfirmTransaction, Amount } from '../lib'
+import * as Layout from '../lib/transform/layout'
+import { sendTransaction, TransactionResult, Amount } from '../lib'
 
 /**
  * Information about a token
@@ -175,7 +175,7 @@ export class Token {
       programId: programID,
     })
 
-    await sendAndConfirmTransaction('createAccount', connection, transaction, payer, tokenAccount)
+    await sendTransaction(connection, transaction, payer, tokenAccount)
 
     const token = new Token(connection, tokenAccount.publicKey, programID)
 
@@ -199,7 +199,7 @@ export class Token {
       programId: programID,
     })
 
-    await sendAndConfirmTransaction('createAccount', connection, transaction, payer, account)
+    await sendTransaction(connection, transaction, payer, account)
 
     // Initialize the token account
     const keys = [
@@ -222,7 +222,7 @@ export class Token {
       programId: programID,
       data,
     })
-    await sendAndConfirmTransaction('init tokenAccount', connection, transaction, account)
+    await sendTransaction(connection, transaction, account)
 
     return account.publicKey
   }
@@ -281,7 +281,7 @@ export class Token {
       programId: programID,
     })
 
-    await sendAndConfirmTransaction('createAccount', connection, transaction, owner, tokenAccount)
+    await sendTransaction(connection, transaction, owner, tokenAccount)
 
     const keys = [
       { pubkey: tokenAccount.publicKey, isSigner: true, isWritable: false },
@@ -298,13 +298,7 @@ export class Token {
       data,
     })
 
-    await sendAndConfirmTransaction(
-      'New tokenAccount',
-      connection,
-      transaction,
-      owner,
-      tokenAccount
-    )
+    await sendTransaction(connection, transaction, owner, tokenAccount)
 
     return [token, initialAccountPublicKey]
   }
@@ -344,13 +338,7 @@ export class Token {
       programId: this.programID,
     })
 
-    await sendAndConfirmTransaction(
-      'createAccount',
-      this.connection,
-      transaction,
-      owner,
-      tokenAccount
-    )
+    await sendTransaction(this.connection, transaction, owner, tokenAccount)
 
     // Initialize the token account
     const keys = [
@@ -366,13 +354,7 @@ export class Token {
       programId: this.programID,
       data,
     })
-    await sendAndConfirmTransaction(
-      'init tokenAccount',
-      this.connection,
-      transaction,
-      owner,
-      tokenAccount
-    )
+    await sendTransaction(this.connection, transaction, owner, tokenAccount)
 
     return tokenAccount.publicKey
   }
@@ -461,9 +443,8 @@ export class Token {
     source: PublicKey,
     destination: PublicKey,
     amount: number | Amount
-  ): Promise<void> {
-    return await sendAndConfirmTransaction(
-      'transfer',
+  ): Promise<TransactionResult> {
+    return sendTransaction(
       this.connection,
       new Transaction().add(
         await this.transferInstruction(owner.publicKey, source, destination, amount)
@@ -485,9 +466,8 @@ export class Token {
     account: PublicKey,
     delegate: PublicKey,
     amount: number | Amount
-  ): Promise<void> {
-    await sendAndConfirmTransaction(
-      'approve',
+  ): Promise<TransactionResult> {
+    return sendTransaction(
       this.connection,
       new Transaction().add(this.approveInstruction(owner.publicKey, account, delegate, amount)),
       owner
@@ -501,7 +481,7 @@ export class Token {
    * @param account Public key of the token account
    * @param delegate Token account to revoke authorization from
    */
-  revoke(owner: Account, account: PublicKey, delegate: PublicKey): Promise<void> {
+  revoke(owner: Account, account: PublicKey, delegate: PublicKey): Promise<TransactionResult> {
     return this.approve(owner, account, delegate, 0)
   }
 
@@ -512,9 +492,12 @@ export class Token {
    * @param account Public key of the token account
    * @param newOwner New owner of the token account
    */
-  async setOwner(owner: Account, account: PublicKey, newOwner: PublicKey): Promise<void> {
-    await sendAndConfirmTransaction(
-      'setOwneer',
+  async setOwner(
+    owner: Account,
+    account: PublicKey,
+    newOwner: PublicKey
+  ): Promise<TransactionResult> {
+    return sendTransaction(
       this.connection,
       new Transaction().add(this.setOwnerInstruction(owner.publicKey, account, newOwner)),
       owner
@@ -529,9 +512,13 @@ export class Token {
    * @param dest Public key of the account to mint to
    * @param amount ammount to mint
    */
-  async mintTo(owner: Account, token: PublicKey, dest: PublicKey, amount: number): Promise<void> {
-    await sendAndConfirmTransaction(
-      'mintTo',
+  async mintTo(
+    owner: Account,
+    token: PublicKey,
+    dest: PublicKey,
+    amount: number
+  ): Promise<TransactionResult> {
+    return sendTransaction(
       this.connection,
       new Transaction().add(this.mintToInstruction(owner, token, dest, amount)),
       owner
@@ -545,9 +532,8 @@ export class Token {
    * @param account Account to burn tokens from
    * @param amount ammount to burn
    */
-  async burn(owner: Account, account: PublicKey, amount: number): Promise<void> {
-    await sendAndConfirmTransaction(
-      'burn',
+  async burn(owner: Account, account: PublicKey, amount: number): Promise<TransactionResult> {
+    return sendTransaction(
       this.connection,
       new Transaction().add(await this.burnInstruction(owner, account, amount)),
       owner

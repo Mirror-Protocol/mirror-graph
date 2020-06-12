@@ -1,5 +1,5 @@
 import { PublicKey, Account } from '@solana/web3.js'
-import { getConnection, newAccountWithLamports, Amount, SymbolBuffer } from './lib'
+import { getConnection, newSystemAccount, Amount, SymbolBuffer } from './lib'
 import { Minter, Token } from './entities'
 
 export async function createMinter(
@@ -20,7 +20,7 @@ export async function createMinter(
       (await Token.getMinBalanceRentForExemptToken(connection)) +
       3 * (await Token.getMinBalanceRentForExemptTokenAccount(connection)))
 
-  const accountOwner = await newAccountWithLamports(connection, balanceNeeded)
+  const accountOwner = await newSystemAccount(connection, balanceNeeded)
   const minter = await Minter.createMinter(
     connection,
     accountOwner,
@@ -46,7 +46,7 @@ export async function createDeposit(
 ): Promise<[Account, PublicKey]> {
   const connection = await getConnection()
   const balanceNeeded = 1000000 + (await Minter.getMinBalanceRentForExemptMinter(connection))
-  const depositOwner = await newAccountWithLamports(connection, balanceNeeded)
+  const depositOwner = await newSystemAccount(connection, balanceNeeded)
 
   return [
     depositOwner,
@@ -65,7 +65,7 @@ export async function createMintPosition(
 ): Promise<[Account, PublicKey]> {
   const connection = await getConnection()
   const balanceNeeded = 1000000 + (await Minter.getMinBalanceRentForExemptMinter(connection))
-  const poisitionOwner = await newAccountWithLamports(connection, balanceNeeded)
+  const poisitionOwner = await newSystemAccount(connection, balanceNeeded)
 
   return [
     poisitionOwner,

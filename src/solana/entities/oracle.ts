@@ -1,7 +1,7 @@
 import * as BufferLayout from 'buffer-layout'
 import { Account, PublicKey, Connection, Transaction, SystemProgram } from '@solana/web3.js'
-import { sendAndConfirmTransaction, Amount, SymbolBuffer } from '../lib'
-import * as Layout from '../lib/layout'
+import { sendTransaction, Amount, SymbolBuffer } from '../lib'
+import * as Layout from '../lib/transform/layout'
 
 /**
  * Information about a mint config
@@ -105,7 +105,7 @@ export class Oracle {
       programId: programID,
     })
 
-    await sendAndConfirmTransaction('createAccount', connection, transaction, owner, oracleAccount)
+    await sendTransaction(connection, transaction, owner, oracleAccount)
 
     transaction = new Transaction().add({
       keys: [
@@ -118,7 +118,7 @@ export class Oracle {
       data,
     })
 
-    await sendAndConfirmTransaction('New oracleAccount', connection, transaction, owner)
+    await sendTransaction(connection, transaction, owner)
 
     return oracle
   }
@@ -152,7 +152,7 @@ export class Oracle {
       data,
     })
 
-    await sendAndConfirmTransaction('Update price', this.connection, transaction, this.owner)
+    await sendTransaction(this.connection, transaction, this.owner)
 
     return
   }

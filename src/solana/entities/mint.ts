@@ -1,7 +1,7 @@
 import * as BufferLayout from 'buffer-layout'
 import { Account, PublicKey, Connection, Transaction, SystemProgram } from '@solana/web3.js'
-import { sendAndConfirmTransaction, Amount, SymbolBuffer, ProgramAddress } from '../lib'
-import * as Layout from '../lib/layout'
+import { sendTransaction, Amount, SymbolBuffer, ProgramAddress } from '../lib'
+import * as Layout from '../lib/transform/layout'
 import { Token } from './token'
 
 /**
@@ -188,7 +188,7 @@ export class Minter {
       programId: programID,
     })
 
-    await sendAndConfirmTransaction('createAccount', connection, transaction, owner, configAccount)
+    await sendTransaction(connection, transaction, owner, configAccount)
 
     const dataLayout = BufferLayout.struct([
       BufferLayout.nu64('instruction'),
@@ -222,7 +222,7 @@ export class Minter {
       data,
     })
 
-    await sendAndConfirmTransaction('New configAccount', connection, transaction, owner)
+    await sendTransaction(connection, transaction, owner)
 
     return minter
   }
@@ -276,13 +276,7 @@ export class Minter {
       programId: this.programID,
     })
 
-    await sendAndConfirmTransaction(
-      'createAccount',
-      this.connection,
-      transaction,
-      this.owner,
-      boardAccount
-    )
+    await sendTransaction(this.connection, transaction, this.owner, boardAccount)
 
     const dataLayout = BufferLayout.struct([
       BufferLayout.nu64('instruction'),
@@ -322,13 +316,7 @@ export class Minter {
       data,
     })
 
-    await sendAndConfirmTransaction(
-      'New boardAccount',
-      this.connection,
-      transaction,
-      this.owner,
-      tokenAccount
-    )
+    await sendTransaction(this.connection, transaction, this.owner, tokenAccount)
 
     return [boardAccount.publicKey, assetToken]
   }
@@ -357,13 +345,7 @@ export class Minter {
         programId: this.programID,
       })
 
-      await sendAndConfirmTransaction(
-        'createAccount',
-        this.connection,
-        transaction,
-        depositOwner,
-        depositAccount
-      )
+      await sendTransaction(this.connection, transaction, depositOwner, depositAccount)
 
       depositAcc = depositAccount.publicKey
     }
@@ -400,13 +382,7 @@ export class Minter {
       data,
     })
 
-    await sendAndConfirmTransaction(
-      'deposit',
-      this.connection,
-      transaction,
-      depositOwner,
-      depositTokenOwner
-    )
+    await sendTransaction(this.connection, transaction, depositOwner, depositTokenOwner)
 
     return depositAcc
   }
@@ -457,7 +433,7 @@ export class Minter {
       data,
     })
 
-    await sendAndConfirmTransaction('withdraw', this.connection, transaction, depositOwner)
+    await sendTransaction(this.connection, transaction, depositOwner)
 
     return depositAcc
   }
@@ -492,13 +468,7 @@ export class Minter {
         programId: this.programID,
       })
 
-      await sendAndConfirmTransaction(
-        'createAccount',
-        this.connection,
-        transaction,
-        positionOwner,
-        positionAccount
-      )
+      await sendTransaction(this.connection, transaction, positionOwner, positionAccount)
 
       positionAcc = positionAccount.publicKey
     }
@@ -540,13 +510,7 @@ export class Minter {
       data,
     })
 
-    await sendAndConfirmTransaction(
-      'position',
-      this.connection,
-      transaction,
-      positionOwner,
-      collateralTokenOwner
-    )
+    await sendTransaction(this.connection, transaction, positionOwner, collateralTokenOwner)
 
     return positionAcc
   }
