@@ -35,7 +35,6 @@ type BoardInfo = {
   symbol: SymbolBuffer
   config: PublicKey
   assetToken: PublicKey
-  assetHolder: PublicKey
   depositHolder: PublicKey
   collateralHolder: PublicKey
   oracle: PublicKey
@@ -53,7 +52,6 @@ const BoardInfoLayout = BufferLayout.struct([
   Layout.symbol('symbol'),
   Layout.publicKey('config'),
   Layout.publicKey('assetToken'),
-  Layout.publicKey('assetHolder'),
   Layout.publicKey('depositHolder'),
   Layout.publicKey('collateralHolder'),
   Layout.publicKey('oracle'),
@@ -83,9 +81,6 @@ const DepositInfoLayout = BufferLayout.struct([
 ])
 
 const BOARD_PREFIX = 'board'
-
-// const TOKEN_DECIMAL: number = 9
-// const TOKEN_SUPPLY = new Amount(10_000_000_000).muln(Math.pow(10, TOKEN_DECIMAL))
 
 /**
  * Minter manage whitelist and asset's supply
@@ -147,7 +142,7 @@ export class Minter {
   }
 
   static getMinterDataSize(): number {
-    return Math.max(ConfigInfoLayout.span, BoardInfoLayout.span) + 10
+    return Math.max(ConfigInfoLayout.span, BoardInfoLayout.span, DepositInfoLayout.span) + 10
   }
 
   static async createMinter(
@@ -243,13 +238,6 @@ export class Minter {
       this.owner,
       assetTokenProgramID
     )
-    const assetBoard = await Token.createNewAccount(
-      this.connection,
-      this.owner,
-      boardSigner,
-      assetToken.token,
-      assetTokenProgramID
-    )
     const collateralBoard = await Token.createNewAccount(
       this.connection,
       this.owner,
@@ -299,7 +287,6 @@ export class Minter {
         { pubkey: this.owner.publicKey, isSigner: true, isWritable: false },
         { pubkey: assetTokenProgramID, isSigner: false, isWritable: false },
         { pubkey: assetToken.token, isSigner: true, isWritable: true },
-        { pubkey: assetBoard, isSigner: false, isWritable: true },
         { pubkey: this.collateralTokenProgramID, isSigner: false, isWritable: false },
         { pubkey: this.collateralToken, isSigner: false, isWritable: false },
         { pubkey: collateralBoard, isSigner: false, isWritable: false },
@@ -454,7 +441,7 @@ export class Minter {
       this.programID
     )
 
-    // Create new deposit account
+    // Create new position account
     if (!positionAcc) {
       const positionAccount = new Account()
       const balanceNeeded: number = await Minter.getMinBalanceRentForExemptMinter(this.connection)
@@ -497,8 +484,8 @@ export class Minter {
         { pubkey: collateralTokenSource, isSigner: false, isWritable: true },
         { pubkey: boardInfo.collateralHolder, isSigner: false, isWritable: true },
         { pubkey: assetTokenProgramID, isSigner: false, isWritable: false },
+        { pubkey: boardInfo.assetToken, isSigner: false, isWritable: true },
         { pubkey: assetTokenDest, isSigner: false, isWritable: true },
-        { pubkey: boardInfo.assetHolder, isSigner: false, isWritable: true },
         { pubkey: boardInfo.oracle, isSigner: false, isWritable: false },
         { pubkey: this.config, isSigner: false, isWritable: false },
         { pubkey: board, isSigner: false, isWritable: true },
@@ -569,7 +556,6 @@ export class Minter {
     boardInfo.totalMintAmount = Amount.fromBuffer(boardInfo.totalMintAmount)
     boardInfo.depositHolder = new PublicKey(boardInfo.depositHolder)
     boardInfo.collateralHolder = new PublicKey(boardInfo.collateralHolder)
-    boardInfo.assetHolder = new PublicKey(boardInfo.assetHolder)
     boardInfo.assetToken = new PublicKey(boardInfo.assetToken)
     boardInfo.oracle = new PublicKey(boardInfo.oracle)
 

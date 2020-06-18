@@ -10,6 +10,20 @@ import type { Connection } from '@solana/web3.js'
 import { sendTransaction, TransactionResult, Amount } from 'solana'
 import * as Layout from 'solana/types/layout'
 
+// import * as BufferLayout from 'buffer-layout'
+// import {
+//   Account,
+//   PublicKey,
+//   SystemProgram,
+//   Transaction,
+//   TransactionInstruction,
+// } from '@solana/web3.js'
+// import type { Connection } from '@solana/web3.js'
+
+// import * as Layout from './layout'
+// import { sendAndConfirmTransaction } from './utils'
+// import { Amount } from '../utils/amount'
+
 /**
  * Information about a token
  */
@@ -106,6 +120,11 @@ export class Token {
   token: PublicKey
 
   /**
+   * The account of token owner
+   */
+  tokenOwner: Account
+
+  /**
    * Program Identifier for the Token program
    */
   programID: PublicKey
@@ -115,10 +134,11 @@ export class Token {
    *
    * @param connection The connection to use
    * @param token Public key of the token
+   * @param tokenOwner Account of the token owner
    * @param programID Optional token programID, uses the system programID by default
    */
-  constructor(connection: Connection, token: PublicKey, programID: PublicKey) {
-    Object.assign(this, { connection, token, programID })
+  constructor(connection: Connection, token: PublicKey, tokenOwner: Account, programID: PublicKey) {
+    Object.assign(this, { connection, token, tokenOwner, programID })
   }
 
   /**
@@ -147,25 +167,6 @@ export class Token {
     const tokenAccount: Account = new Account()
     const balanceNeeded = await Token.getMinBalanceRentForExemptToken(connection)
 
-    const dataLayout = BufferLayout.struct([
-      BufferLayout.u8('instruction'),
-      Layout.uint64('supply'),
-      BufferLayout.nu64('decimals'),
-    ])
-
-    let data = Buffer.alloc(1024)
-    {
-      const encodeLength = dataLayout.encode(
-        {
-          instruction: 0, // NewToken instruction
-          supply: new Amount(0).toBuffer(),
-          decimals: 6,
-        },
-        data
-      )
-      data = data.slice(0, encodeLength)
-    }
-
     const transaction: Transaction = SystemProgram.createAccount({
       fromPubkey: payer.publicKey,
       newAccountPubkey: tokenAccount.publicKey,
@@ -176,7 +177,7 @@ export class Token {
 
     await sendTransaction(connection, transaction, payer, tokenAccount)
 
-    const token = new Token(connection, tokenAccount.publicKey, programID)
+    const token = new Token(connection, tokenAccount.publicKey, null, programID)
 
     return [token, tokenAccount]
   }
@@ -230,7 +231,7 @@ export class Token {
    * Create a new Token
    *
    * @param connection The connection to use
-   * @param owner User account that will own the returned Token Account
+   * @param tokenOwner User account that will own the returned Token
    * @param supply Total supply of the new token
    * @param decimals Location of the decimal place
    * @param programID Optional token programID, uses the system programID by default
@@ -238,15 +239,12 @@ export class Token {
    */
   static async createNewToken(
     connection: Connection,
-    owner: Account,
-    supply: Amount,
+    tokenOwner: Account,
     decimals: number,
-    programID: PublicKey,
-    isOwned = false
-  ): Promise<TokenAndPublicKey> {
+    programID: PublicKey
+  ): Promise<Token> {
     const tokenAccount = new Account()
-    const token = new Token(connection, tokenAccount.publicKey, programID)
-    const initialAccountPublicKey = await token.newAccount(owner, null)
+    const token = new Token(connection, tokenAccount.publicKey, tokenOwner, programID)
 
     let transaction
 
@@ -261,7 +259,7 @@ export class Token {
       const encodeLength = dataLayout.encode(
         {
           instruction: 0, // NewToken instruction
-          supply: supply.toBuffer(),
+          supply: new Amount(0).toBuffer(),
           decimals,
         },
         data
@@ -273,23 +271,19 @@ export class Token {
 
     // Allocate memory for the tokenAccount account
     transaction = SystemProgram.createAccount({
-      fromPubkey: owner.publicKey,
+      fromPubkey: tokenOwner.publicKey,
       newAccountPubkey: tokenAccount.publicKey,
       lamports: balanceNeeded,
       space: TokenInfoLayout.span,
       programId: programID,
     })
 
-    await sendTransaction(connection, transaction, owner, tokenAccount)
+    await sendTransaction(connection, transaction, tokenOwner, tokenAccount)
 
     const keys = [
-      { pubkey: tokenAccount.publicKey, isSigner: true, isWritable: false },
-      { pubkey: initialAccountPublicKey, isSigner: false, isWritable: true },
+      { pubkey: tokenAccount.publicKey, isSigner: true, isWritable: true },
+      { pubkey: tokenOwner.publicKey, isSigner: false, isWritable: false },
     ]
-
-    if (isOwned) {
-      keys.push({ pubkey: owner.publicKey, isSigner: true, isWritable: false })
-    }
 
     transaction = new Transaction().add({
       keys,
@@ -297,9 +291,9 @@ export class Token {
       data,
     })
 
-    await sendTransaction(connection, transaction, owner, tokenAccount)
+    await sendTransaction(connection, transaction, tokenAccount)
 
-    return [token, initialAccountPublicKey]
+    return token
   }
 
   /**
@@ -353,7 +347,7 @@ export class Token {
       programId: this.programID,
       data,
     })
-    await sendTransaction(this.connection, transaction, owner, tokenAccount)
+    await sendTransaction(this.connection, transaction, tokenAccount)
 
     return tokenAccount.publicKey
   }
@@ -506,21 +500,14 @@ export class Token {
   /**
    * Mint new tokens
    *
-   * @param token Public key of the token
-   * @param owner Owner of the token
    * @param dest Public key of the account to mint to
    * @param amount ammount to mint
    */
-  async mintTo(
-    owner: Account,
-    token: PublicKey,
-    dest: PublicKey,
-    amount: number
-  ): Promise<TransactionResult> {
+  async mintTo(dest: PublicKey, amount: number | Amount): Promise<TransactionResult> {
     return sendTransaction(
       this.connection,
-      new Transaction().add(this.mintToInstruction(owner, token, dest, amount)),
-      owner
+      new Transaction().add(this.mintToInstruction(this.tokenOwner, this.token, dest, amount)),
+      this.tokenOwner
     )
   }
 
@@ -531,7 +518,11 @@ export class Token {
    * @param account Account to burn tokens from
    * @param amount ammount to burn
    */
-  async burn(owner: Account, account: PublicKey, amount: number): Promise<TransactionResult> {
+  async burn(
+    owner: Account,
+    account: PublicKey,
+    amount: number | Amount
+  ): Promise<TransactionResult> {
     return sendTransaction(
       this.connection,
       new Transaction().add(await this.burnInstruction(owner, account, amount)),
@@ -690,7 +681,7 @@ export class Token {
     owner: Account,
     token: PublicKey,
     dest: PublicKey,
-    amount: number
+    amount: number | Amount
   ): TransactionInstruction {
     const dataLayout = BufferLayout.struct([
       BufferLayout.u8('instruction'),
@@ -727,7 +718,7 @@ export class Token {
   async burnInstruction(
     owner: Account,
     account: PublicKey,
-    amount: number
+    amount: number | Amount
   ): Promise<TransactionInstruction> {
     const accountInfo = await this.accountInfo(account)
 

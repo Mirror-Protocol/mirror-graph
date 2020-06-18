@@ -45,6 +45,7 @@ export async function createDeposit(
 ): Promise<[Account, PublicKey]> {
   const connection = await getConnection()
   const balanceNeeded = 1000000 + (await Minter.getMinBalanceRentForExemptMinter(connection))
+
   const depositOwner = await newAccountWithAirdrop(connection, balanceNeeded)
 
   return [
@@ -64,6 +65,7 @@ export async function createMintPosition(
 ): Promise<[Account, PublicKey]> {
   const connection = await getConnection()
   const balanceNeeded = 1000000 + (await Minter.getMinBalanceRentForExemptMinter(connection))
+
   const poisitionOwner = await newAccountWithAirdrop(connection, balanceNeeded)
 
   return [
