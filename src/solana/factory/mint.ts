@@ -1,6 +1,5 @@
 import { PublicKey, Account } from '@solana/web3.js'
-import { getConnection, newSystemAccount, Amount, SymbolBuffer } from './lib'
-import { Minter, Token } from './entities'
+import { Minter, Token, Amount, SymbolBuffer, getConnection, newAccountWithAirdrop } from 'solana'
 
 export async function createMinter(
   collateralTokenProgramID: PublicKey,
@@ -20,7 +19,7 @@ export async function createMinter(
       (await Token.getMinBalanceRentForExemptToken(connection)) +
       3 * (await Token.getMinBalanceRentForExemptTokenAccount(connection)))
 
-  const accountOwner = await newSystemAccount(connection, balanceNeeded)
+  const accountOwner = await newAccountWithAirdrop(connection, balanceNeeded)
   const minter = await Minter.createMinter(
     connection,
     accountOwner,
@@ -46,7 +45,7 @@ export async function createDeposit(
 ): Promise<[Account, PublicKey]> {
   const connection = await getConnection()
   const balanceNeeded = 1000000 + (await Minter.getMinBalanceRentForExemptMinter(connection))
-  const depositOwner = await newSystemAccount(connection, balanceNeeded)
+  const depositOwner = await newAccountWithAirdrop(connection, balanceNeeded)
 
   return [
     depositOwner,
@@ -65,7 +64,7 @@ export async function createMintPosition(
 ): Promise<[Account, PublicKey]> {
   const connection = await getConnection()
   const balanceNeeded = 1000000 + (await Minter.getMinBalanceRentForExemptMinter(connection))
-  const poisitionOwner = await newSystemAccount(connection, balanceNeeded)
+  const poisitionOwner = await newAccountWithAirdrop(connection, balanceNeeded)
 
   return [
     poisitionOwner,

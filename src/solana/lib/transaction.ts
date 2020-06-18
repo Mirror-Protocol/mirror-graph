@@ -1,5 +1,5 @@
 import { sendAndConfirmTransaction, Account, Connection, Transaction } from '@solana/web3.js'
-import { newSystemAccount } from './account'
+import { newAccountWithAirdrop } from './account'
 
 export interface TransactionResult {
   time: number
@@ -22,7 +22,7 @@ export async function sendTransaction(
   if (!payerAccount) {
     const { feeCalculator } = await connection.getRecentBlockhash()
     const fees = feeCalculator.lamportsPerSignature * 100 // wag
-    payerAccount = await newSystemAccount(connection, fees)
+    payerAccount = await newAccountWithAirdrop(connection, fees)
   }
 
   signers.unshift(payerAccount)

@@ -7,9 +7,8 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js'
 import type { Connection } from '@solana/web3.js'
-
-import * as Layout from '../lib/transform/layout'
-import { sendTransaction, TransactionResult, Amount } from '../lib'
+import { sendTransaction, TransactionResult, Amount } from 'solana'
+import * as Layout from 'solana/types/layout'
 
 /**
  * Information about a token

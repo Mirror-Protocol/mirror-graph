@@ -1,8 +1,7 @@
 import * as BufferLayout from 'buffer-layout'
 import { Account, PublicKey, Connection, Transaction, SystemProgram } from '@solana/web3.js'
-import { sendTransaction, Amount, SymbolBuffer, ProgramAddress } from '../lib'
-import * as Layout from '../lib/transform/layout'
-import { Token } from './token'
+import { sendTransaction, Amount, SymbolBuffer, ProgramAddress, Token } from 'solana'
+import * as Layout from 'solana/types/layout'
 
 /**
  * Information about a mint config

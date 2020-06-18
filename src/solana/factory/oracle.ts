@@ -1,7 +1,5 @@
-import { getConnection } from './lib/program'
 import { PublicKey, Account } from '@solana/web3.js'
-import { newSystemAccount, SymbolBuffer } from './lib'
-import { Oracle } from './entities'
+import { Oracle, SymbolBuffer, getConnection, newAccountWithAirdrop } from 'solana'
 
 export async function createOracle(
   oracleAccount: Account,
@@ -13,7 +11,7 @@ export async function createOracle(
 ): Promise<[Oracle, Account]> {
   const connection = await getConnection()
   const balanceNeeded = 1000000 + (await Oracle.getMinBalanceRentForExemptOracle(connection))
-  const accountOwner = await newSystemAccount(connection, balanceNeeded)
+  const accountOwner = await newAccountWithAirdrop(connection, balanceNeeded)
   const oracle = await Oracle.createOracle(
     connection,
     oracleAccount,

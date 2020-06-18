@@ -1,10 +1,9 @@
 import * as fs from 'mz/fs'
-import { Connection, BpfLoader, Account, PublicKey } from '@solana/web3.js'
+import { BpfLoader, Account, PublicKey } from '@solana/web3.js'
 import { sha256 } from 'crypto-hash'
-import * as semver from 'semver'
 import * as logger from 'lib/logger'
-import { newSystemAccount } from './account'
-import { url } from './url'
+import { newAccountWithAirdrop } from './account'
+import { getConnection } from './connection'
 import BN = require('bn.js')
 
 /**
@@ -23,27 +22,6 @@ export class ProgramAddress {
   }
 }
 
-let connection
-
-export async function getConnection(): Promise<Connection> {
-  if (connection) return connection
-
-  let newConnection = new Connection(url)
-  const version = await newConnection.getVersion()
-
-  // commitment params are only supported >= 0.21.0
-  const solanaCoreVersion = version['solana-core'].split(' ')[0]
-  if (semver.gte(solanaCoreVersion, '0.21.0')) {
-    newConnection = new Connection(url, 'recent')
-  }
-
-  // require-atomic-updates
-  connection = newConnection
-  logger.info('Connection to cluster established:', url, version)
-
-  return connection
-}
-
 export async function loadProgram(path: string): Promise<Account> {
   const NUM_RETRIES = 500 /* allow some number of retries */
   const data = await fs.readFile(path)
@@ -55,19 +33,17 @@ export async function loadProgram(path: string): Promise<Account> {
       (BpfLoader.getMinNumSignatures(data.length) + NUM_RETRIES) +
     (await conn.getMinimumBalanceForRentExemption(data.length))
 
-  const from = await newSystemAccount(conn, balanceNeeded)
-  logger.info(`Loading ${path} program...`)
+  const from = await newAccountWithAirdrop(conn, balanceNeeded)
 
-  let programAcc = new Account()
+  let programAcc: Account
   let attempts = 5
-  while (attempts > 0) {
+  for (; attempts > 0; attempts -= 1) {
     try {
-      logger.info('Loading BPF program...')
+      logger.info(`Loading ${path} program...`)
+      programAcc = new Account()
       await BpfLoader.load(conn, from, programAcc, data)
       break
     } catch (err) {
-      programAcc = new Account()
-      attempts -= 1
       logger.error(`Error loading BPF program, ${attempts} attempts remaining:`, err.message)
     }
   }
