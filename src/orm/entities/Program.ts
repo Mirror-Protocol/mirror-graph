@@ -1,5 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, CreateDateColumn, Column } from 'typeorm'
 import { ObjectType, Field, ID } from 'type-graphql'
+import graphqlTypeJson from 'graphql-type-json'
+import { ProgramIds, ProgramKeys } from '../types'
 
 @ObjectType()
 @Entity('program')
@@ -12,35 +14,19 @@ export class Program {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Field()
-  @Column()
-  mintProgramId: string
+  @Field((type) => graphqlTypeJson)
+  @Column({ type: 'jsonb', default: {} })
+  programIds: ProgramIds
 
-  @Field()
-  @Column()
-  oracleProgramId: string
+  @Field((type) => graphqlTypeJson)
+  @Column({ type: 'jsonb', default: {} })
+  minter: ProgramKeys
 
-  @Field()
-  @Column()
-  tokenProgramId: string
+  @Field((type) => graphqlTypeJson)
+  @Column({ type: 'jsonb', default: {} })
+  depositToken: ProgramKeys
 
-  @Field()
-  @Column()
-  marketProgramId: string
-
-  @Field()
-  @Column({ nullable: true })
-  minterKey?: string
-
-  @Field()
-  @Column({ nullable: true })
-  depositTokenKey?: string
-
-  @Field()
-  @Column({ nullable: true })
-  collateralTokenKey?: string
-
-  @Field()
-  @Column({ nullable: true })
-  minterOwnerSecretKey?: string
+  @Field((type) => graphqlTypeJson)
+  @Column({ type: 'jsonb', default: {} })
+  collateralToken: ProgramKeys
 }

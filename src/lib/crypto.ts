@@ -29,3 +29,11 @@ export function decrypt(source: string): string {
 
   return result
 }
+
+export function encryptBuffer(value: Buffer): string {
+  return encrypt(value.toString())
+}
+
+export function decryptBuffer(source: string): Buffer {
+  return Buffer.from(decrypt(source).split(','))
+}

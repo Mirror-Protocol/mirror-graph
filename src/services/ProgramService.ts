@@ -14,7 +14,7 @@ import {
 } from 'solana'
 import { Program } from 'orm'
 import * as logger from 'lib/logger'
-import { encrypt } from 'lib/crypto'
+import { encryptBuffer } from 'lib/crypto'
 
 @Service()
 export class ProgramService {
@@ -43,17 +43,19 @@ export class ProgramService {
     const marketProgramId: Account = await loadMarketProgram()
 
     return this.programRepo.save({
-      mintProgramId: mintProgramId.publicKey.toBase58(),
-      oracleProgramId: oracleProgramId.publicKey.toBase58(),
-      tokenProgramId: tokenProgramId.publicKey.toBase58(),
-      marketProgramId: marketProgramId.publicKey.toBase58(),
+      programIds: {
+        mint: mintProgramId.publicKey.toBase58(),
+        oracle: oracleProgramId.publicKey.toBase58(),
+        token: tokenProgramId.publicKey.toBase58(),
+        market: marketProgramId.publicKey.toBase58(),
+      },
     })
   }
 
   async create(): Promise<Program> {
     const program = await this.get()
-    const tokenProgramId = new PublicKey(program.tokenProgramId)
-    const mintProgramId = new PublicKey(program.mintProgramId)
+    const tokenProgramId = new PublicKey(program.programIds.token)
+    const mintProgramId = new PublicKey(program.programIds.mint)
 
     logger.info('Create Deposit Token')
     const depositToken = await createToken(tokenProgramId, DECIMALS)
@@ -76,13 +78,21 @@ export class ProgramService {
     const configInfo = await minter.configInfo()
     logger.info('Config: ', configInfo)
 
-    return this.programRepo.save(
-      Object.assign(program, {
-        minterKey: minter.config.toBase58(),
-        depositTokenKey: depositToken.token.toBase58(),
-        collateralTokenKey: collateralToken.token.toBase58(),
-        minterOwnerSecretKey: encrypt(minterOwner.secretKey.toString()),
-      })
-    )
+    const saveData: Partial<Program> = {
+      minter: {
+        key: minter.config.toBase58(),
+        ownerSecretKey: encryptBuffer(minterOwner.secretKey),
+      },
+      depositToken: {
+        key: depositToken.token.toBase58(),
+        ownerSecretKey: encryptBuffer(depositToken.tokenOwner.secretKey),
+      },
+      collateralToken: {
+        key: collateralToken.token.toBase58(),
+        ownerSecretKey: encryptBuffer(collateralToken.tokenOwner.secretKey),
+      },
+    }
+
+    return this.programRepo.save(Object.assign(program, saveData))
   }
 }

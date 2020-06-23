@@ -40,7 +40,7 @@ export async function createDeposit(
   minter: Minter,
   depositTokenOwner: Account,
   depositTokenSource: PublicKey,
-  symbol: SymbolBuffer,
+  boardKey: PublicKey,
   amount: Amount
 ): Promise<[Account, PublicKey]> {
   const connection = await getConnection()
@@ -50,7 +50,14 @@ export async function createDeposit(
 
   return [
     depositOwner,
-    await minter.deposit(depositOwner, null, depositTokenOwner, depositTokenSource, symbol, amount),
+    await minter.deposit(
+      depositOwner,
+      null,
+      depositTokenOwner,
+      depositTokenSource,
+      boardKey,
+      amount
+    ),
   ]
 }
 
@@ -60,6 +67,7 @@ export async function createMintPosition(
   collateralTokenSource: PublicKey,
   assetTokenProgramId: PublicKey,
   assetTokenDest: PublicKey,
+  boardKey: PublicKey,
   symbol: SymbolBuffer,
   amount: Amount
 ): Promise<[Account, PublicKey]> {
@@ -77,6 +85,7 @@ export async function createMintPosition(
       collateralTokenSource,
       assetTokenProgramId,
       assetTokenDest,
+      boardKey,
       symbol,
       amount
     ),

@@ -99,7 +99,6 @@ export class Minter {
   depositTokenProgramId: PublicKey
   depositToken: PublicKey
   mintDataSize: number
-  boards: { string: PublicKey }
 
   /**
    *
@@ -227,7 +226,6 @@ export class Minter {
     symbol: SymbolBuffer
   ): Promise<[PublicKey, Token]> {
     const boardAccount = new Account()
-    this.boards[symbol.toString()] = boardAccount.publicKey
 
     const boardSigner = await ProgramAddress.create(
       [BOARD_PREFIX, symbol.toString()],
@@ -312,11 +310,10 @@ export class Minter {
     depositAcc: PublicKey | void,
     depositTokenOwner: Account,
     depositTokenSource: PublicKey,
-    symbol: SymbolBuffer,
+    boardKey: PublicKey,
     amount: Amount
   ): Promise<PublicKey> {
-    const board: PublicKey = this.boards[symbol.toString()]
-    const boardInfo: BoardInfo = await this.boardInfo(symbol)
+    const boardInfo: BoardInfo = await this.boardInfo(boardKey)
 
     // Create new deposit account
     if (!depositAcc) {
@@ -361,7 +358,7 @@ export class Minter {
         { pubkey: depositTokenSource, isSigner: false, isWritable: true },
         { pubkey: boardInfo.depositHolder, isSigner: false, isWritable: true },
         { pubkey: this.config, isSigner: false, isWritable: false },
-        { pubkey: board, isSigner: false, isWritable: true },
+        { pubkey: boardKey, isSigner: false, isWritable: true },
         { pubkey: depositAcc, isSigner: false, isWritable: true },
       ],
       programId: this.programId,
@@ -377,11 +374,11 @@ export class Minter {
     depositOwner: Account,
     depositAcc: PublicKey,
     tokenDest: PublicKey,
+    boardKey: PublicKey,
     symbol: SymbolBuffer,
     amount: Amount
   ): Promise<PublicKey> {
-    const board: PublicKey = this.boards[symbol.toString()]
-    const boardInfo: BoardInfo = await this.boardInfo(symbol)
+    const boardInfo: BoardInfo = await this.boardInfo(boardKey)
     const boardSigner = await ProgramAddress.create(
       [BOARD_PREFIX, symbol.toString()],
       this.programId
@@ -411,7 +408,7 @@ export class Minter {
         { pubkey: tokenDest, isSigner: false, isWritable: true },
         { pubkey: boardInfo.depositHolder, isSigner: false, isWritable: true },
         { pubkey: this.config, isSigner: false, isWritable: false },
-        { pubkey: board, isSigner: false, isWritable: true },
+        { pubkey: boardKey, isSigner: false, isWritable: true },
         { pubkey: depositAcc, isSigner: false, isWritable: true },
         { pubkey: boardSigner, isSigner: false, isWritable: false },
       ],
@@ -431,11 +428,11 @@ export class Minter {
     collateralTokenSource: PublicKey,
     assetTokenProgramId: PublicKey,
     assetTokenDest: PublicKey,
+    boardKey: PublicKey,
     symbol: SymbolBuffer,
     amount: Amount
   ): Promise<PublicKey> {
-    const board: PublicKey = this.boards[symbol.toString()]
-    const boardInfo: BoardInfo = await this.boardInfo(symbol)
+    const boardInfo: BoardInfo = await this.boardInfo(boardKey)
     const boardSigner = await ProgramAddress.create(
       [BOARD_PREFIX, symbol.toString()],
       this.programId
@@ -488,7 +485,7 @@ export class Minter {
         { pubkey: assetTokenDest, isSigner: false, isWritable: true },
         { pubkey: boardInfo.oracle, isSigner: false, isWritable: false },
         { pubkey: this.config, isSigner: false, isWritable: false },
-        { pubkey: board, isSigner: false, isWritable: true },
+        { pubkey: boardKey, isSigner: false, isWritable: true },
         { pubkey: positionAcc, isSigner: false, isWritable: true },
         { pubkey: boardSigner, isSigner: false, isWritable: false },
       ],
@@ -532,8 +529,8 @@ export class Minter {
   /**
    * Retrieve board information
    */
-  async boardInfo(symbol: SymbolBuffer): Promise<BoardInfo> {
-    const accountInfo = await this.connection.getAccountInfo(this.boards[symbol.toString()])
+  async boardInfo(boardKey: PublicKey): Promise<BoardInfo> {
+    const accountInfo = await this.connection.getAccountInfo(boardKey)
     if (accountInfo == null) {
       throw new Error('failed to retrieve config info')
     }
