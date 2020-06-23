@@ -7,7 +7,7 @@ export async function createOracle(
   baseToken: PublicKey,
   decimals: number,
   denom: SymbolBuffer,
-  programID: PublicKey
+  programId: PublicKey
 ): Promise<[Oracle, Account]> {
   const connection = await getConnection()
   const balanceNeeded = 1000000 + (await Oracle.getMinBalanceRentForExemptOracle(connection))
@@ -20,7 +20,7 @@ export async function createOracle(
     baseToken,
     decimals,
     denom,
-    programID
+    programId
   )
 
   return [oracle, accountOwner]

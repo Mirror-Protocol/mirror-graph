@@ -90,13 +90,13 @@ export class Minter {
    * @private
    */
   connection: Connection
-  programID: PublicKey
+  programId: PublicKey
 
   owner: Account
   config: PublicKey
-  collateralTokenProgramID: PublicKey
+  collateralTokenProgramId: PublicKey
   collateralToken: PublicKey
-  depositTokenProgramID: PublicKey
+  depositTokenProgramId: PublicKey
   depositToken: PublicKey
   mintDataSize: number
   boards: { string: PublicKey }
@@ -104,29 +104,29 @@ export class Minter {
   /**
    *
    * @param connection The connection to use
-   * @param collateralTokenProgramID Collateral token program ID
+   * @param collateralTokenProgramId Collateral token program ID
    * @param collateralToken Collateral token public key
-   * @param depositTokenProgramID Deposit token program ID
+   * @param depositTokenProgramId Deposit token program ID
    * @param depositToken Deposit token public key
    */
   constructor(
     connection: Connection,
-    programID: PublicKey,
+    programId: PublicKey,
     owner: Account,
     config: PublicKey,
-    collateralTokenProgramID: PublicKey,
+    collateralTokenProgramId: PublicKey,
     collateralToken: PublicKey,
-    depositTokenProgramID: PublicKey,
+    depositTokenProgramId: PublicKey,
     depositToken: PublicKey
   ) {
     Object.assign(this, {
       connection,
-      programID,
+      programId,
       owner,
       config,
-      collateralTokenProgramID,
+      collateralTokenProgramId,
       collateralToken,
-      depositTokenProgramID,
+      depositTokenProgramId,
       depositToken,
       boards: {},
     })
@@ -138,7 +138,7 @@ export class Minter {
    * @return Number of lamports required
    */
   static async getMinBalanceRentForExemptMinter(connection: Connection): Promise<number> {
-    return await connection.getMinimumBalanceForRentExemption(this.getMinterDataSize())
+    return connection.getMinimumBalanceForRentExemption(this.getMinterDataSize())
   }
 
   static getMinterDataSize(): number {
@@ -148,24 +148,24 @@ export class Minter {
   static async createMinter(
     connection: Connection,
     owner: Account,
-    collateralTokenProgramID: PublicKey,
+    collateralTokenProgramId: PublicKey,
     collateralToken: PublicKey,
-    depositTokenProgramID: PublicKey,
+    depositTokenProgramId: PublicKey,
     depositToken: PublicKey,
     decimals: number,
     mintCapacity: Amount,
     whitelistThreshold: Amount,
-    programID: PublicKey
+    programId: PublicKey
   ): Promise<Minter> {
     const configAccount = new Account()
     const minter = new Minter(
       connection,
-      programID,
+      programId,
       owner,
       configAccount.publicKey,
-      collateralTokenProgramID,
+      collateralTokenProgramId,
       collateralToken,
-      depositTokenProgramID,
+      depositTokenProgramId,
       depositToken
     )
 
@@ -179,7 +179,7 @@ export class Minter {
       newAccountPubkey: configAccount.publicKey,
       lamports: balanceNeeded,
       space: this.getMinterDataSize(),
-      programId: programID,
+      programId,
     })
 
     await sendTransaction(connection, transaction, owner, configAccount)
@@ -212,7 +212,7 @@ export class Minter {
         { pubkey: depositToken, isSigner: false, isWritable: false },
         { pubkey: configAccount.publicKey, isSigner: false, isWritable: true },
       ],
-      programId: programID,
+      programId,
       data,
     })
 
@@ -222,7 +222,7 @@ export class Minter {
   }
 
   async createBoard(
-    assetTokenProgramID: PublicKey,
+    assetTokenProgramId: PublicKey,
     oracle: PublicKey,
     symbol: SymbolBuffer
   ): Promise<[PublicKey, Token]> {
@@ -231,26 +231,26 @@ export class Minter {
 
     const boardSigner = await ProgramAddress.create(
       [BOARD_PREFIX, symbol.toString()],
-      this.programID
+      this.programId
     )
     const [assetToken, tokenAccount] = await Token.fundsToken(
       this.connection,
       this.owner,
-      assetTokenProgramID
+      assetTokenProgramId
     )
     const collateralBoard = await Token.createNewAccount(
       this.connection,
       this.owner,
       boardSigner,
       this.collateralToken,
-      this.collateralTokenProgramID
+      this.collateralTokenProgramId
     )
     const depositBoard = await Token.createNewAccount(
       this.connection,
       this.owner,
       boardSigner,
       this.depositToken,
-      this.depositTokenProgramID
+      this.depositTokenProgramId
     )
 
     const balanceNeeded = await Minter.getMinBalanceRentForExemptMinter(this.connection)
@@ -260,7 +260,7 @@ export class Minter {
       newAccountPubkey: boardAccount.publicKey,
       lamports: balanceNeeded,
       space: Minter.getMinterDataSize(),
-      programId: this.programID,
+      programId: this.programId,
     })
 
     await sendTransaction(this.connection, transaction, this.owner, boardAccount)
@@ -285,12 +285,12 @@ export class Minter {
     transaction = new Transaction().add({
       keys: [
         { pubkey: this.owner.publicKey, isSigner: true, isWritable: false },
-        { pubkey: assetTokenProgramID, isSigner: false, isWritable: false },
+        { pubkey: assetTokenProgramId, isSigner: false, isWritable: false },
         { pubkey: assetToken.token, isSigner: true, isWritable: true },
-        { pubkey: this.collateralTokenProgramID, isSigner: false, isWritable: false },
+        { pubkey: this.collateralTokenProgramId, isSigner: false, isWritable: false },
         { pubkey: this.collateralToken, isSigner: false, isWritable: false },
         { pubkey: collateralBoard, isSigner: false, isWritable: false },
-        { pubkey: this.depositTokenProgramID, isSigner: false, isWritable: false },
+        { pubkey: this.depositTokenProgramId, isSigner: false, isWritable: false },
         { pubkey: this.depositToken, isSigner: false, isWritable: false },
         { pubkey: depositBoard, isSigner: false, isWritable: false },
         { pubkey: oracle, isSigner: false, isWritable: false },
@@ -298,7 +298,7 @@ export class Minter {
         { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
         { pubkey: boardSigner, isSigner: false, isWritable: true },
       ],
-      programId: this.programID,
+      programId: this.programId,
       data,
     })
 
@@ -328,7 +328,7 @@ export class Minter {
         newAccountPubkey: depositAccount.publicKey,
         lamports: balanceNeeded,
         space: Minter.getMinterDataSize(),
-        programId: this.programID,
+        programId: this.programId,
       })
 
       await sendTransaction(this.connection, transaction, depositOwner, depositAccount)
@@ -356,7 +356,7 @@ export class Minter {
     const transaction = new Transaction().add({
       keys: [
         { pubkey: depositOwner.publicKey, isSigner: true, isWritable: false },
-        { pubkey: this.depositTokenProgramID, isSigner: false, isWritable: false },
+        { pubkey: this.depositTokenProgramId, isSigner: false, isWritable: false },
         { pubkey: depositTokenOwner.publicKey, isSigner: true, isWritable: false },
         { pubkey: depositTokenSource, isSigner: false, isWritable: true },
         { pubkey: boardInfo.depositHolder, isSigner: false, isWritable: true },
@@ -364,7 +364,7 @@ export class Minter {
         { pubkey: board, isSigner: false, isWritable: true },
         { pubkey: depositAcc, isSigner: false, isWritable: true },
       ],
-      programId: this.programID,
+      programId: this.programId,
       data,
     })
 
@@ -384,7 +384,7 @@ export class Minter {
     const boardInfo: BoardInfo = await this.boardInfo(symbol)
     const boardSigner = await ProgramAddress.create(
       [BOARD_PREFIX, symbol.toString()],
-      this.programID
+      this.programId
     )
 
     const dataLayout = BufferLayout.struct([
@@ -407,7 +407,7 @@ export class Minter {
     const transaction = new Transaction().add({
       keys: [
         { pubkey: depositOwner.publicKey, isSigner: true, isWritable: false },
-        { pubkey: this.depositTokenProgramID, isSigner: false, isWritable: false },
+        { pubkey: this.depositTokenProgramId, isSigner: false, isWritable: false },
         { pubkey: tokenDest, isSigner: false, isWritable: true },
         { pubkey: boardInfo.depositHolder, isSigner: false, isWritable: true },
         { pubkey: this.config, isSigner: false, isWritable: false },
@@ -415,7 +415,7 @@ export class Minter {
         { pubkey: depositAcc, isSigner: false, isWritable: true },
         { pubkey: boardSigner, isSigner: false, isWritable: false },
       ],
-      programId: this.programID,
+      programId: this.programId,
       data,
     })
 
@@ -429,7 +429,7 @@ export class Minter {
     positionAcc: PublicKey | void,
     collateralTokenOwner: Account,
     collateralTokenSource: PublicKey,
-    assetTokenProgramID: PublicKey,
+    assetTokenProgramId: PublicKey,
     assetTokenDest: PublicKey,
     symbol: SymbolBuffer,
     amount: Amount
@@ -438,7 +438,7 @@ export class Minter {
     const boardInfo: BoardInfo = await this.boardInfo(symbol)
     const boardSigner = await ProgramAddress.create(
       [BOARD_PREFIX, symbol.toString()],
-      this.programID
+      this.programId
     )
 
     // Create new position account
@@ -451,7 +451,7 @@ export class Minter {
         newAccountPubkey: positionAccount.publicKey,
         lamports: balanceNeeded,
         space: Minter.getMinterDataSize(),
-        programId: this.programID,
+        programId: this.programId,
       })
 
       await sendTransaction(this.connection, transaction, positionOwner, positionAccount)
@@ -479,11 +479,11 @@ export class Minter {
     const transaction = new Transaction().add({
       keys: [
         { pubkey: positionOwner.publicKey, isSigner: true, isWritable: false },
-        { pubkey: this.collateralTokenProgramID, isSigner: false, isWritable: false },
+        { pubkey: this.collateralTokenProgramId, isSigner: false, isWritable: false },
         { pubkey: collateralTokenOwner.publicKey, isSigner: true, isWritable: false },
         { pubkey: collateralTokenSource, isSigner: false, isWritable: true },
         { pubkey: boardInfo.collateralHolder, isSigner: false, isWritable: true },
-        { pubkey: assetTokenProgramID, isSigner: false, isWritable: false },
+        { pubkey: assetTokenProgramId, isSigner: false, isWritable: false },
         { pubkey: boardInfo.assetToken, isSigner: false, isWritable: true },
         { pubkey: assetTokenDest, isSigner: false, isWritable: true },
         { pubkey: boardInfo.oracle, isSigner: false, isWritable: false },
@@ -492,7 +492,7 @@ export class Minter {
         { pubkey: positionAcc, isSigner: false, isWritable: true },
         { pubkey: boardSigner, isSigner: false, isWritable: false },
       ],
-      programId: this.programID,
+      programId: this.programId,
       data,
     })
 
@@ -510,7 +510,7 @@ export class Minter {
       throw new Error('failed to retrieve config info')
     }
 
-    if (!accountInfo.owner.equals(this.programID)) {
+    if (!accountInfo.owner.equals(this.programId)) {
       throw new Error(`Invalid config owner: ${JSON.stringify(accountInfo.owner)}`)
     }
 
@@ -538,7 +538,7 @@ export class Minter {
       throw new Error('failed to retrieve config info')
     }
 
-    if (!accountInfo.owner.equals(this.programID)) {
+    if (!accountInfo.owner.equals(this.programId)) {
       throw new Error(`Invalid board owner: ${JSON.stringify(accountInfo.owner)}`)
     }
 
@@ -571,7 +571,7 @@ export class Minter {
       throw new Error('failed to retrieve config info')
     }
 
-    if (!accountInfo.owner.equals(this.programID)) {
+    if (!accountInfo.owner.equals(this.programId)) {
       throw new Error(`Invalid board owner: ${JSON.stringify(accountInfo.owner)}`)
     }
 

@@ -10,20 +10,6 @@ import type { Connection } from '@solana/web3.js'
 import { sendTransaction, TransactionResult, Amount } from 'solana'
 import * as Layout from 'solana/types/layout'
 
-// import * as BufferLayout from 'buffer-layout'
-// import {
-//   Account,
-//   PublicKey,
-//   SystemProgram,
-//   Transaction,
-//   TransactionInstruction,
-// } from '@solana/web3.js'
-// import type { Connection } from '@solana/web3.js'
-
-// import * as Layout from './layout'
-// import { sendAndConfirmTransaction } from './utils'
-// import { Amount } from '../utils/amount'
-
 /**
  * Information about a token
  */
@@ -127,7 +113,7 @@ export class Token {
   /**
    * Program Identifier for the Token program
    */
-  programID: PublicKey
+  programId: PublicKey
 
   /**
    * Create a Token object attached to the specific token
@@ -135,10 +121,10 @@ export class Token {
    * @param connection The connection to use
    * @param token Public key of the token
    * @param tokenOwner Account of the token owner
-   * @param programID Optional token programID, uses the system programID by default
+   * @param programId Optional token programId, uses the system programId by default
    */
-  constructor(connection: Connection, token: PublicKey, tokenOwner: Account, programID: PublicKey) {
-    Object.assign(this, { connection, token, tokenOwner, programID })
+  constructor(connection: Connection, token: PublicKey, tokenOwner: Account, programId: PublicKey) {
+    Object.assign(this, { connection, token, tokenOwner, programId })
   }
 
   /**
@@ -147,7 +133,7 @@ export class Token {
    * @return Number of lamports required
    */
   static async getMinBalanceRentForExemptToken(connection: Connection): Promise<number> {
-    return await connection.getMinimumBalanceForRentExemption(TokenInfoLayout.span)
+    return connection.getMinimumBalanceForRentExemption(TokenInfoLayout.span)
   }
 
   /**
@@ -162,7 +148,7 @@ export class Token {
   static async fundsToken(
     connection: Connection,
     payer: Account,
-    programID: PublicKey
+    programId: PublicKey
   ): Promise<[Token, Account]> {
     const tokenAccount: Account = new Account()
     const balanceNeeded = await Token.getMinBalanceRentForExemptToken(connection)
@@ -172,12 +158,12 @@ export class Token {
       newAccountPubkey: tokenAccount.publicKey,
       lamports: balanceNeeded,
       space: TokenInfoLayout.span,
-      programId: programID,
+      programId,
     })
 
     await sendTransaction(connection, transaction, payer, tokenAccount)
 
-    const token = new Token(connection, tokenAccount.publicKey, null, programID)
+    const token = new Token(connection, tokenAccount.publicKey, null, programId)
 
     return [token, tokenAccount]
   }
@@ -187,7 +173,7 @@ export class Token {
     payer: Account,
     owner: PublicKey,
     token: PublicKey,
-    programID: PublicKey
+    programId: PublicKey
   ): Promise<PublicKey> {
     const account: Account = new Account()
     const balanceNeeded = await Token.getMinBalanceRentForExemptTokenAccount(connection)
@@ -196,7 +182,7 @@ export class Token {
       newAccountPubkey: account.publicKey,
       lamports: balanceNeeded,
       space: TokenAccountInfoLayout.span,
-      programId: programID,
+      programId,
     })
 
     await sendTransaction(connection, transaction, payer, account)
@@ -219,7 +205,7 @@ export class Token {
 
     transaction = new Transaction().add({
       keys,
-      programId: programID,
+      programId,
       data,
     })
     await sendTransaction(connection, transaction, account)
@@ -234,17 +220,17 @@ export class Token {
    * @param tokenOwner User account that will own the returned Token
    * @param supply Total supply of the new token
    * @param decimals Location of the decimal place
-   * @param programID Optional token programID, uses the system programID by default
+   * @param programId Optional token programId, uses the system programId by default
    * @return Token object for the newly minted token, Public key of the Token Account holding the total supply of new tokens
    */
   static async createNewToken(
     connection: Connection,
     tokenOwner: Account,
     decimals: number,
-    programID: PublicKey
+    programId: PublicKey
   ): Promise<Token> {
     const tokenAccount = new Account()
-    const token = new Token(connection, tokenAccount.publicKey, tokenOwner, programID)
+    const token = new Token(connection, tokenAccount.publicKey, tokenOwner, programId)
 
     let transaction
 
@@ -275,7 +261,7 @@ export class Token {
       newAccountPubkey: tokenAccount.publicKey,
       lamports: balanceNeeded,
       space: TokenInfoLayout.span,
-      programId: programID,
+      programId,
     })
 
     await sendTransaction(connection, transaction, tokenOwner, tokenAccount)
@@ -287,7 +273,7 @@ export class Token {
 
     transaction = new Transaction().add({
       keys,
-      programId: programID,
+      programId,
       data,
     })
 
@@ -328,7 +314,7 @@ export class Token {
       newAccountPubkey: tokenAccount.publicKey,
       lamports: balanceNeeded,
       space: TokenAccountInfoLayout.span,
-      programId: this.programID,
+      programId: this.programId,
     })
 
     await sendTransaction(this.connection, transaction, owner, tokenAccount)
@@ -344,7 +330,7 @@ export class Token {
     }
     transaction = new Transaction().add({
       keys,
-      programId: this.programID,
+      programId: this.programId,
       data,
     })
     await sendTransaction(this.connection, transaction, tokenAccount)
@@ -361,7 +347,7 @@ export class Token {
       throw new Error('failed to retrieve token info')
     }
 
-    if (!accountInfo.owner.equals(this.programID)) {
+    if (!accountInfo.owner.equals(this.programId)) {
       throw new Error(`Invalid token owner: ${JSON.stringify(accountInfo.owner)}`)
     }
 
@@ -392,7 +378,7 @@ export class Token {
       throw new Error('failed to retrive account info')
     }
 
-    if (!accountInfo.owner.equals(this.programID)) {
+    if (!accountInfo.owner.equals(this.programId)) {
       throw new Error('Invalid token account owner')
     }
 
@@ -577,7 +563,7 @@ export class Token {
     }
     return new TransactionInstruction({
       keys,
-      programId: this.programID,
+      programId: this.programId,
       data,
     })
   }
@@ -616,7 +602,7 @@ export class Token {
         { pubkey: account, isSigner: false, isWritable: true },
         { pubkey: delegate, isSigner: false, isWritable: true },
       ],
-      programId: this.programID,
+      programId: this.programId,
       data,
     })
   }
@@ -664,7 +650,7 @@ export class Token {
         { pubkey: account, isSigner: false, isWritable: true },
         { pubkey: newOwner, isSigner: false, isWritable: true },
       ],
-      programId: this.programID,
+      programId: this.programId,
       data,
     })
   }
@@ -703,7 +689,7 @@ export class Token {
         { pubkey: token, isSigner: false, isWritable: true },
         { pubkey: dest, isSigner: false, isWritable: true },
       ],
-      programId: this.programID,
+      programId: this.programId,
       data,
     })
   }
@@ -751,7 +737,7 @@ export class Token {
 
     return new TransactionInstruction({
       keys,
-      programId: this.programID,
+      programId: this.programId,
       data,
     })
   }

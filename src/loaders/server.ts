@@ -6,7 +6,18 @@ import { initGraphQL, finalizeGraphQL } from './graphql'
 
 let server: http.Server
 
+function validateConfig(): void {
+  const keys = ['ORM', 'PORT', 'TERRA_URL', 'ENCRYPT_KEY']
+  for (const key of keys) {
+    if (!config[key]) {
+      throw new Error(`process.env.${key} is missing`)
+    }
+  }
+}
+
 export async function initServer(): Promise<http.Server> {
+  validateConfig()
+
   const app = await initApp()
 
   await initGraphQL(app)

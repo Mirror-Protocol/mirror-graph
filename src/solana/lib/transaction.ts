@@ -22,7 +22,7 @@ export async function sendTransaction(
   if (!payerAccount) {
     const { feeCalculator } = await connection.getRecentBlockhash()
     const fees = feeCalculator.lamportsPerSignature * 100 // wag
-    payerAccount = await newAccountWithAirdrop(connection, fees)
+    payerAccount = await newAccountWithAirdrop(connection, fees, false)
   }
 
   signers.unshift(payerAccount)

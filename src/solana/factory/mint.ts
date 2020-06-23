@@ -2,14 +2,14 @@ import { PublicKey, Account } from '@solana/web3.js'
 import { Minter, Token, Amount, SymbolBuffer, getConnection, newAccountWithAirdrop } from 'solana'
 
 export async function createMinter(
-  collateralTokenProgramID: PublicKey,
+  collateralTokenProgramId: PublicKey,
   collateralToken: PublicKey,
-  depositTokenProgramID: PublicKey,
+  depositTokenProgramId: PublicKey,
   depositToken: PublicKey,
   decimals: number,
   mintCapacity: Amount,
   whitelistThreshold: Amount,
-  programID: PublicKey
+  programId: PublicKey
 ): Promise<[Minter, Account]> {
   const connection = await getConnection()
   const balanceNeeded =
@@ -23,14 +23,14 @@ export async function createMinter(
   const minter = await Minter.createMinter(
     connection,
     accountOwner,
-    collateralTokenProgramID,
+    collateralTokenProgramId,
     collateralToken,
-    depositTokenProgramID,
+    depositTokenProgramId,
     depositToken,
     decimals,
     mintCapacity,
     whitelistThreshold,
-    programID
+    programId
   )
 
   return [minter, accountOwner]
@@ -58,7 +58,7 @@ export async function createMintPosition(
   minter: Minter,
   collateralTokenOwner: Account,
   collateralTokenSource: PublicKey,
-  assetTokenProgramID: PublicKey,
+  assetTokenProgramId: PublicKey,
   assetTokenDest: PublicKey,
   symbol: SymbolBuffer,
   amount: Amount
@@ -75,7 +75,7 @@ export async function createMintPosition(
       null,
       collateralTokenOwner,
       collateralTokenSource,
-      assetTokenProgramID,
+      assetTokenProgramId,
       assetTokenDest,
       symbol,
       amount

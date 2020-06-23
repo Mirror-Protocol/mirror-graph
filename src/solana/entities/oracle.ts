@@ -39,17 +39,17 @@ export class Oracle {
 
   oracle: PublicKey
   owner: Account
-  programID: PublicKey
+  programId: PublicKey
 
   /**
    * Create a Token object attached to the specific oracle
    *
    * @param connection The connection to use
    * @param oracle Public key
-   * @param oracle programID
+   * @param oracle programId
    */
-  constructor(connection: Connection, oracle: PublicKey, owner: Account, programID: PublicKey) {
-    Object.assign(this, { connection, oracle, owner, programID })
+  constructor(connection: Connection, oracle: PublicKey, owner: Account, programId: PublicKey) {
+    Object.assign(this, { connection, oracle, owner, programId })
   }
 
   /**
@@ -58,7 +58,7 @@ export class Oracle {
    * @return Number of lamports required
    */
   static async getMinBalanceRentForExemptOracle(connection: Connection): Promise<number> {
-    return await connection.getMinimumBalanceForRentExemption(OracleInfoLayout.span)
+    return connection.getMinimumBalanceForRentExemption(OracleInfoLayout.span)
   }
 
   static async createOracle(
@@ -69,9 +69,9 @@ export class Oracle {
     baseToken: PublicKey,
     decimals: number,
     symbol: SymbolBuffer,
-    programID: PublicKey
+    programId: PublicKey
   ): Promise<Oracle> {
-    const oracle = new Oracle(connection, oracleAccount.publicKey, owner, programID)
+    const oracle = new Oracle(connection, oracleAccount.publicKey, owner, programId)
 
     let transaction: Transaction = null
 
@@ -102,7 +102,7 @@ export class Oracle {
       newAccountPubkey: oracleAccount.publicKey,
       lamports: balanceNeeded,
       space: OracleInfoLayout.span,
-      programId: programID,
+      programId: programId,
     })
 
     await sendTransaction(connection, transaction, owner, oracleAccount)
@@ -114,7 +114,7 @@ export class Oracle {
         { pubkey: baseToken, isSigner: false, isWritable: false },
         { pubkey: oracleAccount.publicKey, isSigner: false, isWritable: true },
       ],
-      programId: programID,
+      programId,
       data,
     })
 
@@ -148,7 +148,7 @@ export class Oracle {
         { pubkey: this.owner.publicKey, isSigner: true, isWritable: false },
         { pubkey: this.oracle, isSigner: false, isWritable: true },
       ],
-      programId: this.programID,
+      programId: this.programId,
       data,
     })
 
@@ -166,7 +166,7 @@ export class Oracle {
       throw new Error('failed to retrieve oracle info')
     }
 
-    if (!accountInfo.owner.equals(this.programID)) {
+    if (!accountInfo.owner.equals(this.programId)) {
       throw new Error(`Invalid oracle owner: ${JSON.stringify(accountInfo.owner)}`)
     }
 
