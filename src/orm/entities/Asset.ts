@@ -7,8 +7,8 @@ import {
   JoinColumn,
 } from 'typeorm'
 import { ObjectType, Field, ID } from 'type-graphql'
-import { Program } from './Program'
-// import { ProgramKey } from 'orm'
+import graphqlTypeJson from 'graphql-type-json'
+import { ProgramKeys, Program } from 'orm'
 
 @ObjectType()
 @Entity('asset')
@@ -29,17 +29,13 @@ export class Asset {
   @Column()
   boardKey: string
 
-  @Field()
-  @Column()
-  assetKey: string
+  @Field((type) => graphqlTypeJson)
+  @Column({ type: 'jsonb', default: {} })
+  assetToken: ProgramKeys
 
-  @Field()
-  @Column()
-  oracleKey: string
-
-  @Field()
-  @Column()
-  oracleOwnerSecretKey: string
+  @Field((type) => graphqlTypeJson)
+  @Column({ type: 'jsonb', default: {} })
+  oracle: ProgramKeys
 
   @ManyToOne(() => Program)
   @JoinColumn()

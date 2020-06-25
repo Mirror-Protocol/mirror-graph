@@ -1,22 +1,23 @@
-import { Repository } from 'typeorm'
-import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Service, Inject } from 'typedi'
 import { Account, PublicKey } from '@solana/web3.js'
 import {
   createOracle,
   createDeposit,
   createTokenAccount,
+  createMintPosition,
   Amount,
   SymbolBuffer,
   Minter,
   Token,
+  Oracle,
   getConnection,
   DECIMALS,
+  BoardInfo,
 } from 'solana'
 import { Asset } from 'orm'
 import { ProgramService, AssetService } from 'services'
 import * as logger from 'lib/logger'
-import { encryptBuffer, decryptBuffer } from 'lib/crypto'
+import { decryptBuffer } from 'lib/crypto'
 
 @Service()
 export class MinterService {
@@ -26,8 +27,7 @@ export class MinterService {
 
   constructor(
     @Inject((type) => ProgramService) private readonly programService: ProgramService,
-    @Inject((type) => AssetService) private readonly assetService: AssetService,
-    @InjectRepository(Asset) private readonly assetRepo: Repository<Asset>
+    @Inject((type) => AssetService) private readonly assetService: AssetService
   ) {}
 
   async load(): Promise<Minter> {
@@ -65,8 +65,16 @@ export class MinterService {
     return this.minter || (await this.load())
   }
 
+  async getBoard(symbol: string): Promise<BoardInfo> {
+    const minter: Minter = await this.get()
+    const asset: Asset = await this.assetService.get(symbol)
+
+    return minter.boardInfo(new PublicKey(asset.boardKey))
+  }
+
   async whitelisting(symbol: string): Promise<Asset> {
-    const minter = await this.get()
+    const minter: Minter = await this.get()
+    const configInfo = await minter.configInfo()
     const program = await this.programService.get()
     const { programIds, collateralToken } = program
 
@@ -75,18 +83,15 @@ export class MinterService {
     const oracleAccount = new Account()
     const symbolBuffer = new SymbolBuffer(symbol)
 
-    const [boardAccountKey, assetToken] = await minter.createBoard(
+    // create asset board and assetToken
+    const [boardKey, assetToken] = await minter.createBoard(
       new PublicKey(programIds.token),
       oracleAccount.publicKey,
       symbolBuffer
     )
 
-    const assetTokenInfo = await assetToken.tokenInfo()
-    logger.info('Asset Token: ', assetTokenInfo)
-
-    logger.info('Create Oracle')
-
-    const [oracle, oracleOwner] = await createOracle(
+    // create oracle
+    const [oracle] = await createOracle(
       oracleAccount,
       assetToken.token,
       new PublicKey(collateralToken.key),
@@ -95,98 +100,68 @@ export class MinterService {
       new PublicKey(programIds.oracle)
     )
 
-    logger.info('Update price')
-
+    // todo: remove test code
     const oraclePrice = new Amount(1000 * Math.pow(10, DECIMALS))
     await oracle.updatePrice(oraclePrice)
 
-    const oracleInfo = await oracle.oracleInfo()
-    logger.info('Oracle: ', oracleInfo)
-    logger.info('Oracle Price: ', oracleInfo.price.toString())
-
-    const boardInfo = await minter.boardInfo(boardAccountKey)
+    const boardInfo = await minter.boardInfo(boardKey)
     logger.info('Mint Board:', boardInfo)
 
-    return this.assetRepo.save({
-      program,
-      symbol,
-      assetKey: assetToken.token.toBase58(),
-      boardKey: boardAccountKey.toBase58(),
-      oracleKey: oracleAccount.publicKey.toBase58(),
-      oracleOwnerSecretKey: encryptBuffer(oracleOwner.secretKey),
-    })
-  }
-
-  async deposit(symbol: string): Promise<void> {
-    const minter = await this.get()
-    const configInfo = await minter.configInfo()
-    // const { programIds, collateralToken, depositToken } = await this.programService.get()
-
-    const asset = await this.assetService.get(symbol)
-
     // todo: remove test code
-    const [depositInitialOwner, depositInitialAccount] = await createTokenAccount(this.depositToken)
-    await this.depositToken.mintTo(depositInitialAccount, new Amount('100000000000000'))
+    const [depositerOwner, depositerAccount] = await createTokenAccount(this.depositToken)
+    await this.depositToken.mintTo(depositerAccount, new Amount('100000000000000'))
 
     logger.info('Deposit as much as threshold')
     const [, /*depositOwner*/ depositAccount] = await createDeposit(
       minter,
-      depositInitialOwner,
-      depositInitialAccount,
-      new PublicKey(asset.boardKey),
+      depositerOwner,
+      depositerAccount,
+      boardKey,
       configInfo.whitelistThreshold
     )
 
-    // logger.info(`${symbol} mintable:`, (await minter.boardInfo(symbolBuffer)).isMintable)
-
     const depositInfo = await minter.depositInfo(depositAccount)
     logger.info('Deposit:', depositInfo)
+
+    return this.assetService.create(symbol, program, assetToken, boardKey, oracle)
   }
 
-  async boardInfo(symbol: string): Promise<void> {
-    const minter = await this.get()
-    const asset = await this.assetService.get(symbol)
-    console.log(asset)
-    logger.info(await minter.boardInfo(new PublicKey(asset.boardKey)))
+  async mint(symbol: string): Promise<void> {
+    const minter: Minter = await this.get()
+    const asset: Asset = await this.assetService.get(symbol)
+    const assetToken: Token = await this.assetService.getAssetToken(symbol)
+    const oracle: Oracle = await this.assetService.getOracle(symbol)
+    const oracleInfo = await oracle.oracleInfo()
+    const configInfo = await minter.configInfo()
+
+    // todo: remove test code
+    const [collateralerOwner, collateralerAccount] = await createTokenAccount(this.collateralToken)
+    await this.depositToken.mintTo(collateralerAccount, new Amount('100000000000000'))
+
+    // Create asset token receiver
+    logger.info('Create Asset Receiver')
+    const [, /*assetReceiverOwner*/ assetReceiver] = await createTokenAccount(assetToken)
+
+    logger.info('Create Mint Position')
+    const targetMintedAmount = new Amount(10)
+    const [positionOwner, positionAccount] = await createMintPosition(
+      minter,
+      collateralerOwner,
+      collateralerAccount,
+      assetToken.programId,
+      assetReceiver,
+      new PublicKey(asset.boardKey),
+      new Amount(
+        targetMintedAmount
+          .mul(oracleInfo.price)
+          .divn(Math.pow(10, oracleInfo.decimals))
+          .muln(Math.pow(10, configInfo.decimals))
+          .div(configInfo.mintCapacity)
+          .toString()
+      )
+    )
+    logger.info(
+      `positionAccount: ${positionAccount.toBase58()}, positionOwnerSecret: ${positionOwner.secretKey.toString()}`
+    )
   }
-  /*
-    async withdraw(): Promise<void> {
-      logger.info('Witndraw a little amount')
-      await minter.withdraw(
-        depositOwner,
-        depositAccount,
-        depositReceiver,
-        symbolBuffer,
-        new Amount(10)
-      )
-    }
-  
-    async mint(): Promise<void> {
-      // Create asset token receiver
-      logger.info('Create Asset Receiver')
-      const [assetReceiverOwner, assetReceiver] = await createTokenAccount(assetToken)
-  
-      logger.info('Create Mint Position')
-      const targetMintedAmount = new Amount(7)
-      const [positionOwner, positionAccount] = await createMintPosition(
-        minter,
-        collateralInitialOwner,
-        collateralInitialAccount,
-        assetToken.programId,
-        assetReceiver,
-        symbolBuffer,
-        new Amount(
-          targetMintedAmount
-            .mul(oraclePrice)
-            .divn(Math.pow(10, oracleDecimals))
-            .muln(Math.pow(10, configInfo.decimals))
-            .div(configInfo.mintCapacity)
-            .toString()
-        ),
-      )
-  
-      const assetReceiverInfo = await assetToken.accountInfo(assetReceiver)
-      assert(assetReceiverInfo.amount.eq(targetMintedAmount), 'Minted coins differ with expected amount')
-    }
-    */
 }

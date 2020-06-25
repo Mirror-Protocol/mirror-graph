@@ -6,7 +6,7 @@ import * as Layout from 'solana/types/layout'
 /**
  * Information about a mint config
  */
-type OracleInfo = {
+export type OracleInfo = {
   price: Amount
   decimals: number
   assetToken: PublicKey

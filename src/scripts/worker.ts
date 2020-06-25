@@ -28,14 +28,9 @@ async function whitelisting(symbol: string): Promise<void> {
   await minterService.whitelisting(symbol)
 }
 
-async function deposit(symbol: string): Promise<void> {
-  const minterService = Container.get(MinterService)
-  await minterService.deposit(symbol)
-}
-
 async function board(symbol: string): Promise<void> {
   const minterService = Container.get(MinterService)
-  await minterService.boardInfo(symbol)
+  await minterService.getBoard(symbol)
 }
 
 async function main(): Promise<void> {
@@ -64,13 +59,6 @@ async function main(): Promise<void> {
         throw new Error('input symbol argument')
       }
       await whitelisting(args[1])
-      break
-
-    case 'deposit':
-      if (args.length < 2) {
-        throw new Error('input symbol argument')
-      }
-      await deposit(args[1])
       break
 
     case 'board':

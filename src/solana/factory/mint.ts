@@ -1,5 +1,5 @@
 import { PublicKey, Account } from '@solana/web3.js'
-import { Minter, Token, Amount, SymbolBuffer, getConnection, newAccountWithAirdrop } from 'solana'
+import { Minter, Token, Amount, getConnection, newAccountWithAirdrop } from 'solana'
 
 export async function createMinter(
   collateralTokenProgramId: PublicKey,
@@ -68,7 +68,6 @@ export async function createMintPosition(
   assetTokenProgramId: PublicKey,
   assetTokenDest: PublicKey,
   boardKey: PublicKey,
-  symbol: SymbolBuffer,
   amount: Amount
 ): Promise<[Account, PublicKey]> {
   const connection = await getConnection()
@@ -86,7 +85,6 @@ export async function createMintPosition(
       assetTokenProgramId,
       assetTokenDest,
       boardKey,
-      symbol,
       amount
     ),
   ]

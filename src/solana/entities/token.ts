@@ -13,7 +13,7 @@ import * as Layout from 'solana/types/layout'
 /**
  * Information about a token
  */
-type TokenInfo = {
+export type TokenInfo = {
   /**
    * Total supply of tokens
    */
@@ -44,7 +44,7 @@ const TokenInfoLayout = BufferLayout.struct([
 /**
  * Information about a token account
  */
-type TokenAccountInfo = {
+export type TokenAccountInfo = {
   /**
    * The kind of token this account holds
    */

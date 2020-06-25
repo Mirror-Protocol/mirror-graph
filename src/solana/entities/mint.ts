@@ -6,7 +6,7 @@ import * as Layout from 'solana/types/layout'
 /**
  * Information about a mint config
  */
-type ConfigInfo = {
+export type ConfigInfo = {
   owner: Account
   decimals: number
   mintCapacity: Amount
@@ -31,7 +31,7 @@ const ConfigInfoLayout = BufferLayout.struct([
 /**
  * Information about a mint board
  */
-type BoardInfo = {
+export type BoardInfo = {
   symbol: SymbolBuffer
   config: PublicKey
   assetToken: PublicKey
@@ -64,7 +64,7 @@ const BoardInfoLayout = BufferLayout.struct([
 /**
  * Information about a mint deposit
  */
-type DepositInfo = {
+export type DepositInfo = {
   owner: PublicKey
   mintBoard: PublicKey
   depositAmount: Amount
@@ -375,12 +375,11 @@ export class Minter {
     depositAcc: PublicKey,
     tokenDest: PublicKey,
     boardKey: PublicKey,
-    symbol: SymbolBuffer,
     amount: Amount
   ): Promise<PublicKey> {
     const boardInfo: BoardInfo = await this.boardInfo(boardKey)
     const boardSigner = await ProgramAddress.create(
-      [BOARD_PREFIX, symbol.toString()],
+      [BOARD_PREFIX, boardInfo.symbol.toString()],
       this.programId
     )
 
@@ -429,12 +428,11 @@ export class Minter {
     assetTokenProgramId: PublicKey,
     assetTokenDest: PublicKey,
     boardKey: PublicKey,
-    symbol: SymbolBuffer,
     amount: Amount
   ): Promise<PublicKey> {
     const boardInfo: BoardInfo = await this.boardInfo(boardKey)
     const boardSigner = await ProgramAddress.create(
-      [BOARD_PREFIX, symbol.toString()],
+      [BOARD_PREFIX, boardInfo.symbol.toString()],
       this.programId
     )
 
