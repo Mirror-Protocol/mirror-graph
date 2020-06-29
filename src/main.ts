@@ -1,12 +1,12 @@
 import 'reflect-metadata'
 import * as Bluebird from 'bluebird'
-import * as config from 'config'
 import { Container } from 'typedi'
 import { once } from 'lodash'
 import * as logger from 'lib/logger'
 import { init as initErrorHandler, errorHandler } from 'error'
 import { initORM, finalizeORM } from 'orm'
 import { initServer, finalizeServer } from 'loaders'
+import config from 'config'
 
 Bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
 global.Promise = Bluebird as any // eslint-disable-line
@@ -32,7 +32,7 @@ async function gracefulShutdown(): Promise<void> {
 async function main(): Promise<void> {
   logger.info('Initialize mirror-api-server')
 
-  initErrorHandler({ sentry: config.sentry })
+  initErrorHandler({ sentryDsn: config.SENTRY_DSN })
 
   await initORM(Container)
   await initServer()
