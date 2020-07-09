@@ -6,6 +6,7 @@ import * as logger from 'lib/logger'
 import { init as initErrorHandler, errorHandler } from 'error'
 import { initORM, finalizeORM } from 'orm'
 import { initServer, finalizeServer } from 'loaders'
+import { initTerra } from 'lib/terra'
 import config from 'config'
 
 Bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
@@ -35,6 +36,9 @@ async function main(): Promise<void> {
   initErrorHandler({ sentryDsn: config.SENTRY_DSN })
 
   await initORM(Container)
+
+  initTerra(config.TERRA_LCD, config.TERRA_CHAINID)
+
   await initServer()
 
   // attach graceful shutdown

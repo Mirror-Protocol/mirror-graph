@@ -1,2 +1,2 @@
 export * from './Asset'
-export * from './Program'
+export * from './Contract'
