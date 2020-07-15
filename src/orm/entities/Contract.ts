@@ -24,13 +24,5 @@ export class Contract {
 
   @Field()
   @Column({ default: '' })
-  oracle: string
-
-  @Field()
-  @Column({ default: '' })
-  deposit: string
-
-  @Field()
-  @Column({ default: '' })
-  collateral: string
+  market: string
 }
