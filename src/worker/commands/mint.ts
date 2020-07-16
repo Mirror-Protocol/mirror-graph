@@ -9,7 +9,7 @@ export function mint(): void {
   program
     .command('whitelist <symbol> <name>')
     .description('whitelisting new asset')
-    .requiredOption("-m, --mnemonic <'mnemonic'>", '24words mnemonic, must be separated by space')
+    .requiredOption('-m, --mnemonic <"mnemonic">', '24words mnemonic, must be separated by space')
     .action(async (symbol, name, { mnemonic }) => {
       await minterService.whitelist(symbol, name, new MnemonicKey({ mnemonic }))
     })
@@ -23,7 +23,7 @@ export function mint(): void {
     .option('--auction-threshold-rate <threshold-rate>', 'auction start threshold rate')
     .option('--mint-capacity <capacity>', 'mint capacity rate')
     .option('--owner <owner>', 'owner')
-    .requiredOption("-m, --mnemonic <'mnemonic'>", '24words mnemonic, must be separated by space')
+    .requiredOption('-m, --mnemonic <"mnemonic">', '24words mnemonic, must be separated by space')
     .action(
       async ({
         collateralDenom,

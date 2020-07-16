@@ -26,19 +26,9 @@ export class MinterService {
   ): Promise<void> {
     const contract = await this.ownerService.getContract()
 
-    await execute(
-      contract.mint,
-      {
-        updateConfig: options,
-      },
-      key
-    )
+    await execute(contract.mint, { updateConfig: options }, key)
 
-    // logger.info('mint', await contractQuery(contract.mint, { whitelist: { symbol: 'mTEST' } }))
-    logger.info(
-      'mint',
-      await contractQuery<{ config: object }>(contract.mint, { config: {} })
-    )
+    logger.info('config mint result', await contractQuery(contract.mint, { config: {} }))
   }
 
   async whitelist(symbol: string, name: string, key: Key): Promise<Asset> {
@@ -70,8 +60,8 @@ export class MinterService {
       key
     )
 
-    logger.info('token', await contractInfo(token))
     logger.info('oracle', await contractInfo(oracle))
+    logger.info('token', await contractInfo(token))
 
     // execute whitelist function in mint contact
     await execute(contract.mint, { whitelist: { assetToken: token, oracle, symbol } }, key)
@@ -79,7 +69,7 @@ export class MinterService {
     // save asset entity to database
     const asset = await this.assetService.create({ symbol, name, token, oracle, contract })
 
-    logger.info(`${symbol} asset created`)
+    logger.info(`whitelisted asset ${symbol}`)
 
     return asset
   }

@@ -1,9 +1,9 @@
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Service } from 'typedi'
-import { Contract } from 'orm'
+import { Contract, CodeIds } from 'orm'
 import { Key } from '@terra-money/terra.js'
-import { storeCode, instantiate, contractInfo } from 'lib/terra'
+import { instantiate, contractInfo } from 'lib/terra'
 import * as logger from 'lib/logger'
 
 @Service()
@@ -27,22 +27,9 @@ export class OwnerService {
     return this.contract || this.load()
   }
 
-  async storeCodes(key: Key): Promise<Contract> {
-    return this.contractRepo.save({
-      codeIds: {
-        mint: await storeCode('src/contracts/mirror_mint.wasm', key),
-        oracle: await storeCode('src/contracts/mirror_oracle.wasm', key),
-        token: await storeCode('src/contracts/mirror_erc20.wasm', key),
-        market: await storeCode('src/contracts/mirror_market.wasm', key),
-      },
-    })
-  }
-
-  async create(key: Key): Promise<Contract> {
-    const contract = await this.getContract()
-
-    contract.mint = await instantiate(
-      contract.codeIds.mint,
+  async create(codeIds: CodeIds, key: Key): Promise<Contract> {
+    const mint = await instantiate(
+      codeIds.mint,
       {
         collateralDenom: 'uusd',
         depositDenom: 'uluna',
@@ -55,10 +42,10 @@ export class OwnerService {
       key
     )
 
-    contract.market = await instantiate(
-      contract.codeIds.market,
+    const market = await instantiate(
+      codeIds.market,
       {
-        mint: contract.mint,
+        mint,
         collateralDenom: 'uusd',
         basePool: '1000000000000',
         commissionRate: '0.001', // 0.1%
@@ -70,9 +57,7 @@ export class OwnerService {
       key
     )
 
-    this.contractInfo()
-
-    return this.contractRepo.save(contract)
+    return this.contractRepo.save({ codeIds, mint, market, owner: key.accAddress })
   }
 
   async contractInfo(): Promise<void> {

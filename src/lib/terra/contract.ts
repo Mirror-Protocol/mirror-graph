@@ -40,8 +40,7 @@ export async function storeCode(path: string, key: Key): Promise<number> {
     return codeId
   } catch (error) {
     logger.info(`failed store code ${path}`)
-    logger.info(tx)
-    throw new Error(error)
+    throw new Error(tx.raw_log)
   }
 }
 
@@ -81,5 +80,14 @@ export async function execute(contractAddress: string, msg: object, key: Key): P
     throw new Error(tx.raw_log)
   }
 
-  logger.info(tx)
+  try {
+    const log = JSON.parse(tx.raw_log)
+    const contractAddress = log[0].events[0].attributes[0].value
+
+    logger.info(`execute contract ${contractAddress} success`)
+  } catch (error) {
+    logger.info(`execute contract ${contractAddress} failed`)
+    logger.info(tx)
+    throw new Error(error)
+  }
 }

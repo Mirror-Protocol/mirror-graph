@@ -15,14 +15,18 @@ export class Contract {
   id: number
 
   @Field((type) => graphqlTypeJson)
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'jsonb' })
   codeIds: CodeIds
 
   @Field()
-  @Column({ default: '' })
+  @Column()
   mint: string
 
   @Field()
-  @Column({ default: '' })
+  @Column()
   market: string
+
+  @Field({ description: 'owner address' })
+  @Column()
+  owner: string
 }
