@@ -10,11 +10,7 @@ export function contract(): void {
   program
     .command('store-codes')
     .description('store mint/oracle/token/market contracts to chain')
-    .requiredOption(
-      '--mnemonic [aa,bb,cc,dd,...]',
-      '24words mnemonic, must be separated by commas(,)',
-      (value: string) => value.replace(/,/g, ' ')
-    )
+    .requiredOption("-m, --mnemonic <'mnemonic'>", '24words mnemonic, must be separated by space')
     .action(async ({ mnemonic }) => {
       await ownerService.storeCodes(new MnemonicKey({ mnemonic }))
     })
@@ -22,11 +18,7 @@ export function contract(): void {
   program
     .command('create')
     .description('instantiate mint/market contracts')
-    .requiredOption(
-      '--mnemonic [aa,bb,cc,dd,...]',
-      '24words mnemonic, must be separated by commas(,)',
-      (value: string) => value.replace(/,/g, ' ')
-    )
+    .requiredOption("-m, --mnemonic <'mnemonic'>", '24words mnemonic, must be separated by space')
     .action(async ({ mnemonic }) => {
       logger.info(await ownerService.create(new MnemonicKey({ mnemonic })))
     })
@@ -35,6 +27,6 @@ export function contract(): void {
     .command('contract-info')
     .description('show mint/market contracts infomation')
     .action(async () => {
-      await ownerService.printContractInfo()
+      await ownerService.contractInfo()
     })
 }

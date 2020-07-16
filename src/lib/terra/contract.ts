@@ -11,8 +11,8 @@ import { snakeCase, isObject, isArray } from 'lodash'
 import * as logger from 'lib/logger'
 import { lcd, transaction } from '.'
 
+// eslint-disable-next-line
 function toSnakeCase(obj: any): any {
-  // eslint-disable-line
   if (isObject(obj) && !isArray(obj)) {
     const converted = {}
     Object.keys(obj).forEach((key) => {
@@ -68,10 +68,18 @@ export async function contractInfo(address: string): Promise<ContractInfo> {
   return lcd.wasm.contractInfo(address)
 }
 
-export async function execute(address: string, msg: object, key: Key): Promise<void> {
+export async function contractQuery<T>(address: string, query: object): Promise<T> {
+  return lcd.wasm.contractQuery<T>(address, query)
+}
+
+export async function execute(contractAddress: string, msg: object, key: Key): Promise<void> {
   const tx = await transaction(lcd.wallet(key), [
-    new MsgExecuteContract(key.accAddress, address, toSnakeCase(msg), new Coins([])),
+    new MsgExecuteContract(key.accAddress, contractAddress, toSnakeCase(msg), new Coins([])),
   ])
+
+  if (!tx.logs) {
+    throw new Error(tx.raw_log)
+  }
 
   logger.info(tx)
 }

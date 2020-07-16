@@ -3,7 +3,7 @@ import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Service } from 'typedi'
 import { Contract } from 'orm'
 import { Key } from '@terra-money/terra.js'
-import { storeCode, instantiate, execute, contractInfo } from 'lib/terra'
+import { storeCode, instantiate, contractInfo } from 'lib/terra'
 import * as logger from 'lib/logger'
 
 @Service()
@@ -23,7 +23,7 @@ export class OwnerService {
     return this.contract
   }
 
-  async get(): Promise<Contract> {
+  async getContract(): Promise<Contract> {
     return this.contract || this.load()
   }
 
@@ -39,7 +39,7 @@ export class OwnerService {
   }
 
   async create(key: Key): Promise<Contract> {
-    const contract = await this.get()
+    const contract = await this.getContract()
 
     contract.mint = await instantiate(
       contract.codeIds.mint,
@@ -70,40 +70,15 @@ export class OwnerService {
       key
     )
 
-    this.printContractInfo()
+    this.contractInfo()
 
     return this.contractRepo.save(contract)
   }
 
-  async printContractInfo(): Promise<void> {
-    const contract = await this.get()
+  async contractInfo(): Promise<void> {
+    const contract = await this.getContract()
 
     logger.info('mint', await contractInfo(contract.mint))
     logger.info('market', await contractInfo(contract.market))
-  }
-
-  async configMint(
-    options: {
-      collateralDenom?: string
-      depositDenom?: string
-      whitelistThreshold?: string
-      auctionDiscount?: string
-      auctionThresholdRate?: string
-      mintCapacity?: string
-      owner?: string
-    },
-    key: Key
-  ): Promise<void> {
-    const contract = await this.get()
-
-    await execute(
-      contract.mint,
-      {
-        updateConfig: options,
-      },
-      key
-    )
-
-    logger.info('mint', await contractInfo(contract.mint))
   }
 }

@@ -4,40 +4,18 @@
   "main": "src/main.ts",
   "license": "MIT",
   "scripts": {
-    "dev": "better-npm-run start-dev",
-    "start": "better-npm-run start-prod",
-    "workerdev": "better-npm-run start-worker-dev",
-    "worker": "better-npm-run start-worker",
+    "dev": "nodemon --signal SIGINT --exec ts-node -e ts,json,R --files -r tsconfig-paths/register src/main.ts",
+    "start": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
+    "worker": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/worker/main.ts",
     "test": "jest",
     "lint": "eslint src --ext .js,.ts",
     "prettier": "prettier --write src/**/*.ts"
   },
-  "betterScripts": {
-    "start-dev": {
-      "command": "nodemon --signal SIGINT --exec ts-node -e ts,json,R --files -r tsconfig-paths/register src/main.ts"
-    },
-    "start-prod": {
-      "command": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
-      "env": {
-        "NODE_ENV": "production"
-      }
-    },
-    "start-worker-dev": {
-      "command": "nodemon --signal SIGINT --exec ts-node -e ts,json --files -r tsconfig-paths/register src/worker/main.ts"
-    },
-    "start-worker": {
-      "command": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/worker/main.ts",
-      "env": {
-        "NODE_ENV": "production"
-      }
-    }
-  },
   "dependencies": {
     "@sentry/node": "5.13.0",
-    "@terra-money/terra.js": "^0.4.4",
+    "@terra-money/terra.js": "^0.4.5",
     "apollo-server": "^2.11.0",
     "apollo-server-express": "^2.11.0",
-    "better-npm-run": "^0.1.1",
     "bignumber.js": "^9.0.0",
     "bluebird": "^3.7.2",
     "bn.js": "^5.1.2",
