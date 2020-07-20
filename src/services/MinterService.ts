@@ -1,9 +1,10 @@
 import { Service, Inject } from 'typedi'
-import { Key } from '@terra-money/terra.js'
-import { Asset } from 'orm'
+import { Key, Coins } from '@terra-money/terra.js'
+import { Asset, MintConfig, Whitelist } from 'orm'
 import { OwnerService, AssetService } from 'services'
 import { instantiate, contractQuery, contractInfo, execute } from 'lib/terra'
 import * as logger from 'lib/logger'
+import { toCamelCase } from 'lib/caseStyles'
 
 @Service()
 export class MinterService {
@@ -27,11 +28,9 @@ export class MinterService {
     const contract = await this.ownerService.getContract()
 
     await execute(contract.mint, { updateConfig: options }, key)
-
-    logger.info('config mint result', await contractQuery(contract.mint, { config: {} }))
   }
 
-  async whitelist(symbol: string, name: string, key: Key): Promise<Asset> {
+  async whitelisting(symbol: string, name: string, key: Key): Promise<Asset> {
     if (await this.assetService.get(symbol)) {
       throw new Error('already registered symbol asset')
     }
@@ -72,5 +71,39 @@ export class MinterService {
     logger.info(`whitelisted asset ${symbol}`)
 
     return asset
+  }
+
+  async deposit(symbol: string, key: Key, amount: string): Promise<void> {
+    const contract = await this.ownerService.getContract()
+
+    // execute deposit function in mint contact
+    await execute(contract.mint, { deposit: { symbol } }, key, new Coins(amount))
+  }
+
+  async mint(symbol: string, key: Key, amount: string): Promise<void> {
+    const contract = await this.ownerService.getContract()
+
+    // execute mint function in mint contact
+    await execute(contract.mint, { mint: { symbol } }, key, new Coins(amount))
+  }
+
+  async getConfig(): Promise<MintConfig> {
+    const contract = await this.ownerService.getContract()
+    return toCamelCase(await contractQuery(contract.mint, { config: {} }))
+  }
+
+  async getWhitelist(symbol: string): Promise<Whitelist> {
+    const contract = await this.ownerService.getContract()
+    return toCamelCase(await contractQuery(contract.mint, { whitelist: { symbol } }))
+  }
+
+  async getDeposit(symbol: string, address: string): Promise<{ amount: string }> {
+    const contract = await this.ownerService.getContract()
+    return contractQuery(contract.mint, { deposit: { symbol, address } })
+  }
+
+  async getPosition(symbol: string, address: string): Promise<{ amount: string }> {
+    const contract = await this.ownerService.getContract()
+    return contractQuery(contract.mint, { position: { symbol, address } })
   }
 }

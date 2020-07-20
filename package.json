@@ -6,14 +6,14 @@
   "scripts": {
     "dev": "nodemon --signal SIGINT --exec ts-node -e ts,json,R --files -r tsconfig-paths/register src/main.ts",
     "start": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
-    "worker": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/worker/main.ts",
+    "cli": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/cli/main.ts",
     "test": "jest",
     "lint": "eslint src --ext .js,.ts",
     "prettier": "prettier --write src/**/*.ts"
   },
   "dependencies": {
     "@sentry/node": "5.13.0",
-    "@terra-money/terra.js": "^0.4.5",
+    "@terra-money/terra.js": "^0.4.7",
     "apollo-server": "^2.11.0",
     "apollo-server-express": "^2.11.0",
     "bignumber.js": "^9.0.0",

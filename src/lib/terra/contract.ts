@@ -7,22 +7,9 @@ import {
 } from '@terra-money/terra.js'
 import { ContractInfo } from '@terra-money/terra.js/dist/client/lcd/api/WasmAPI'
 import * as fs from 'fs'
-import { snakeCase, isObject, isArray } from 'lodash'
 import * as logger from 'lib/logger'
+import { toSnakeCase } from 'lib/caseStyles'
 import { lcd, transaction } from '.'
-
-// eslint-disable-next-line
-function toSnakeCase(obj: any): any {
-  if (isObject(obj) && !isArray(obj)) {
-    const converted = {}
-    Object.keys(obj).forEach((key) => {
-      converted[snakeCase(key)] = toSnakeCase(obj[key])
-    })
-    return converted
-  }
-
-  return obj
-}
 
 export async function storeCode(path: string, key: Key): Promise<number> {
   const wasmBinary = fs.readFileSync(path)
@@ -30,6 +17,10 @@ export async function storeCode(path: string, key: Key): Promise<number> {
   const tx = await transaction(lcd.wallet(key), [
     new MsgStoreCode(key.accAddress, wasmBinary.toString('base64')),
   ])
+
+  if (tx.code) {
+    throw new Error(`[${tx.code}] ${tx.raw_log}`)
+  }
 
   try {
     const log = JSON.parse(tx.raw_log)
@@ -39,7 +30,7 @@ export async function storeCode(path: string, key: Key): Promise<number> {
 
     return codeId
   } catch (error) {
-    logger.info(`failed store code ${path}`)
+    logger.error(`failed store code ${path}`)
     throw new Error(tx.raw_log)
   }
 }
@@ -49,6 +40,10 @@ export async function instantiate(codeId: number, initMsg: object, key: Key): Pr
     new MsgInstantiateContract(key.accAddress, codeId, toSnakeCase(initMsg), new Coins([]), true),
   ])
 
+  if (tx.code) {
+    throw new Error(`[${tx.code}] ${tx.raw_log}`)
+  }
+
   try {
     const log = JSON.parse(tx.raw_log)
     const contractAddress = log[0].events[0].attributes[2].value
@@ -57,8 +52,8 @@ export async function instantiate(codeId: number, initMsg: object, key: Key): Pr
 
     return contractAddress
   } catch (error) {
-    logger.info(`failed instantiate code ${codeId}`)
-    logger.info(tx)
+    logger.error(`failed instantiate code ${codeId}`)
+    logger.error(tx.raw_log)
     throw new Error(error)
   }
 }
@@ -71,13 +66,18 @@ export async function contractQuery<T>(address: string, query: object): Promise<
   return lcd.wasm.contractQuery<T>(address, query)
 }
 
-export async function execute(contractAddress: string, msg: object, key: Key): Promise<void> {
+export async function execute(
+  contractAddress: string,
+  msg: object,
+  key: Key,
+  coins: Coins = new Coins([])
+): Promise<void> {
   const tx = await transaction(lcd.wallet(key), [
-    new MsgExecuteContract(key.accAddress, contractAddress, toSnakeCase(msg), new Coins([])),
+    new MsgExecuteContract(key.accAddress, contractAddress, toSnakeCase(msg), coins),
   ])
 
-  if (!tx.logs) {
-    throw new Error(tx.raw_log)
+  if (tx.code) {
+    throw new Error(`[${tx.code}] ${tx.raw_log}`)
   }
 
   try {
@@ -85,9 +85,10 @@ export async function execute(contractAddress: string, msg: object, key: Key): P
     const contractAddress = log[0].events[0].attributes[0].value
 
     logger.info(`execute contract ${contractAddress} success`)
-  } catch (error) {
-    logger.info(`execute contract ${contractAddress} failed`)
     logger.info(tx)
+  } catch (error) {
+    logger.error(`execute contract ${contractAddress} failed`)
+    logger.error(tx.raw_log)
     throw new Error(error)
   }
 }
