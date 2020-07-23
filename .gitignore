@@ -48,3 +48,4 @@ ormconfig.json
 # direnv
 .envrc
 .direnv
+keystore.json

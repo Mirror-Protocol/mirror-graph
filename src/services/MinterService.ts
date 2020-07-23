@@ -30,7 +30,7 @@ export class MinterService {
     await execute(contract.mint, { updateConfig: options }, key)
   }
 
-  async whitelisting(symbol: string, name: string, key: Key): Promise<Asset> {
+  async whitelisting(symbol: string, name: string, ownerKey: Key, oracleKey: Key): Promise<Asset> {
     if (await this.assetService.get(symbol)) {
       throw new Error('already registered symbol asset')
     }
@@ -46,7 +46,7 @@ export class MinterService {
         decimals: 6,
         initialBalances: [],
       },
-      key
+      ownerKey
     )
 
     const oracle = await instantiate(
@@ -56,14 +56,14 @@ export class MinterService {
         baseDenom: symbol,
         quoteDenom: 'uusd',
       },
-      key
+      oracleKey
     )
 
     logger.info('oracle', await contractInfo(oracle))
     logger.info('token', await contractInfo(token))
 
     // execute whitelist function in mint contact
-    await execute(contract.mint, { whitelist: { assetToken: token, oracle, symbol } }, key)
+    await execute(contract.mint, { whitelist: { assetToken: token, oracle, symbol } }, ownerKey)
 
     // save asset entity to database
     const asset = await this.assetService.create({ symbol, name, token, oracle, contract })

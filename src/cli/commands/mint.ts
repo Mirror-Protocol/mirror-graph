@@ -1,8 +1,9 @@
 import { Container } from 'typedi'
-import { MnemonicKey } from '@terra-money/terra.js'
 import { program } from 'commander'
 import { MinterService } from 'services'
 import * as logger from 'lib/logger'
+import { getKey } from 'lib/keystore'
+import config from 'config'
 
 export function mint(): void {
   const minterService = Container.get(MinterService)
@@ -10,14 +11,21 @@ export function mint(): void {
   program
     .command('whitelisting <symbol> <name>')
     .description('whitelisting new asset')
-    .requiredOption('-m, --mnemonic <"mnemonic">', '24words mnemonic, must be separated by space')
-    .action(async (symbol, name, { mnemonic }) => {
-      await minterService.whitelisting(symbol, name, new MnemonicKey({ mnemonic }))
+    .requiredOption('--owner <owner-password>', 'owner key password')
+    .requiredOption('--oracle <oracle-password>', 'oracle key password')
+    .action(async (symbol, name, { owner, oracle }) => {
+      await minterService.whitelisting(
+        symbol,
+        name,
+        getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner),
+        getKey(config.KEYSTORE_PATH, config.ORACLE_KEY, oracle)
+      )
     })
 
   program
     .command('config-mint')
     .description('modify configuration of mint contract')
+    .option('-p, --password <owner-password>', 'owner key password')
     .option('--collateral-denom <denom>', 'collateral denom, uses mint')
     .option('--deposit-denom <denom>', 'deposit denom')
     .option('--whitelist-threshold <threshold>', 'whitelist threshold')
@@ -25,9 +33,9 @@ export function mint(): void {
     .option('--auction-threshold-rate <threshold-rate>', 'auction start threshold rate')
     .option('--mint-capacity <capacity>', 'mint capacity rate')
     .option('--owner <owner>', 'owner')
-    .option('-m, --mnemonic <"mnemonic">', '24words mnemonic, must be separated by space')
     .action(
       async ({
+        password,
         collateralDenom,
         depositDenom,
         whitelistThreshold,
@@ -35,9 +43,8 @@ export function mint(): void {
         auctionThresholdRate,
         mintCapacity,
         owner,
-        mnemonic,
       }) => {
-        if (mnemonic) {
+        if (password) {
           await minterService.config(
             {
               collateralDenom,
@@ -48,7 +55,7 @@ export function mint(): void {
               mintCapacity,
               owner,
             },
-            new MnemonicKey({ mnemonic })
+            getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
           )
         }
 
@@ -59,17 +66,25 @@ export function mint(): void {
   program
     .command('deposit <symbol> <amount>')
     .description('deposit to symbol. eg) deposit mAAPL 100uluna')
-    .requiredOption('-m, --mnemonic <"mnemonic">', '24words mnemonic, must be separated by space')
-    .action(async (symbol, amount, { mnemonic }) => {
-      await minterService.deposit(symbol, new MnemonicKey({ mnemonic }), amount)
+    .requiredOption('-p, --password <owner-password>', 'owner key password')
+    .action(async (symbol, amount, { password }) => {
+      await minterService.deposit(
+        symbol,
+        getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password),
+        amount
+      )
     })
 
   program
     .command('mint <symbol> <amount>')
     .description('mint asset. eg) mint mAAPL 100uusd')
-    .requiredOption('-m, --mnemonic <"mnemonic">', '24words mnemonic, must be separated by space')
-    .action(async (symbol, amount, { mnemonic }) => {
-      await minterService.mint(symbol, new MnemonicKey({ mnemonic }), amount)
+    .requiredOption('-p, --password <owner-password>', 'owner key password')
+    .action(async (symbol, amount, { password }) => {
+      await minterService.mint(
+        symbol,
+        getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password),
+        amount
+      )
     })
 
   program

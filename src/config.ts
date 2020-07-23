@@ -5,7 +5,7 @@ const {
   TERRA_LCD,
   TERRA_CHAINID,
   SENTRY_DSN,
-  ENCRYPT_KEY,
+  KEYSTORE_PATH,
 } = process.env
 
 const config = {
@@ -15,7 +15,9 @@ const config = {
   TERRA_LCD,
   TERRA_CHAINID,
   SENTRY_DSN,
-  ENCRYPT_KEY,
+  KEYSTORE_PATH: KEYSTORE_PATH || './keystore.json',
+  OWNER_KEY: 'owner',
+  ORACLE_KEY: 'oracle',
 }
 
 export default config

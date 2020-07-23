@@ -1,39 +1,42 @@
-import * as crypto from 'crypto'
+import * as CryptoJS from 'crypto-js'
 
-const iv = '12237afa2e44151f'
+const KEY_SIZE = 256
+const ITERATIONS = 100
 
-export function generateKey(): string {
-  return crypto.randomBytes(32).toString('hex')
+export function encrypt(plainText, pass): string {
+  const salt = CryptoJS.lib.WordArray.random(128 / 8)
+
+  const key = CryptoJS.PBKDF2(pass, salt, {
+    keySize: KEY_SIZE / 32,
+    iterations: ITERATIONS,
+  })
+
+  const iv = CryptoJS.lib.WordArray.random(128 / 8)
+
+  const encrypted = CryptoJS.AES.encrypt(plainText, key, {
+    iv,
+    padding: CryptoJS.pad.Pkcs7,
+    mode: CryptoJS.mode.CBC,
+  })
+
+  // salt, iv will be hex 32 in length
+  // append them to the ciphertext for use  in decryption
+  return salt.toString() + iv.toString() + encrypted.toString()
 }
 
-export function encrypt(value: string): string {
-  if (!process.env.ENCRYPT_KEY) {
-    throw new Error('ENCRYPT_KEY is required')
-  }
-  const cipher = crypto.createCipheriv('aes-256-cbc', process.env.ENCRYPT_KEY, iv)
+export function decrypt(transitmessage, pass): string {
+  const salt = CryptoJS.enc.Hex.parse(transitmessage.substr(0, 32))
+  const iv = CryptoJS.enc.Hex.parse(transitmessage.substr(32, 32))
+  const encrypted = transitmessage.substring(64)
 
-  let result = cipher.update(value, 'utf8', 'base64')
-  result += cipher.final('base64')
+  const key = CryptoJS.PBKDF2(pass, salt, {
+    keySize: KEY_SIZE / 32,
+    iterations: ITERATIONS,
+  })
 
-  return result
-}
-
-export function decrypt(source: string): string {
-  if (!process.env.ENCRYPT_KEY) {
-    throw new Error('ENCRYPT_KEY is required')
-  }
-  const decipher = crypto.createDecipheriv('aes-256-cbc', process.env.ENCRYPT_KEY, iv)
-
-  let result = decipher.update(source, 'base64', 'utf8')
-  result += decipher.final('utf8')
-
-  return result
-}
-
-export function encryptBuffer(value: Buffer): string {
-  return encrypt(value.toString())
-}
-
-export function decryptBuffer(source: string): Buffer {
-  return Buffer.from(decrypt(source).split(','))
+  return CryptoJS.AES.decrypt(encrypted, key, {
+    iv,
+    padding: CryptoJS.pad.Pkcs7,
+    mode: CryptoJS.mode.CBC,
+  }).toString(CryptoJS.enc.Utf8)
 }
