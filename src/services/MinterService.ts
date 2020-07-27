@@ -1,10 +1,10 @@
 import { Service, Inject } from 'typedi'
 import { Key, Coins } from '@terra-money/terra.js'
-import { Asset, MintConfig, Whitelist } from 'orm'
+import { Asset, MintWhitelist } from 'orm'
 import { OwnerService, AssetService } from 'services'
 import { instantiate, contractQuery, contractInfo, execute } from 'lib/terra'
 import * as logger from 'lib/logger'
-import { toCamelCase } from 'lib/caseStyles'
+import config from 'config'
 
 @Service()
 export class MinterService {
@@ -12,23 +12,6 @@ export class MinterService {
     @Inject((type) => OwnerService) private readonly ownerService: OwnerService,
     @Inject((type) => AssetService) private readonly assetService: AssetService
   ) {}
-
-  async config(
-    options: {
-      collateralDenom?: string
-      depositDenom?: string
-      whitelistThreshold?: string
-      auctionDiscount?: string
-      auctionThresholdRate?: string
-      mintCapacity?: string
-      owner?: string
-    },
-    key: Key
-  ): Promise<void> {
-    const contract = await this.ownerService.getContract()
-
-    await execute(contract.mint, { updateConfig: options }, key)
-  }
 
   async whitelisting(symbol: string, name: string, ownerKey: Key, oracleKey: Key): Promise<Asset> {
     if (await this.assetService.get(symbol)) {
@@ -39,31 +22,28 @@ export class MinterService {
 
     const token = await instantiate(
       contract.codeIds.token,
-      {
-        minter: contract.mint,
-        symbol,
-        name,
-        decimals: 6,
-        initialBalances: [],
-      },
+      { minter: contract.mint, symbol, name, decimals: 6, initialBalances: [] },
       ownerKey
     )
 
     const oracle = await instantiate(
       contract.codeIds.oracle,
-      {
-        assetToken: token,
-        baseDenom: symbol,
-        quoteDenom: 'uusd',
-      },
+      { assetToken: token, baseDenom: symbol, quoteDenom: 'uusd' },
       oracleKey
     )
 
     logger.info('oracle', await contractInfo(oracle))
     logger.info('token', await contractInfo(token))
 
-    // execute whitelist function in mint contact
+    // execute mint.whitelist function for whitelist
     await execute(contract.mint, { whitelist: { assetToken: token, oracle, symbol } }, ownerKey)
+
+    // execute market.createPool function for pool config
+    await execute(
+      contract.market,
+      { createPool: { symbol, ...config.BASE_MARKET_POOL_CONFIG } },
+      ownerKey
+    )
 
     // save asset entity to database
     const asset = await this.assetService.create({ symbol, name, token, oracle, contract })
@@ -73,28 +53,23 @@ export class MinterService {
     return asset
   }
 
+  // deposit uluna for mint
   async deposit(symbol: string, key: Key, amount: string): Promise<void> {
     const contract = await this.ownerService.getContract()
 
-    // execute deposit function in mint contact
-    await execute(contract.mint, { deposit: { symbol } }, key, new Coins(amount))
+    return execute(contract.mint, { deposit: { symbol } }, key, new Coins(amount))
   }
 
+  // mint using uusd
   async mint(symbol: string, key: Key, amount: string): Promise<void> {
     const contract = await this.ownerService.getContract()
 
-    // execute mint function in mint contact
-    await execute(contract.mint, { mint: { symbol } }, key, new Coins(amount))
+    return execute(contract.mint, { mint: { symbol } }, key, new Coins(amount))
   }
 
-  async getConfig(): Promise<MintConfig> {
+  async getWhitelist(symbol: string): Promise<MintWhitelist> {
     const contract = await this.ownerService.getContract()
-    return toCamelCase(await contractQuery(contract.mint, { config: {} }))
-  }
-
-  async getWhitelist(symbol: string): Promise<Whitelist> {
-    const contract = await this.ownerService.getContract()
-    return toCamelCase(await contractQuery(contract.mint, { whitelist: { symbol } }))
+    return contractQuery(contract.mint, { whitelist: { symbol } })
   }
 
   async getDeposit(symbol: string, address: string): Promise<{ amount: string }> {

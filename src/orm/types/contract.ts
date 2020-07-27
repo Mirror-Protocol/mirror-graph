@@ -5,6 +5,13 @@ export interface CodeIds {
   market: number
 }
 
+export interface ContractInfo {
+  codeId: number
+  address: string
+  owner: string
+  migratable: boolean
+}
+
 export interface MintConfig {
   owner: string
   collateralDenom: string
@@ -15,10 +22,34 @@ export interface MintConfig {
   auctionThresholdRate: string
 }
 
-export interface Whitelist {
+export interface MintContractInfo extends ContractInfo {
+  initMsg: MintConfig
+}
+
+export interface MintWhitelist {
   symbol: string
   oracle: string
   assetToken: string
   totalDeposit: string
   isMintable: boolean
+}
+
+export interface MarketConfig {
+  owner: string
+}
+
+export interface MarketPoolConfig {
+  basePool: string
+  commissionRate: string
+  minSpread: string
+  maxSpread: string
+  marginThresholdRate: string
+  marginDiscountRate: string
+}
+
+export interface MarketContractInfo extends ContractInfo {
+  initMsg: MarketPoolConfig & {
+    mint: string
+    collateralDenom: string
+  }
 }

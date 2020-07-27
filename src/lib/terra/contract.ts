@@ -5,10 +5,10 @@ import {
   Coins,
   Key,
 } from '@terra-money/terra.js'
-import { ContractInfo } from '@terra-money/terra.js/dist/client/lcd/api/WasmAPI'
+import { ContractInfo } from 'orm'
 import * as fs from 'fs'
 import * as logger from 'lib/logger'
-import { toSnakeCase } from 'lib/caseStyles'
+import { toSnakeCase, toCamelCase } from 'lib/caseStyles'
 import { lcd, transaction } from '.'
 
 export async function storeCode(path: string, key: Key): Promise<number> {
@@ -59,11 +59,11 @@ export async function instantiate(codeId: number, initMsg: object, key: Key): Pr
 }
 
 export async function contractInfo(address: string): Promise<ContractInfo> {
-  return lcd.wasm.contractInfo(address)
+  return toCamelCase(await lcd.wasm.contractInfo(address))
 }
 
 export async function contractQuery<T>(address: string, query: object): Promise<T> {
-  return lcd.wasm.contractQuery<T>(address, query)
+  return toCamelCase(await lcd.wasm.contractQuery<T>(address, toSnakeCase(query)))
 }
 
 export async function execute(

@@ -2,6 +2,7 @@ import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository } from 'typeorm'
 import { Service } from 'typedi'
 import { Asset } from 'orm'
+import { contractQuery } from 'lib/terra'
 
 @Service()
 export class AssetService {
@@ -17,5 +18,11 @@ export class AssetService {
 
   async create(options: Partial<Asset>): Promise<Asset> {
     return this.assetRepo.save(options)
+  }
+
+  async getPrice(symbol: string): Promise<{ price: string }> {
+    const asset = await this.get(symbol)
+    console.log(asset)
+    return contractQuery(asset.oracle, { price: {} })
   }
 }

@@ -5,7 +5,7 @@ import * as logger from 'lib/logger'
 import { getKey } from 'lib/keystore'
 import config from 'config'
 
-export function mint(): void {
+export function minter(): void {
   const minterService = Container.get(MinterService)
 
   program
@@ -21,47 +21,6 @@ export function mint(): void {
         getKey(config.KEYSTORE_PATH, config.ORACLE_KEY, oracle)
       )
     })
-
-  program
-    .command('config-mint')
-    .description('modify configuration of mint contract')
-    .option('-p, --password <owner-password>', 'owner key password')
-    .option('--collateral-denom <denom>', 'collateral denom, uses mint')
-    .option('--deposit-denom <denom>', 'deposit denom')
-    .option('--whitelist-threshold <threshold>', 'whitelist threshold')
-    .option('--auction-discount <discount-rate>', 'auction discount rate')
-    .option('--auction-threshold-rate <threshold-rate>', 'auction start threshold rate')
-    .option('--mint-capacity <capacity>', 'mint capacity rate')
-    .option('--owner <owner>', 'owner')
-    .action(
-      async ({
-        password,
-        collateralDenom,
-        depositDenom,
-        whitelistThreshold,
-        auctionDiscount,
-        auctionThresholdRate,
-        mintCapacity,
-        owner,
-      }) => {
-        if (password) {
-          await minterService.config(
-            {
-              collateralDenom,
-              depositDenom,
-              whitelistThreshold,
-              auctionDiscount,
-              auctionThresholdRate,
-              mintCapacity,
-              owner,
-            },
-            getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
-          )
-        }
-
-        logger.info(await minterService.getConfig())
-      }
-    )
 
   program
     .command('deposit <symbol> <amount>')
@@ -92,5 +51,15 @@ export function mint(): void {
     .description('print whitelisted information')
     .action(async (symbol) => {
       logger.info(await minterService.getWhitelist(symbol))
+    })
+
+  program
+    .command('print-position <symbol>')
+    .description('print deposit/position')
+    .requiredOption('-p, --password <owner-password>', 'owner key password')
+    .action(async (symbol, { password }) => {
+      const key = getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
+      logger.info(await minterService.getDeposit(symbol, key.accAddress))
+      logger.info(await minterService.getPosition(symbol, key.accAddress))
     })
 }

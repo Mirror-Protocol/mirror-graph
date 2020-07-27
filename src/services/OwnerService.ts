@@ -1,10 +1,18 @@
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Service } from 'typedi'
-import { Contract, CodeIds } from 'orm'
+import {
+  Contract,
+  CodeIds,
+  MintContractInfo,
+  MintConfig,
+  MarketContractInfo,
+  MarketConfig,
+  MarketPoolConfig,
+} from 'orm'
 import { Key } from '@terra-money/terra.js'
-import { instantiate, contractInfo } from 'lib/terra'
-import * as logger from 'lib/logger'
+import { instantiate, contractQuery, contractInfo, execute } from 'lib/terra'
+import config from 'config'
 
 @Service()
 export class OwnerService {
@@ -31,12 +39,7 @@ export class OwnerService {
     const mint = await instantiate(
       codeIds.mint,
       {
-        collateralDenom: 'uusd',
-        depositDenom: 'uluna',
-        whitelistThreshold: '1000000000000',
-        auctionDiscount: '0.1',
-        auctionThresholdRate: '0.8',
-        mintCapacity: '0.7',
+        ...config.BASE_MINT_CONFIG,
         owner: key.accAddress,
       },
       key
@@ -45,14 +48,8 @@ export class OwnerService {
     const market = await instantiate(
       codeIds.market,
       {
+        ...config.BASE_MARKET_CONFIG,
         mint,
-        collateralDenom: 'uusd',
-        basePool: '1000000000000',
-        commissionRate: '0.001', // 0.1%
-        maxSpread: '0.01', // 1%
-        minSpread: '0.001', // 0.1%
-        marginThresholdRate: '0.05', // 5%
-        marginDiscountRate: '0.01', // 1%
       },
       key
     )
@@ -60,10 +57,70 @@ export class OwnerService {
     return this.contractRepo.save({ codeIds, mint, market, owner: key.accAddress })
   }
 
-  async contractInfo(): Promise<void> {
+  async configMint(
+    options: {
+      collateralDenom?: string
+      depositDenom?: string
+      whitelistThreshold?: string
+      auctionDiscount?: string
+      auctionThresholdRate?: string
+      mintCapacity?: string
+      owner?: string
+    },
+    key: Key
+  ): Promise<void> {
     const contract = await this.getContract()
 
-    logger.info('mint', await contractInfo(contract.mint))
-    logger.info('market', await contractInfo(contract.market))
+    return execute(contract.mint, { updateConfig: options }, key)
+  }
+
+  async configMarket(owner: string, key: Key): Promise<void> {
+    const contract = await this.getContract()
+
+    return execute(contract.market, { updateConfig: owner }, key)
+  }
+
+  async configMarketPool(
+    options: {
+      symbol: string
+      basePool?: string
+      commissionRate?: string
+      minSpread?: string
+      maxSpread?: string
+      marginThresholdRate?: string
+      marginDiscountRate?: string
+    },
+    key: Key
+  ): Promise<void> {
+    const contract = await this.getContract()
+
+    return execute(contract.market, { updatePoolConfig: options }, key)
+  }
+
+  async getMintConfig(): Promise<MintConfig> {
+    const contract = await this.getContract()
+    return contractQuery(contract.mint, { config: {} })
+  }
+
+  async getMarketConfig(): Promise<MarketConfig> {
+    const contract = await this.getContract()
+    return contractQuery(contract.market, { config: {} })
+  }
+
+  async getMarketPoolConfig(symbol: string): Promise<MarketPoolConfig> {
+    const contract = await this.getContract()
+    return contractQuery(contract.market, { poolConfig: { symbol } })
+  }
+
+  async mintContractInfo(): Promise<MintContractInfo> {
+    const contract = await this.getContract()
+
+    return (await contractInfo(contract.mint)) as MintContractInfo
+  }
+
+  async marketContractInfo(): Promise<MarketContractInfo> {
+    const contract = await this.getContract()
+
+    return (await contractInfo(contract.market)) as MarketContractInfo
   }
 }
