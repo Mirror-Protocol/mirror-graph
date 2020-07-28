@@ -35,24 +35,19 @@ export class OwnerService {
     return this.contract || this.load()
   }
 
-  async create(codeIds: CodeIds, key: Key): Promise<Contract> {
-    const mint = await instantiate(
-      codeIds.mint,
-      {
-        ...config.BASE_MINT_CONFIG,
-        owner: key.accAddress,
-      },
-      key
-    )
+  async create(
+    codeIds: CodeIds,
+    key: Key,
+    mintAddress?: string,
+    marketAddress?: string
+  ): Promise<Contract> {
+    const mint =
+      mintAddress ||
+      (await instantiate(codeIds.mint, { ...config.BASE_MINT_CONFIG, owner: key.accAddress }, key))
 
-    const market = await instantiate(
-      codeIds.market,
-      {
-        ...config.BASE_MARKET_CONFIG,
-        mint,
-      },
-      key
-    )
+    const market =
+      marketAddress ||
+      (await instantiate(codeIds.market, { ...config.BASE_MARKET_CONFIG, mint }, key))
 
     return this.contractRepo.save({ codeIds, mint, market, owner: key.accAddress })
   }

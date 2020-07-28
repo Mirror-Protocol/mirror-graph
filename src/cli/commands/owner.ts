@@ -30,21 +30,25 @@ export function contract(): void {
     })
 
   program
-    .command('create')
-    .description('instantiate mint/market contracts')
+    .command('init')
+    .description('initialize contract info')
     .requiredOption('-p, --password <owner-password>', 'owner key password')
-    .requiredOption('--mint <codeId>', "mint contract's codeId", (value) => +value)
-    .requiredOption('--oracle <codeId>', "oracle contract's codeId", (value) => +value)
-    .requiredOption('--token <codeId>', "token contract's codeId", (value) => +value)
-    .requiredOption('--market <codeId>', "market contract's codeId", (value) => +value)
-    .action(async ({ password, mint, oracle, token, market }) => {
+    .requiredOption('--mint <codeId>', 'mint contract codeId', (value) => +value)
+    .requiredOption('--oracle <codeId>', 'oracle contract codeId', (value) => +value)
+    .requiredOption('--token <codeId>', 'token contract codeId', (value) => +value)
+    .requiredOption('--market <codeId>', 'market contract codeId', (value) => +value)
+    .option('--mint-contract <address>', 'if undefined make new instance')
+    .option('--market-contract <address>', 'if undefined make new instance')
+    .action(async ({ password, mint, oracle, token, market, mintContract, marketContract }) => {
       const contract = await ownerService.create(
         { mint, oracle, token, market },
-        getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
+        getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password),
+        mintContract,
+        marketContract
       )
-      logger.info('created mirror contract', contract)
-      logger.info('mint', await ownerService.mintContractInfo())
-      logger.info('market', await ownerService.marketContractInfo())
+      !mintContract && logger.info('mint', await ownerService.mintContractInfo())
+      !marketContract && logger.info('market', await ownerService.marketContractInfo())
+      logger.info(`created mirror contract. id: ${contract.id}`, contract)
     })
 
   program
