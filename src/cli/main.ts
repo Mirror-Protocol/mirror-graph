@@ -5,9 +5,9 @@ import { program } from 'commander'
 import { values } from 'lodash'
 import { initORM } from 'orm'
 import { init as initErrorHandler, errorHandler } from 'error'
+import { initMirror } from 'loaders'
 import * as logger from 'lib/logger'
-import config from 'config'
-import { initTerra } from 'lib/terra'
+import config, { validateConfig } from 'config'
 import * as commands from './commands'
 
 Bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
@@ -18,9 +18,11 @@ async function main(): Promise<void> {
 
   initErrorHandler({ sentryDsn: config.SENTRY_DSN })
 
+  validateConfig()
+
   await initORM(Container)
 
-  initTerra(config.TERRA_LCD, config.TERRA_CHAINID)
+  await initMirror()
 
   // regist commands
   values(commands).forEach((func) => func())

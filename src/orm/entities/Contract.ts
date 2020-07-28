@@ -18,15 +18,15 @@ export class Contract {
   @Column({ type: 'jsonb' })
   codeIds: CodeIds
 
-  @Field()
+  @Field({ description: 'mint contract address' })
   @Column()
   mint: string
 
-  @Field()
+  @Field({ description: 'market contract address' })
   @Column()
   market: string
 
-  @Field({ description: 'owner address' })
+  @Field({ description: 'owner account address' })
   @Column()
   owner: string
 }

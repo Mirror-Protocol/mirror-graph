@@ -46,8 +46,8 @@ export function contract(): void {
         mintContract,
         marketContract
       )
-      !mintContract && logger.info('mint', await ownerService.mintContractInfo())
-      !marketContract && logger.info('market', await ownerService.marketContractInfo())
+      !mintContract && logger.info('mint', await ownerService.getMintContractInfo())
+      !marketContract && logger.info('market', await ownerService.getMarketContractInfo())
       logger.info(`created mirror contract. id: ${contract.id}`, contract)
     })
 
@@ -55,14 +55,14 @@ export function contract(): void {
     .command('mint-contract-info')
     .description('show mint contract infomation')
     .action(async () => {
-      logger.info(await ownerService.mintContractInfo())
+      logger.info(await ownerService.getMintContractInfo())
     })
 
   program
     .command('market-contract-info')
     .description('show market contract infomation')
     .action(async () => {
-      logger.info(await ownerService.marketContractInfo())
+      logger.info(await ownerService.getMarketContractInfo())
     })
 }
 

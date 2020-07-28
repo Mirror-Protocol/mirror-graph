@@ -20,10 +20,8 @@ export class OwnerService {
 
   constructor(@InjectRepository(Contract) private readonly contractRepo: Repository<Contract>) {}
 
-  async load(id?: number): Promise<Contract> {
-    const findOptions = id ? { id } : { order: { createdAt: 'DESC' } }
-
-    this.contract = await this.contractRepo.findOne(findOptions)
+  async load(id: number): Promise<Contract> {
+    this.contract = await this.contractRepo.findOne({ id })
     if (!this.contract) {
       throw new Error(`There is no contract ${id}`)
     }
@@ -31,8 +29,8 @@ export class OwnerService {
     return this.contract
   }
 
-  async getContract(): Promise<Contract> {
-    return this.contract || this.load()
+  getContract(): Contract {
+    return this.contract
   }
 
   async create(
@@ -64,15 +62,11 @@ export class OwnerService {
     },
     key: Key
   ): Promise<void> {
-    const contract = await this.getContract()
-
-    return execute(contract.mint, { updateConfig: options }, key)
+    return execute(this.contract.mint, { updateConfig: options }, key)
   }
 
   async configMarket(owner: string, key: Key): Promise<void> {
-    const contract = await this.getContract()
-
-    return execute(contract.market, { updateConfig: owner }, key)
+    return execute(this.contract.market, { updateConfig: owner }, key)
   }
 
   async configMarketPool(
@@ -87,35 +81,26 @@ export class OwnerService {
     },
     key: Key
   ): Promise<void> {
-    const contract = await this.getContract()
-
-    return execute(contract.market, { updatePoolConfig: options }, key)
+    return execute(this.contract.market, { updatePoolConfig: options }, key)
   }
 
   async getMintConfig(): Promise<MintConfig> {
-    const contract = await this.getContract()
-    return contractQuery(contract.mint, { config: {} })
+    return contractQuery(this.contract.mint, { config: {} })
   }
 
   async getMarketConfig(): Promise<MarketConfig> {
-    const contract = await this.getContract()
-    return contractQuery(contract.market, { config: {} })
+    return contractQuery(this.contract.market, { config: {} })
   }
 
   async getMarketPoolConfig(symbol: string): Promise<MarketPoolConfig> {
-    const contract = await this.getContract()
-    return contractQuery(contract.market, { poolConfig: { symbol } })
+    return contractQuery(this.contract.market, { poolConfig: { symbol } })
   }
 
-  async mintContractInfo(): Promise<MintContractInfo> {
-    const contract = await this.getContract()
-
-    return (await contractInfo(contract.mint)) as MintContractInfo
+  async getMintContractInfo(): Promise<MintContractInfo> {
+    return (await contractInfo(this.contract.mint)) as MintContractInfo
   }
 
-  async marketContractInfo(): Promise<MarketContractInfo> {
-    const contract = await this.getContract()
-
-    return (await contractInfo(contract.market)) as MarketContractInfo
+  async getMarketContractInfo(): Promise<MarketContractInfo> {
+    return (await contractInfo(this.contract.market)) as MarketContractInfo
   }
 }

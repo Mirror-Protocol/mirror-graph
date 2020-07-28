@@ -1,4 +1,4 @@
 export * from './AssetService'
 export * from './OwnerService'
 export * from './MinterService'
-export * from './MarketService'
+export * from './LPService'

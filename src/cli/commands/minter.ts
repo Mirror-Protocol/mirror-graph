@@ -54,12 +54,20 @@ export function minter(): void {
     })
 
   program
-    .command('print-position <symbol>')
-    .description('print deposit/position')
+    .command('print-deposit <symbol>')
+    .description('print deposit information')
     .requiredOption('-p, --password <owner-password>', 'owner key password')
     .action(async (symbol, { password }) => {
       const key = getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
       logger.info(await minterService.getDeposit(symbol, key.accAddress))
+    })
+
+  program
+    .command('print-position <symbol>')
+    .description('print position')
+    .requiredOption('-p, --password <owner-password>', 'owner key password')
+    .action(async (symbol, { password }) => {
+      const key = getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
       logger.info(await minterService.getPosition(symbol, key.accAddress))
     })
 }
