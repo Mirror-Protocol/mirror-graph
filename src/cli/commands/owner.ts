@@ -37,8 +37,8 @@ export function contract(): void {
     .requiredOption('--oracle <codeId>', 'oracle contract codeId', (value) => +value)
     .requiredOption('--token <codeId>', 'token contract codeId', (value) => +value)
     .requiredOption('--market <codeId>', 'market contract codeId', (value) => +value)
-    .option('--mint-contract <address>', 'if undefined make new instance')
-    .option('--market-contract <address>', 'if undefined make new instance')
+    .option('--mint-contract <address>', 'if undefined, make new instance')
+    .option('--market-contract <address>', 'if undefined, make new instance')
     .action(async ({ password, mint, oracle, token, market, mintContract, marketContract }) => {
       const contract = await ownerService.create(
         { mint, oracle, token, market },

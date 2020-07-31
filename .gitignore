@@ -49,3 +49,4 @@ ormconfig.json
 .envrc
 .direnv
 keystore.json
+address.json

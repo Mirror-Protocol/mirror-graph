@@ -1,6 +1,8 @@
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Service } from 'typedi'
+import { Key } from '@terra-money/terra.js'
+import { BlockTxBroadcastResult } from '@terra-money/terra.js/dist/client/lcd/api/TxAPI'
 import {
   Contract,
   CodeIds,
@@ -10,7 +12,6 @@ import {
   MarketConfig,
   MarketPoolConfig,
 } from 'orm'
-import { Key } from '@terra-money/terra.js'
 import { instantiate, contractQuery, contractInfo, execute } from 'lib/terra'
 import config from 'config'
 
@@ -21,7 +22,8 @@ export class OwnerService {
   constructor(@InjectRepository(Contract) private readonly contractRepo: Repository<Contract>) {}
 
   async load(id: number): Promise<Contract> {
-    this.contract = await this.contractRepo.findOne({ id })
+    const findOptions = id !== -1 ? { id } : { order: { createdAt: 'DESC' } }
+    this.contract = await this.contractRepo.findOne(findOptions)
     if (!this.contract) {
       throw new Error(`There is no contract ${id}`)
     }
@@ -61,11 +63,11 @@ export class OwnerService {
       owner?: string
     },
     key: Key
-  ): Promise<void> {
+  ): Promise<BlockTxBroadcastResult> {
     return execute(this.contract.mint, { updateConfig: options }, key)
   }
 
-  async configMarket(owner: string, key: Key): Promise<void> {
+  async configMarket(owner: string, key: Key): Promise<BlockTxBroadcastResult> {
     return execute(this.contract.market, { updateConfig: owner }, key)
   }
 
@@ -80,7 +82,7 @@ export class OwnerService {
       marginDiscountRate?: string
     },
     key: Key
-  ): Promise<void> {
+  ): Promise<BlockTxBroadcastResult> {
     return execute(this.contract.market, { updatePoolConfig: options }, key)
   }
 

@@ -4,7 +4,9 @@ import {
   MsgExecuteContract,
   Coins,
   Key,
+  Msg,
 } from '@terra-money/terra.js'
+import { BlockTxBroadcastResult } from '@terra-money/terra.js/dist/client/lcd/api/TxAPI'
 import { ContractInfo } from 'orm'
 import * as fs from 'fs'
 import * as logger from 'lib/logger'
@@ -23,8 +25,7 @@ export async function storeCode(path: string, key: Key): Promise<number> {
   }
 
   try {
-    const log = JSON.parse(tx.raw_log)
-    const codeId = +log[0].events[1].attributes[1].value
+    const codeId = +tx.logs[0].events[1].attributes[1].value
 
     logger.info(`stored ${path}, codeId: ${codeId}`)
 
@@ -45,8 +46,7 @@ export async function instantiate(codeId: number, initMsg: object, key: Key): Pr
   }
 
   try {
-    const log = JSON.parse(tx.raw_log)
-    const contractAddress = log[0].events[0].attributes[2].value
+    const contractAddress = tx.logs[0].events[0].attributes[2].value
 
     logger.info(`instantiated code ${codeId}, contractAddress: ${contractAddress}`)
 
@@ -66,29 +66,33 @@ export async function contractQuery<T>(address: string, query: object): Promise<
   return toCamelCase(await lcd.wasm.contractQuery<T>(address, toSnakeCase(query)))
 }
 
-export async function execute(
-  contractAddress: string,
-  msg: object,
-  key: Key,
-  coins: Coins = new Coins([])
-): Promise<void> {
-  const tx = await transaction(lcd.wallet(key), [
-    new MsgExecuteContract(key.accAddress, contractAddress, toSnakeCase(msg), coins),
-  ])
+export async function executeMsgs(msgs: Msg[], key: Key): Promise<BlockTxBroadcastResult> {
+  const tx = await transaction(lcd.wallet(key), msgs)
 
   if (tx.code) {
     throw new Error(`[${tx.code}] ${tx.raw_log}`)
   }
 
   try {
-    const log = JSON.parse(tx.raw_log)
-    const contractAddress = log[0].events[0].attributes[0].value
+    if (!tx.logs[0].events[0].attributes[0].value) {
+      throw new Error('execute contract failed')
+    }
 
-    logger.info(`execute contract ${contractAddress} success`)
-    logger.info(tx)
+    return tx
   } catch (error) {
-    logger.error(`execute contract ${contractAddress} failed`)
     logger.error(tx.raw_log)
     throw new Error(error)
   }
+}
+
+export async function execute(
+  contractAddress: string,
+  msg: object,
+  key: Key,
+  coins: Coins = new Coins([])
+): Promise<BlockTxBroadcastResult> {
+  return executeMsgs(
+    [new MsgExecuteContract(key.accAddress, contractAddress, toSnakeCase(msg), coins)],
+    key
+  )
 }

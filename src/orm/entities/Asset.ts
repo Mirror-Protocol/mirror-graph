@@ -29,13 +29,13 @@ export class Asset {
   @Column()
   name: string
 
-  @Field()
+  @Field({ description: 'token account address' })
   @Column()
-  token: string // token address
+  token: string
 
-  @Field()
+  @Field({ description: 'oracle account address' })
   @Column()
-  oracle: string // oracle address
+  oracle: string
 
   @ManyToOne(() => Contract)
   @JoinColumn()

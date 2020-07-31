@@ -34,6 +34,13 @@ export interface MintWhitelist {
   isMintable: boolean
 }
 
+export interface MintPosition {
+  collateralAmount: string
+  mintAmount: string
+  liquidityAmount: string
+  isAuctionOpen: boolean
+}
+
 export interface MarketConfig {
   owner: string
 }
