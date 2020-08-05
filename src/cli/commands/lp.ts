@@ -47,7 +47,7 @@ export function whitelisting(): void {
     .requiredOption('-p, --password <owner-password>', 'owner key password')
     .action(async (symbol, { password }) => {
       const key = getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
-      logger.info(await lpService.getDeposit(symbol, key.accAddress))
+      logger.info(await lpService.getDepositAmount(symbol, key.accAddress))
     })
 }
 
@@ -88,12 +88,12 @@ export function minter(): void {
     })
 
   program
-    .command('print-position <symbol>')
+    .command('print-mint-position <symbol>')
     .description('print position')
     .requiredOption('-p, --password <lp-password>', 'lp key password')
     .action(async (symbol, { password }) => {
       const key = getKey(config.KEYSTORE_PATH, config.LP_KEY, password)
 
-      logger.info(await lpService.getPosition(symbol, key.accAddress))
+      logger.info(await lpService.getMintPosition(symbol, key.accAddress))
     })
 }

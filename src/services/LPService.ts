@@ -7,6 +7,10 @@ import { instantiate, contractQuery, execute } from 'lib/terra'
 import * as logger from 'lib/logger'
 import config from 'config'
 
+interface AmountResponse {
+  amount: string
+}
+
 @Service()
 export class LPService {
   constructor(
@@ -110,33 +114,39 @@ export class LPService {
     return contractQuery(contract.mint, { whitelist: { symbol } })
   }
 
-  async getDeposit(symbol: string, address: string): Promise<{ amount: string }> {
+  async getDepositAmount(symbol: string, address: string): Promise<string> {
     const contract = this.ownerService.getContract()
-    return contractQuery(contract.mint, { deposit: { symbol, address } })
+    const { amount } = await contractQuery<AmountResponse>(contract.mint, {
+      deposit: { symbol, address },
+    })
+    return amount
   }
 
-  async getPool(symbol: string): Promise<{ amount: string }> {
+  async getPoolAmount(symbol: string): Promise<string> {
     const contract = this.ownerService.getContract()
-    return contractQuery(contract.market, { pool: { symbol } })
+    const { amount } = await contractQuery<AmountResponse>(contract.market, { pool: { symbol } })
+    return amount
   }
 
-  async getPosition(symbol: string, address: string): Promise<MintPosition> {
+  async getCollateralRewards(): Promise<string> {
     const contract = this.ownerService.getContract()
-    const mintPosition: {
-      collateralAmount: string
-      assetAmount: string
-      isAuctionOpen: boolean
-    } = await contractQuery(contract.mint, { position: { symbol, address } })
-    const marketPosition: { amount: string } = await contractQuery(contract.market, {
+    const { collectedRewards } = await contractQuery<{ collectedRewards: string }>(
+      contract.market,
+      { collateral: {} }
+    )
+    return collectedRewards
+  }
+
+  async getLiquidityAmount(symbol: string, address: string): Promise<string> {
+    const contract = this.ownerService.getContract()
+    const { amount } = await contractQuery<AmountResponse>(contract.market, {
       provider: { symbol, address },
     })
-    const { collateralAmount, assetAmount, isAuctionOpen } = mintPosition
+    return amount
+  }
 
-    return {
-      collateralAmount,
-      mintAmount: assetAmount,
-      liquidityAmount: marketPosition.amount,
-      isAuctionOpen,
-    }
+  async getMintPosition(symbol: string, address: string): Promise<MintPosition> {
+    const contract = this.ownerService.getContract()
+    return contractQuery<MintPosition>(contract.mint, { position: { symbol, address } })
   }
 }

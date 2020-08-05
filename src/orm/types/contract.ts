@@ -36,8 +36,7 @@ export interface MintWhitelist {
 
 export interface MintPosition {
   collateralAmount: string
-  mintAmount: string
-  liquidityAmount: string
+  assetAmount: string
   isAuctionOpen: boolean
 }
 
