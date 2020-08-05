@@ -37,7 +37,7 @@ export class Asset {
   @Column()
   oracle: string
 
-  @ManyToOne(() => Contract)
+  @ManyToOne(() => Contract, { onDelete: 'CASCADE' })
   @JoinColumn()
   contract: Contract
 }
