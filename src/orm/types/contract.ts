@@ -60,3 +60,9 @@ export interface MarketContractInfo extends ContractInfo {
     collateralDenom: string
   }
 }
+
+export interface OraclePrice {
+  price: string
+  priceMultiplier: string
+  lastUpdateTime: number
+}

@@ -3,7 +3,7 @@ import { Repository } from 'typeorm'
 import { Service, Inject } from 'typedi'
 import { Key, Coin } from '@terra-money/terra.js'
 import { BlockTxBroadcastResult } from '@terra-money/terra.js/dist/client/lcd/api/TxAPI'
-import { Asset } from 'orm'
+import { Asset, OraclePrice } from 'orm'
 import { OwnerService } from 'services'
 import { contractQuery, execute } from 'lib/terra'
 
@@ -34,10 +34,9 @@ export class AssetService {
     return execute(asset.token, { approve: { amount: coin.amount.toString(), spender } }, key)
   }
 
-  async getPrice(symbol: string): Promise<{ price: string }> {
+  async getPrice(symbol: string): Promise<OraclePrice> {
     const asset = await this.get(symbol)
-    console.log(asset)
-    return contractQuery(asset.oracle, { price: {} })
+    return (await contractQuery(asset.oracle, { price: {} })) as OraclePrice
   }
 
   async getBalance(symbol: string, address: string): Promise<string> {
