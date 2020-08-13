@@ -5,8 +5,8 @@ import {
   Coins,
   Key,
   Msg,
+  TxInfo,
 } from '@terra-money/terra.js'
-import { BlockTxBroadcastResult } from '@terra-money/terra.js/dist/client/lcd/api/TxAPI'
 import { ContractInfo } from 'orm'
 import * as fs from 'fs'
 import * as logger from 'lib/logger'
@@ -66,7 +66,7 @@ export async function contractQuery<T>(address: string, query: object): Promise<
   return toCamelCase(await lcd.wasm.contractQuery<T>(address, toSnakeCase(query)))
 }
 
-export async function executeMsgs(msgs: Msg[], key: Key): Promise<BlockTxBroadcastResult> {
+export async function executeMsgs(msgs: Msg[], key: Key): Promise<TxInfo> {
   const tx = await transaction(lcd.wallet(key), msgs)
 
   if (tx.code) {
@@ -90,7 +90,7 @@ export async function execute(
   msg: object,
   key: Key,
   coins: Coins = new Coins([])
-): Promise<BlockTxBroadcastResult> {
+): Promise<TxInfo> {
   return executeMsgs(
     [new MsgExecuteContract(key.accAddress, contractAddress, toSnakeCase(msg), coins)],
     key

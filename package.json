@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@sentry/node": "5.13.0",
-    "@terra-money/terra.js": "^0.4.7",
+    "@terra-money/terra.js": "^0.4.12",
     "apollo-server": "^2.11.0",
     "apollo-server-express": "^2.11.0",
     "bignumber.js": "^9.0.0",

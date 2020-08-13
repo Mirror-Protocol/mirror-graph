@@ -1,8 +1,7 @@
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository } from 'typeorm'
 import { Service, Inject } from 'typedi'
-import { Key, Coin } from '@terra-money/terra.js'
-import { BlockTxBroadcastResult } from '@terra-money/terra.js/dist/client/lcd/api/TxAPI'
+import { Key, Coin, TxInfo } from '@terra-money/terra.js'
 import { Asset, OraclePrice } from 'orm'
 import { OwnerService } from 'services'
 import { contractQuery, execute } from 'lib/terra'
@@ -29,7 +28,7 @@ export class AssetService {
   }
 
   // approve token transfer
-  async approve(coin: Coin, spender: string, key: Key): Promise<BlockTxBroadcastResult> {
+  async approve(coin: Coin, spender: string, key: Key): Promise<TxInfo> {
     const asset = await this.get(coin.denom)
     return execute(asset.token, { approve: { amount: coin.amount.toString(), spender } }, key)
   }

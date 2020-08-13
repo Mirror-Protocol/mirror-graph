@@ -1,6 +1,5 @@
 import { Service, Inject } from 'typedi'
-import { Key, Coin, Coins } from '@terra-money/terra.js'
-import { BlockTxBroadcastResult } from '@terra-money/terra.js/dist/client/lcd/api/TxAPI'
+import { Key, Coin, Coins, TxInfo } from '@terra-money/terra.js'
 import { Asset, MintWhitelist, MintPosition, AssetPool } from 'orm'
 import { AssetService, OwnerService } from 'services'
 import { instantiate, contractQuery, execute } from 'lib/terra'
@@ -49,7 +48,7 @@ export class LPService {
     return asset
   }
 
-  async createPool(symbol: string, key: Key): Promise<BlockTxBroadcastResult> {
+  async createPool(symbol: string, key: Key): Promise<TxInfo> {
     const contract = this.ownerService.getContract()
 
     // execute market.createPool function for pool config
@@ -61,19 +60,19 @@ export class LPService {
   }
 
   // deposit uluna for mint
-  async deposit(symbol: string, coin: Coin, key: Key): Promise<BlockTxBroadcastResult> {
+  async deposit(symbol: string, coin: Coin, key: Key): Promise<TxInfo> {
     const contract = this.ownerService.getContract()
     return execute(contract.mint, { deposit: { symbol } }, key, new Coins([coin]))
   }
 
   // mint using uusd
-  async mint(symbol: string, coin: Coin, key: Key): Promise<BlockTxBroadcastResult> {
+  async mint(symbol: string, coin: Coin, key: Key): Promise<TxInfo> {
     const contract = this.ownerService.getContract()
     return execute(contract.mint, { mint: { symbol } }, key, new Coins([coin]))
   }
 
   // provide asset liquidity
-  async provideLiquidity(coin: Coin, key: Key): Promise<BlockTxBroadcastResult> {
+  async provideLiquidity(coin: Coin, key: Key): Promise<TxInfo> {
     const contract = this.ownerService.getContract()
     const marketContractInfo = await this.ownerService.getMarketContractInfo()
 
@@ -90,7 +89,7 @@ export class LPService {
   }
 
   // withdraw asset liquidity
-  async withdrawLiquidity(coin: Coin, key: Key): Promise<BlockTxBroadcastResult> {
+  async withdrawLiquidity(coin: Coin, key: Key): Promise<TxInfo> {
     const contract = this.ownerService.getContract()
     const marketContractInfo = await this.ownerService.getMarketContractInfo()
 

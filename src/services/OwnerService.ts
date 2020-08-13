@@ -1,8 +1,7 @@
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Service } from 'typedi'
-import { Key } from '@terra-money/terra.js'
-import { BlockTxBroadcastResult } from '@terra-money/terra.js/dist/client/lcd/api/TxAPI'
+import { Key, TxInfo } from '@terra-money/terra.js'
 import {
   Contract,
   CodeIds,
@@ -63,11 +62,11 @@ export class OwnerService {
       owner?: string
     },
     key: Key
-  ): Promise<BlockTxBroadcastResult> {
+  ): Promise<TxInfo> {
     return execute(this.contract.mint, { updateConfig: options }, key)
   }
 
-  async configMarket(owner: string, key: Key): Promise<BlockTxBroadcastResult> {
+  async configMarket(owner: string, key: Key): Promise<TxInfo> {
     return execute(this.contract.market, { updateConfig: owner }, key)
   }
 
@@ -82,7 +81,7 @@ export class OwnerService {
       marginDiscountRate?: string
     },
     key: Key
-  ): Promise<BlockTxBroadcastResult> {
+  ): Promise<TxInfo> {
     return execute(this.contract.market, { updatePoolConfig: options }, key)
   }
 
