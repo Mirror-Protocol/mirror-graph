@@ -40,15 +40,9 @@ const config = {
   },
   BASE_MARKET_CONFIG: {
     collateralDenom: 'uusd',
-    basePool: '1000000000000',
-    commissionRate: '0.001', // 0.1%
-    maxSpread: '0.01', // 1%
-    minSpread: '0.001', // 0.1%
-    marginThresholdRate: '0.05', // 5%
-    marginDiscountRate: '0.01', // 1%
   },
   BASE_MARKET_POOL_CONFIG: {
-    basePool: '1000000',
+    basePool: '10000000000000',
     commissionRate: '0.001',
     minSpread: '0.0025',
     maxSpread: '0.01',

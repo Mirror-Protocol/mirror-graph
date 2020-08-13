@@ -60,6 +60,17 @@ export interface MarketContractInfo extends ContractInfo {
   }
 }
 
+export interface AssetPool {
+  oracle: string
+  assetToken: string
+  symbol: string
+  deltaSign: boolean
+  delta: string
+  collectedRewards: string
+  poolAmount: string
+  collateralPoolAmount: string
+}
+
 export interface OraclePrice {
   price: string
   priceMultiplier: string

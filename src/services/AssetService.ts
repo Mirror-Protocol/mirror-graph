@@ -36,13 +36,15 @@ export class AssetService {
 
   async getPrice(symbol: string): Promise<OraclePrice> {
     const asset = await this.get(symbol)
-    return (await contractQuery(asset.oracle, { price: {} })) as OraclePrice
+    return contractQuery<OraclePrice>(asset.oracle, { price: {} })
   }
 
   async getBalance(symbol: string, address: string): Promise<string> {
     const asset = await this.get(symbol)
-    const result: { balance: string } = await contractQuery(asset.token, { balance: { address } })
+    const { balance } = await contractQuery<{ balance: string }>(asset.token, {
+      balance: { address },
+    })
 
-    return result.balance
+    return balance
   }
 }

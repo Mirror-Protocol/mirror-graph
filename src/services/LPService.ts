@@ -1,10 +1,11 @@
 import { Service, Inject } from 'typedi'
 import { Key, Coin, Coins } from '@terra-money/terra.js'
 import { BlockTxBroadcastResult } from '@terra-money/terra.js/dist/client/lcd/api/TxAPI'
-import { Asset, MintWhitelist, MintPosition } from 'orm'
+import { Asset, MintWhitelist, MintPosition, AssetPool } from 'orm'
 import { AssetService, OwnerService } from 'services'
 import { instantiate, contractQuery, execute } from 'lib/terra'
 import * as logger from 'lib/logger'
+import { num } from 'lib/num'
 import config from 'config'
 
 interface AmountResponse {
@@ -122,10 +123,26 @@ export class LPService {
     return amount
   }
 
-  async getPoolAmount(symbol: string): Promise<string> {
+  async getPoolAmount(symbol: string): Promise<AssetPool> {
     const contract = this.ownerService.getContract()
-    const { amount } = await contractQuery<AmountResponse>(contract.market, { pool: { symbol } })
-    return amount
+    const { basePool } = await this.ownerService.getMarketPoolConfig(symbol)
+    const assetPool = await contractQuery<AssetPool>(contract.market, { pool: { symbol } })
+
+    // const { collateralDenom } = (await this.ownerService.getMarketContractInfo()).initMsg
+    // const collateralCoin = (await lcd.bank.balance(contract.market)).get(collateralDenom)
+    // console.log(collateralCoin)
+
+    // asset pool = base pool + delta
+    const delta = assetPool.deltaSign ? `-${assetPool.delta}` : assetPool.delta
+    assetPool.poolAmount = num(basePool).plus(delta).toString()
+
+    // collateral pool = base pool^2 / asset pool
+    assetPool.collateralPoolAmount = num(basePool)
+      .times(basePool)
+      .dividedBy(assetPool.poolAmount)
+      .toString()
+
+    return assetPool
   }
 
   async getCollateralRewards(): Promise<string> {
