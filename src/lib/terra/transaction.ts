@@ -24,5 +24,10 @@ export async function transaction(wallet: Wallet, msgs: Msg[], timeout = 60000):
   return wallet
     .createAndSignTx({ msgs })
     .then((signed) => lcd.tx.broadcast(signed))
-    .then(async (broadcastResult) => await checkTx(broadcastResult.txhash, timeout))
+    .then((broadcastResult) => {
+      if (broadcastResult.code) {
+        throw new Error(broadcastResult.raw_log)
+      }
+      return checkTx(broadcastResult.txhash, timeout)
+    })
 }
