@@ -37,9 +37,11 @@ export async function storeCode(path: string, key: Key): Promise<number> {
 }
 
 export async function instantiate(codeId: number, initMsg: object, key: Key): Promise<string> {
-  const tx = await transaction(lcd.wallet(key), [
-    new MsgInstantiateContract(key.accAddress, codeId, toSnakeCase(initMsg), new Coins([]), true),
-  ])
+  const tx = await transaction(
+    lcd.wallet(key),
+    [new MsgInstantiateContract(key.accAddress, codeId, toSnakeCase(initMsg), new Coins([]), true)],
+    300000
+  )
 
   if (tx.code) {
     throw new Error(`[${tx.code}] ${tx.raw_log}`)
