@@ -1,13 +1,13 @@
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { OwnerService } from 'services'
+import { ContractService } from 'services'
 import * as logger from 'lib/logger'
 import { storeCode } from 'lib/terra'
 import { getKey } from 'lib/keystore'
 import config from 'config'
 
 export function contract(): void {
-  const ownerService = Container.get(OwnerService)
+  const contractService = Container.get(ContractService)
 
   program
     .command('store-code')
@@ -40,14 +40,14 @@ export function contract(): void {
     .option('--mint-contract <address>', 'if undefined, make new instance')
     .option('--market-contract <address>', 'if undefined, make new instance')
     .action(async ({ password, mint, oracle, token, market, mintContract, marketContract }) => {
-      const contract = await ownerService.create(
+      const contract = await contractService.create(
         { mint, oracle, token, market },
         getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password),
         mintContract,
         marketContract
       )
-      !mintContract && logger.info('mint', await ownerService.getMintContractInfo())
-      !marketContract && logger.info('market', await ownerService.getMarketContractInfo())
+      !mintContract && logger.info('mint', await contractService.getMintContractInfo())
+      !marketContract && logger.info('market', await contractService.getMarketContractInfo())
       logger.info(`created mirror contract. id: ${contract.id}`, contract)
     })
 
@@ -55,19 +55,19 @@ export function contract(): void {
     .command('mint-contract-info')
     .description('show mint contract infomation')
     .action(async () => {
-      logger.info(await ownerService.getMintContractInfo())
+      logger.info(await contractService.getMintContractInfo())
     })
 
   program
     .command('market-contract-info')
     .description('show market contract infomation')
     .action(async () => {
-      logger.info(await ownerService.getMarketContractInfo())
+      logger.info(await contractService.getMarketContractInfo())
     })
 }
 
 export function configuration(): void {
-  const ownerService = Container.get(OwnerService)
+  const contractService = Container.get(ContractService)
 
   program
     .command('config-mint')
@@ -92,7 +92,7 @@ export function configuration(): void {
         owner,
       }) => {
         if (password) {
-          await ownerService.configMint(
+          await contractService.configMint(
             {
               collateralDenom,
               depositDenom,
@@ -106,7 +106,7 @@ export function configuration(): void {
           )
         }
 
-        logger.info(await ownerService.getMintConfig())
+        logger.info(await contractService.getMintConfig())
       }
     )
 
@@ -134,7 +134,7 @@ export function configuration(): void {
         }
       ) => {
         if (password) {
-          await ownerService.configMarketPool(
+          await contractService.configMarketPool(
             {
               symbol,
               basePool,
@@ -148,7 +148,7 @@ export function configuration(): void {
           )
         }
 
-        logger.info(await ownerService.getMarketConfig())
+        logger.info(await contractService.getMarketConfig())
       }
     )
 }

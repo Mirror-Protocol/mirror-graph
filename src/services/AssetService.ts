@@ -3,23 +3,23 @@ import { Repository } from 'typeorm'
 import { Service, Inject } from 'typedi'
 import { Key, Coin, TxInfo } from '@terra-money/terra.js'
 import { Asset, OraclePrice } from 'orm'
-import { OwnerService } from 'services'
+import { ContractService } from 'services'
 import { contractQuery, execute } from 'lib/terra'
 
 @Service()
 export class AssetService {
   constructor(
     @InjectRepository(Asset) private readonly assetRepo: Repository<Asset>,
-    @Inject((type) => OwnerService) private readonly ownerService: OwnerService
+    @Inject((type) => ContractService) private readonly contractService: ContractService
   ) {}
 
   async get(symbol: string): Promise<Asset> {
-    const contract = this.ownerService.getContract()
+    const contract = this.contractService.getContract()
     return this.assetRepo.findOne({ symbol, contract })
   }
 
   async getAll(): Promise<Asset[]> {
-    const contract = this.ownerService.getContract()
+    const contract = this.contractService.getContract()
     return this.assetRepo.find({ contract })
   }
 

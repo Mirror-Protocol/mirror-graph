@@ -15,7 +15,7 @@ import { instantiate, contractQuery, contractInfo, execute } from 'lib/terra'
 import config from 'config'
 
 @Service()
-export class OwnerService {
+export class ContractService {
   private contract: Contract
 
   constructor(@InjectRepository(Contract) private readonly contractRepo: Repository<Contract>) {}

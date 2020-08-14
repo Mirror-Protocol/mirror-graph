@@ -1,3 +1,3 @@
 export * from './AssetService'
-export * from './OwnerService'
+export * from './ContractService'
 export * from './LPService'
