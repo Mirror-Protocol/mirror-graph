@@ -1,13 +1,13 @@
 import { Coin } from '@terra-money/terra.js'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { LPService } from 'services'
+import { LPService, AssetService } from 'services'
 import * as logger from 'lib/logger'
 import { getKey } from 'lib/keystore'
 import config from 'config'
 
 export function whitelisting(): void {
-  const lpService = Container.get(LPService)
+  const assetService = Container.get(AssetService)
 
   program
     .command('whitelisting <symbol> <name>')
@@ -15,7 +15,7 @@ export function whitelisting(): void {
     .requiredOption('--owner <owner-password>', 'owner key password')
     .requiredOption('--oracle <oracle-password>', 'oracle key password')
     .action(async (symbol, name, { owner, oracle }) => {
-      await lpService.whitelisting(
+      await assetService.whitelisting(
         symbol,
         name,
         getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner),
@@ -31,14 +31,14 @@ export function whitelisting(): void {
       const coin = Coin.fromString(coinAmount)
       const key = getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
 
-      await lpService.deposit(symbol, coin, key)
+      await assetService.deposit(symbol, coin, key)
     })
 
   program
     .command('print-whitelist <symbol>')
     .description('print whitelisted information')
     .action(async (symbol) => {
-      logger.info(await lpService.getWhitelist(symbol))
+      logger.info(await assetService.getWhitelist(symbol))
     })
 
   program
@@ -47,11 +47,11 @@ export function whitelisting(): void {
     .requiredOption('-p, --password <owner-password>', 'owner key password')
     .action(async (symbol, { password }) => {
       const key = getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
-      logger.info(await lpService.getDepositAmount(symbol, key.accAddress))
+      logger.info(await assetService.getDepositAmount(symbol, key.accAddress))
     })
 }
 
-export function minter(): void {
+export function lp(): void {
   const lpService = Container.get(LPService)
 
   program

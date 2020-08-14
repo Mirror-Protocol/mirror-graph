@@ -1,6 +1,6 @@
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { ContractService } from 'services'
+import { ContractService, OwnerService } from 'services'
 import * as logger from 'lib/logger'
 import { storeCode } from 'lib/terra'
 import { getKey } from 'lib/keystore'
@@ -67,7 +67,7 @@ export function contract(): void {
 }
 
 export function configuration(): void {
-  const contractService = Container.get(ContractService)
+  const ownerService = Container.get(OwnerService)
 
   program
     .command('config-mint')
@@ -92,7 +92,7 @@ export function configuration(): void {
         owner,
       }) => {
         if (password) {
-          await contractService.configMint(
+          await ownerService.configMint(
             {
               collateralDenom,
               depositDenom,
@@ -106,7 +106,7 @@ export function configuration(): void {
           )
         }
 
-        logger.info(await contractService.getMintConfig())
+        logger.info(await ownerService.getMintConfig())
       }
     )
 
@@ -134,7 +134,7 @@ export function configuration(): void {
         }
       ) => {
         if (password) {
-          await contractService.configMarketPool(
+          await ownerService.configMarketPool(
             {
               symbol,
               basePool,
@@ -148,7 +148,7 @@ export function configuration(): void {
           )
         }
 
-        logger.info(await contractService.getMarketConfig())
+        logger.info(await ownerService.getMarketConfig())
       }
     )
 }

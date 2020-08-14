@@ -76,3 +76,7 @@ export interface OraclePrice {
   priceMultiplier: string
   lastUpdateTime: number
 }
+
+export interface AmountResponse {
+  amount: string
+}
