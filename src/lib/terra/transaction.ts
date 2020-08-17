@@ -2,7 +2,7 @@ import { Wallet, Msg, TxInfo } from '@terra-money/terra.js'
 import { delay } from 'bluebird'
 import { lcd } from '.'
 
-async function checkTx(txHash: string, timeout = 120000): Promise<TxInfo> {
+export async function checkTx(txHash: string, timeout = 120000): Promise<TxInfo> {
   const startedAt = Date.now()
 
   for (;;) {
@@ -12,7 +12,7 @@ async function checkTx(txHash: string, timeout = 120000): Promise<TxInfo> {
       return txInfo
     }
 
-    if (Date.now() - startedAt > timeout) {
+    if (timeout > 0 && Date.now() - startedAt > timeout) {
       throw new Error('lcd timeout')
     }
 

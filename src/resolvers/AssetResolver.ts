@@ -1,13 +1,13 @@
 import { Resolver, Query } from 'type-graphql'
-import { Asset } from 'orm'
+import { AssetEntity } from 'orm'
 import { AssetService } from 'services'
 
-@Resolver((of) => Asset)
+@Resolver((of) => AssetEntity)
 export class AssetResolver {
   constructor(private readonly assetService: AssetService) {}
 
-  @Query((returns) => [Asset], { description: 'Get all listed assets' })
-  assets(): Promise<Asset[]> {
+  @Query((returns) => [AssetEntity], { description: 'Get all listed assets' })
+  assets(): Promise<AssetEntity[]> {
     return this.assetService.getAll()
   }
 }

@@ -1,2 +1,2 @@
-export * from './Asset'
-export * from './Contract'
+export * from './AssetEntity'
+export * from './ContractEntity'

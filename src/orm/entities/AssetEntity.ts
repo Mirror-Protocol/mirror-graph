@@ -8,11 +8,11 @@ import {
 } from 'typeorm'
 import { ObjectType, Field, ID } from 'type-graphql'
 // import graphqlTypeJson from 'graphql-type-json'
-import { Contract } from 'orm'
+import { ContractEntity } from 'orm'
 
 @ObjectType()
 @Entity('asset')
-export class Asset {
+export class AssetEntity {
   @Field((type) => Date)
   @CreateDateColumn()
   createdAt: Date
@@ -37,7 +37,7 @@ export class Asset {
   @Column()
   oracle: string
 
-  @ManyToOne(() => Contract, { onDelete: 'CASCADE' })
+  @ManyToOne(() => ContractEntity, { onDelete: 'CASCADE' })
   @JoinColumn()
-  contract: Contract
+  contract: ContractEntity
 }

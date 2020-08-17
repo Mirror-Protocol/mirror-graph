@@ -2,7 +2,7 @@ import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository } from 'typeorm'
 import { Service, Inject } from 'typedi'
 import { Key, Coin, Coins, TxInfo } from '@terra-money/terra.js'
-import { Asset, OraclePrice, MintWhitelist, AmountResponse } from 'orm'
+import { AssetEntity, OraclePrice, MintWhitelist, AmountResponse } from 'orm'
 import { ContractService } from 'services'
 import { instantiate, contractQuery, execute } from 'lib/terra'
 import * as logger from 'lib/logger'
@@ -10,21 +10,26 @@ import * as logger from 'lib/logger'
 @Service()
 export class AssetService {
   constructor(
-    @InjectRepository(Asset) private readonly assetRepo: Repository<Asset>,
+    @InjectRepository(AssetEntity) private readonly assetRepo: Repository<AssetEntity>,
     @Inject((type) => ContractService) private readonly contractService: ContractService
   ) {}
 
-  async get(symbol: string): Promise<Asset> {
+  async get(symbol: string): Promise<AssetEntity> {
     const contract = this.contractService.getContract()
     return this.assetRepo.findOne({ symbol, contract })
   }
 
-  async getAll(): Promise<Asset[]> {
+  async getAll(): Promise<AssetEntity[]> {
     const contract = this.contractService.getContract()
     return this.assetRepo.find({ contract })
   }
 
-  async whitelisting(symbol: string, name: string, ownerKey: Key, oracleKey: Key): Promise<Asset> {
+  async whitelisting(
+    symbol: string,
+    name: string,
+    ownerKey: Key,
+    oracleKey: Key
+  ): Promise<AssetEntity> {
     if (await this.get(symbol)) {
       throw new Error('already registered symbol asset')
     }

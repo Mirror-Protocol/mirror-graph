@@ -2,17 +2,19 @@ import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Service } from 'typedi'
 import { Key } from '@terra-money/terra.js'
-import { Contract, CodeIds, MintContractInfo, MarketContractInfo } from 'orm'
+import { ContractEntity, CodeIds, MintContractInfo, MarketContractInfo } from 'orm'
 import { instantiate, contractInfo } from 'lib/terra'
 import config from 'config'
 
 @Service()
 export class ContractService {
-  private contract: Contract
+  private contract: ContractEntity
 
-  constructor(@InjectRepository(Contract) private readonly contractRepo: Repository<Contract>) {}
+  constructor(
+    @InjectRepository(ContractEntity) private readonly contractRepo: Repository<ContractEntity>
+  ) {}
 
-  async load(id: number): Promise<Contract> {
+  async load(id: number): Promise<ContractEntity> {
     const findOptions = id !== -1 ? { id } : { order: { createdAt: 'DESC' } }
     this.contract = await this.contractRepo.findOne(findOptions)
     if (!this.contract) {
@@ -27,7 +29,7 @@ export class ContractService {
     key: Key,
     mintAddress?: string,
     marketAddress?: string
-  ): Promise<Contract> {
+  ): Promise<ContractEntity> {
     const mint =
       mintAddress ||
       (await instantiate(codeIds.mint, { ...config.BASE_MINT_CONFIG, owner: key.accAddress }, key))
@@ -39,7 +41,7 @@ export class ContractService {
     return this.contractRepo.save({ codeIds, mint, market, owner: key.accAddress })
   }
 
-  getContract(): Contract {
+  getContract(): ContractEntity {
     return this.contract
   }
 

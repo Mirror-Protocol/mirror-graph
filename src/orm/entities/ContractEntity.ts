@@ -5,7 +5,7 @@ import { CodeIds } from '../types'
 
 @ObjectType()
 @Entity('contract')
-export class Contract {
+export class ContractEntity {
   @Field((type) => Date)
   @CreateDateColumn()
   createdAt: Date

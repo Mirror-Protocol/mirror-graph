@@ -50,3 +50,5 @@ ormconfig.json
 .direnv
 keystore.json
 address.json
+keystore-local.json
+*.envrc
