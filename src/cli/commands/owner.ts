@@ -18,13 +18,19 @@ export function contract(): void {
     .option('--oracle', 'oracle contract')
     .option('--token', 'token contract')
     .option('--market', 'market contract')
-    .action(async ({ password, mint, oracle, token, market, all }) => {
+    .option('--staking', 'staking contract')
+    .option('--stakingToken', 'staking token(erc20) contract')
+    .action(async ({ password, mint, oracle, token, market, staking, stakingToken, all }) => {
       const key = getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
       const codeIds = {
         mint: (mint || all) && (await storeCode('src/contracts/mirror_mint.wasm', key)),
         oracle: (oracle || all) && (await storeCode('src/contracts/mirror_oracle.wasm', key)),
         token: (token || all) && (await storeCode('src/contracts/mirror_erc20.wasm', key)),
         market: (market || all) && (await storeCode('src/contracts/mirror_market.wasm', key)),
+        staking: (staking || all) && (await storeCode('src/contracts/mirror_staking.wasm', key)),
+        stakingToken:
+          (stakingToken || all) &&
+          (await storeCode('src/contracts/mirror_staking_erc20.wasm', key)),
       }
       logger.info(codeIds)
     })
@@ -37,17 +43,13 @@ export function contract(): void {
     .requiredOption('--oracle <codeId>', 'oracle contract codeId', (value) => +value)
     .requiredOption('--token <codeId>', 'token contract codeId', (value) => +value)
     .requiredOption('--market <codeId>', 'market contract codeId', (value) => +value)
-    .option('--mint-contract <address>', 'if undefined, make new instance')
-    .option('--market-contract <address>', 'if undefined, make new instance')
-    .action(async ({ password, mint, oracle, token, market, mintContract, marketContract }) => {
+    .requiredOption('--staking <codeId>', 'staking contract codeId', (value) => +value)
+    .requiredOption('--staking-token <codeId>', 'staking token(erc20) codeId', (value) => +value)
+    .action(async ({ password, mint, oracle, token, market, staking, stakingToken }) => {
       const contract = await contractService.create(
-        { mint, oracle, token, market },
-        getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password),
-        mintContract,
-        marketContract
+        { mint, oracle, token, market, staking, stakingToken },
+        getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
       )
-      !mintContract && logger.info('mint', await contractService.getMintContractInfo())
-      !marketContract && logger.info('market', await contractService.getMarketContractInfo())
       logger.info(`created mirror contract. id: ${contract.id}`, contract)
     })
 

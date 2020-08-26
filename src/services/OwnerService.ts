@@ -17,7 +17,7 @@ export class OwnerService {
     // execute market.createPool function for pool config
     return execute(
       this.contractService.getContract().market,
-      { createPool: { symbol, ...config.BASE_MARKET_POOL_CONFIG } },
+      { createPool: { symbol, ...config.CREATE_MARKET_POOL_CONFIG } },
       key
     )
   }

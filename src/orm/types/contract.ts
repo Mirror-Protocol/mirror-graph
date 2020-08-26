@@ -1,8 +1,12 @@
+import { MsgExecuteContract } from '@terra-money/terra.js'
+
 export interface CodeIds {
   mint: number
   oracle: number
   token: number
   market: number
+  staking: number
+  stakingToken: number
 }
 
 export interface ContractInfo {
@@ -79,4 +83,12 @@ export interface OraclePrice {
 
 export interface AmountResponse {
   amount: string
+}
+
+export interface OracleMsgExecute extends MsgExecuteContract.Data {
+  execute_msg: {
+    feed_price: {
+      price: string
+    }
+  }
 }

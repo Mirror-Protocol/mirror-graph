@@ -4,6 +4,7 @@ import { Service } from 'typedi'
 import { Key } from '@terra-money/terra.js'
 import { ContractEntity, CodeIds, MintContractInfo, MarketContractInfo } from 'orm'
 import { instantiate, contractInfo } from 'lib/terra'
+import * as logger from 'lib/logger'
 import config from 'config'
 
 @Service()
@@ -18,27 +19,53 @@ export class ContractService {
     const findOptions = id !== -1 ? { id } : { order: { createdAt: 'DESC' } }
     this.contract = await this.contractRepo.findOne(findOptions)
     if (!this.contract) {
-      throw new Error(`There is no contract ${id}`)
+      logger.warn(`can't load any contract. id: ${id}`)
+      // throw new Error(`There is no contract ${id}`)
     }
 
     return this.contract
   }
 
-  async create(
-    codeIds: CodeIds,
-    key: Key,
-    mintAddress?: string,
-    marketAddress?: string
-  ): Promise<ContractEntity> {
-    const mint =
-      mintAddress ||
-      (await instantiate(codeIds.mint, { ...config.BASE_MINT_CONFIG, owner: key.accAddress }, key))
+  async create(codeIds: CodeIds, key: Key): Promise<ContractEntity> {
+    const mint = await instantiate(
+      codeIds.mint,
+      {
+        ...config.MINT_INIT_MSG,
+        owner: key.accAddress,
+      },
+      key
+    )
 
-    const market =
-      marketAddress ||
-      (await instantiate(codeIds.market, { ...config.BASE_MARKET_CONFIG, mint }, key))
+    const stakingToken = await instantiate(
+      codeIds.stakingToken,
+      {
+        ...config.STAKING_TOKEN_INIT_MSG,
+        initialBalances: [{ address: key.accAddress, amount: '1000000' }],
+      },
+      key
+    )
 
-    return this.contractRepo.save({ codeIds, mint, market, owner: key.accAddress })
+    const stakingContract = await instantiate(
+      codeIds.staking,
+      { ...config.STAKING_INIT_MSG, stakingToken },
+      key
+    )
+
+    const market = await instantiate(
+      codeIds.market,
+      { ...config.MARKET_INIT_MSG, mint, stakingContract, stakingToken },
+      key
+    )
+
+    return this.contractRepo.save({
+      codeIds,
+      mint,
+      market,
+      stakingToken,
+      staking: stakingContract,
+      owner: key.accAddress,
+      chainId: config.TERRA_CHAIN_ID,
+    })
   }
 
   getContract(): ContractEntity {

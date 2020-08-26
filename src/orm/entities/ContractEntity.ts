@@ -26,7 +26,19 @@ export class ContractEntity {
   @Column()
   market: string
 
+  @Field({ description: 'staking contract address' })
+  @Column()
+  staking: string
+
+  @Field({ description: 'staking token contract address' })
+  @Column()
+  stakingToken: string
+
   @Field({ description: 'owner account address' })
   @Column()
   owner: string
+
+  @Field({ description: 'terra chain id' })
+  @Column()
+  chainId: string
 }

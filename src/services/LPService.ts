@@ -21,36 +21,24 @@ export class LPService {
   async provideLiquidity(coin: Coin, key: Key): Promise<TxInfo> {
     const contract = this.contractService.getContract()
     const marketContractInfo = await this.contractService.getMarketContractInfo()
-
-    // if collateral denom, execute provideCollateral
-    if (coin.denom === marketContractInfo.initMsg.collateralDenom) {
-      return execute(contract.market, { provideCollateral: {} }, key, new Coins([coin]))
-    }
+    const coins: Coins =
+      coin.denom === marketContractInfo.initMsg.collateralDenom ? new Coins([coin]) : new Coins([])
 
     return execute(
       contract.market,
-      { provideLiquidity: { symbol: coin.denom, amount: coin.amount.toString() } },
-      key
+      { provideLiquidity: { coins: [{ denom: coin.denom, amount: coin.amount.toString() }] } },
+      key,
+      coins
     )
   }
 
   // withdraw asset liquidity
   async withdrawLiquidity(coin: Coin, key: Key): Promise<TxInfo> {
     const contract = this.contractService.getContract()
-    const marketContractInfo = await this.contractService.getMarketContractInfo()
-
-    // if collateral denom, execute withdrawCollateral
-    if (coin.denom === marketContractInfo.initMsg.collateralDenom) {
-      return execute(
-        contract.market,
-        { withdrawCollateral: { amount: coin.amount.toString() } },
-        key
-      )
-    }
 
     return execute(
       contract.market,
-      { withdrawLiquidity: { symbol: coin.denom, amount: coin.amount.toString() } },
+      { withdrawLiquidity: { coins: [{ denom: coin.denom, amount: coin.amount.toString() }] } },
       key
     )
   }
