@@ -70,8 +70,14 @@ export class OwnerService {
 
   async getPoolAmount(symbol: string): Promise<AssetPool> {
     const contract = this.contractService.getContract()
+    const asset = await this.assetService.get({ symbol })
     const { basePool } = await this.getMarketPoolConfig(symbol)
     const assetPool = await contractQuery<AssetPool>(contract.market, { pool: { symbol } })
+
+    const assetBalance = await contractQuery<{ balance: string }>(asset.token, {
+      balance: { address: contract.market },
+    })
+    assetPool.marketBalance = assetBalance.balance
 
     // const { collateralDenom } = (await this.contractService.getMarketContractInfo()).initMsg
     // const collateralCoin = (await lcd.bank.balance(contract.market)).get(collateralDenom)

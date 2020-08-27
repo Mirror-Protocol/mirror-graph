@@ -1,4 +1,4 @@
-import { MsgExecuteContract } from '@terra-money/terra.js'
+import { AccAddress, Coins } from '@terra-money/terra.js'
 
 export interface CodeIds {
   mint: number
@@ -73,6 +73,7 @@ export interface AssetPool {
   collectedRewards: string
   poolAmount: string
   collateralPoolAmount: string
+  marketBalance: string
 }
 
 export interface OraclePrice {
@@ -85,10 +86,13 @@ export interface AmountResponse {
   amount: string
 }
 
-export interface OracleMsgExecute extends MsgExecuteContract.Data {
+export interface OracleMsgExecute {
+  sender: AccAddress
+  contract: AccAddress
   execute_msg: {
     feed_price: {
       price: string
     }
   }
+  coins: Coins.Data
 }

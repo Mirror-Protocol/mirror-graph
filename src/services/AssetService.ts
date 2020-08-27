@@ -1,5 +1,5 @@
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { Repository } from 'typeorm'
+import { Repository, FindConditions } from 'typeorm'
 import { Service, Inject } from 'typedi'
 import { Key, Coin, Coins, TxInfo } from '@terra-money/terra.js'
 import { AssetEntity, OraclePrice, MintWhitelist, AmountResponse } from 'orm'
@@ -14,9 +14,9 @@ export class AssetService {
     @Inject((type) => ContractService) private readonly contractService: ContractService
   ) {}
 
-  async get(symbol: string): Promise<AssetEntity> {
-    const contract = this.contractService.getContract()
-    return this.assetRepo.findOne({ symbol, contract })
+  async get(conditions: FindConditions<AssetEntity>): Promise<AssetEntity> {
+    const contract = conditions.contract || this.contractService.getContract()
+    return this.assetRepo.findOne({ ...conditions, contract })
   }
 
   async getAll(): Promise<AssetEntity[]> {
@@ -30,7 +30,7 @@ export class AssetService {
     ownerKey: Key,
     oracleKey: Key
   ): Promise<AssetEntity> {
-    if (await this.get(symbol)) {
+    if (await this.get({ symbol })) {
       throw new Error('already registered symbol asset')
     }
 
@@ -65,7 +65,7 @@ export class AssetService {
 
   // approve token transfer
   async approve(coin: Coin, spender: string, key: Key): Promise<TxInfo> {
-    const asset = await this.get(coin.denom)
+    const asset = await this.get({ symbol: coin.denom })
     return execute(asset.token, { approve: { amount: coin.amount.toString(), spender } }, key)
   }
 
@@ -83,12 +83,12 @@ export class AssetService {
   }
 
   async getPrice(symbol: string): Promise<OraclePrice> {
-    const asset = await this.get(symbol)
+    const asset = await this.get({ symbol })
     return contractQuery<OraclePrice>(asset.oracle, { price: {} })
   }
 
   async getBalance(symbol: string, address: string): Promise<string> {
-    const asset = await this.get(symbol)
+    const asset = await this.get({ symbol })
     const { balance } = await contractQuery<{ balance: string }>(asset.token, {
       balance: { address },
     })

@@ -4,7 +4,6 @@ const {
   TERRA_FCD,
   TERRA_LCD,
   TERRA_CHAIN_ID,
-  SENTRY_DSN,
   KEYSTORE_PATH,
   CONTRACT_ID,
 } = process.env
@@ -24,7 +23,6 @@ const config = {
   TERRA_FCD,
   TERRA_LCD,
   TERRA_CHAIN_ID,
-  SENTRY_DSN,
   KEYSTORE_PATH: KEYSTORE_PATH || './keystore.json',
   CONTRACT_ID: CONTRACT_ID && +CONTRACT_ID,
   OWNER_KEY: 'owner',

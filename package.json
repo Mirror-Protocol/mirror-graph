@@ -7,6 +7,7 @@
     "dev": "nodemon --signal SIGINT --exec ts-node -e ts,json,R --files -r tsconfig-paths/register src/main.ts",
     "start": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
     "cli": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/cli/main.ts",
+    "collector": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/collector/main.ts",
     "test": "jest",
     "lint": "eslint src --ext .js,.ts",
     "prettier": "prettier --write src/**/*.ts"

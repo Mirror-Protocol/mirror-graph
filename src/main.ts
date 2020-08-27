@@ -6,7 +6,7 @@ import * as logger from 'lib/logger'
 import { init as initErrorHandler, errorHandler } from 'error'
 import { initORM, finalizeORM } from 'orm'
 import { initServer, finalizeServer, initMirror } from 'loaders'
-import config, { validateConfig } from 'config'
+import { validateConfig } from 'config'
 
 Bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
 global.Promise = Bluebird as any // eslint-disable-line
@@ -32,7 +32,7 @@ async function gracefulShutdown(): Promise<void> {
 async function main(): Promise<void> {
   logger.info('Initialize mirror-api-server')
 
-  initErrorHandler({ sentryDsn: config.SENTRY_DSN })
+  initErrorHandler({ sentryDsn: process.env.SENTRY })
 
   validateConfig()
 

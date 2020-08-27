@@ -1,7 +1,8 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm'
+import { AssetEntity } from 'orm'
 
 @Entity('price')
-export default class PriceEntity {
+export class PriceEntity {
   @PrimaryGeneratedColumn()
   id: number
 
@@ -22,4 +23,8 @@ export default class PriceEntity {
 
   @Column('decimal', { precision: 40, scale: 18 })
   close: string
+
+  @ManyToOne(() => AssetEntity, { onDelete: 'CASCADE' })
+  @JoinColumn()
+  asset: AssetEntity
 }
