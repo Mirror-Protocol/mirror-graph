@@ -5,12 +5,14 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm'
 import { ObjectType, Field, ID } from 'type-graphql'
 import { ContractEntity } from 'orm'
 
 @ObjectType()
 @Entity('asset')
+@Index('index_asset_symbol_and_contract', ['symbol', 'contract'], { unique: true })
 export class AssetEntity {
   @Field((type) => Date)
   @CreateDateColumn()

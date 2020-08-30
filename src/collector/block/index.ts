@@ -1,11 +1,11 @@
-import { updateBlockHeight } from './blockInfo'
-import { parseMsgs } from '../parser'
+import { updateBlock } from './update'
 
-export async function tick(now: number): Promise<void> {
-  const { isBlockUpdated, blockInfo } = await updateBlockHeight()
-  if (!isBlockUpdated) {
-    return
+export async function collectBlock(now: number): Promise<void> {
+  for (;;) {
+    const hasMoreBlock = await updateBlock()
+
+    if (!hasMoreBlock) {
+      break
+    }
   }
-
-  await parseMsgs(blockInfo)
 }

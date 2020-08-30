@@ -21,7 +21,12 @@ export class PriceService {
     return this.priceRepo.findOne({ asset }, { order: { datetime: 'DESC' } })
   }
 
-  async setPrice(asset: AssetEntity, timestamp: number, price: string): Promise<PriceEntity> {
+  async setOHLC(
+    asset: AssetEntity,
+    timestamp: number,
+    price: string,
+    needSave = true
+  ): Promise<PriceEntity> {
     const datetime = new Date(timestamp - (timestamp % 60000))
     let priceEntity = await this.get({ asset, datetime })
 
@@ -41,6 +46,6 @@ export class PriceService {
       })
     }
 
-    return this.priceRepo.save(priceEntity)
+    return needSave ? this.priceRepo.save(priceEntity) : priceEntity
   }
 }

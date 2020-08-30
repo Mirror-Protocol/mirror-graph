@@ -1,7 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Index } from 'typeorm'
 import { AssetEntity } from 'orm'
 
 @Entity('price')
+@Index('index_price_symbol_and_datetime_and_asset', ['symbol', 'datetime', 'asset'], {
+  unique: true,
+})
 export class PriceEntity {
   @PrimaryGeneratedColumn()
   id: number

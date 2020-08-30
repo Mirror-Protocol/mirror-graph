@@ -1,5 +1,3 @@
-import { AccAddress, Coins } from '@terra-money/terra.js'
-
 export interface CodeIds {
   mint: number
   oracle: number
@@ -84,15 +82,4 @@ export interface OraclePrice {
 
 export interface AmountResponse {
   amount: string
-}
-
-export interface OracleMsgExecute {
-  sender: AccAddress
-  contract: AccAddress
-  execute_msg: {
-    feed_price: {
-      price: string
-    }
-  }
-  coins: Coins.Data
 }
