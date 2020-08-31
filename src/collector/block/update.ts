@@ -9,33 +9,29 @@ import { parseTransactions } from './parser'
 
 let lastBlockHeight
 
-async function getLastBlockHeight(): Promise<number> {
+async function getNewBlockHeight(): Promise<number> {
   if (!lastBlockHeight) {
+    return undefined
     const latestBlockFromDB = await getRepository(BlockEntity).findOne({ order: { id: 'DESC' } })
     lastBlockHeight = latestBlockFromDB?.height || 0
   }
 
-  return lastBlockHeight
+  return lastBlockHeight + 1
 }
 
 async function saveBlock(entityManager: EntityManager, blockInfo: BlockInfo): Promise<BlockEntity> {
-  const block: Partial<BlockEntity> = {
+  return entityManager.getRepository(BlockEntity).save({
     chainId: blockInfo.block.header.chain_id,
     height: +blockInfo.block.header.height,
     datetime: new Date(blockInfo.block.header.time),
     txs: getTxHashs(blockInfo),
-  }
-
-  return entityManager.getRepository(BlockEntity).save(block)
+  })
 }
 
 export async function updateBlock(): Promise<boolean> {
   const blockInfo = await lcd.tendermint
-    .blockInfo((await getLastBlockHeight()) + 1)
-    .catch(undefined)
-  // const blockInfo = await lcd.tendermint
-  //   .blockInfo(lastBlockHeight ? lastBlockHeight + 1 : undefined)
-  //   .catch((error) => undefined)
+    .blockInfo(await getNewBlockHeight())
+    .catch((error) => undefined)
 
   // has no more block
   if (!blockInfo) {

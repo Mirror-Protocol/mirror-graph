@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, CreateDateColumn, Column } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Column } from 'typeorm'
 import { ObjectType, Field, ID } from 'type-graphql'
 import graphqlTypeJson from 'graphql-type-json'
 import { CodeIds } from '../types'
@@ -9,6 +9,10 @@ export class ContractEntity {
   @Field((type) => Date)
   @CreateDateColumn()
   createdAt: Date
+
+  @Field((type) => Date)
+  @UpdateDateColumn()
+  updatedAt: Date
 
   @Field((type) => ID)
   @PrimaryGeneratedColumn()

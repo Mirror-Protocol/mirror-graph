@@ -1,4 +1,13 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Index } from 'typeorm'
+import {
+  Column,
+  Entity,
+  CreateDateColumn,
+  UpdateDateColumn,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from 'typeorm'
 import { AssetEntity } from 'orm'
 
 @Entity('price')
@@ -6,6 +15,12 @@ import { AssetEntity } from 'orm'
   unique: true,
 })
 export class PriceEntity {
+  @CreateDateColumn()
+  createdAt: Date
+
+  @UpdateDateColumn()
+  updatedAt: Date
+
   @PrimaryGeneratedColumn()
   id: number
 

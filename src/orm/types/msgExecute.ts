@@ -14,3 +14,20 @@ export interface OracleFeedPriceMsg extends MsgExecute {
     }
   }
 }
+
+export interface MarketBuyMsg extends MsgExecute {
+  execute_msg: {
+    buy: {
+      symbol: string
+    }
+  }
+}
+
+export interface MarketSellMsg extends MsgExecute {
+  execute_msg: {
+    sell: {
+      symbol: string
+      amount: string
+    }
+  }
+}
