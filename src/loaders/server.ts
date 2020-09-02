@@ -11,7 +11,7 @@ export async function initServer(): Promise<http.Server> {
 
   await initGraphQL(app)
 
-  server = http.createServer(app.handler)
+  server = http.createServer(app.callback())
 
   server.listen(config.PORT, () => {
     logger.info(`Listening on port ${config.PORT}`)

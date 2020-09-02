@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import * as TypeGraphQL from 'type-graphql'
 import { Container } from 'typedi'
-import { ApolloServer } from 'apollo-server-express'
+import { ApolloServer } from 'apollo-server-koa'
 import { errorHandler } from 'error'
 
 let server: ApolloServer
@@ -28,7 +28,7 @@ export async function initGraphQL(app): Promise<void> {
     context: ({ req }): object => req,
   })
 
-  server.applyMiddleware({ app, path: '/' })
+  server.applyMiddleware({ app, path: '/graphql' })
 }
 
 export async function finalizeGraphQL(): Promise<void> {
