@@ -1,7 +1,7 @@
 import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
 import { EntityManager } from 'typeorm'
 import { Parser } from './Parser'
-import { MirrorTxEntity, MirrorTxType } from 'orm'
+import { TxEntity, TxType } from 'orm'
 
 export class MarketParser extends Parser {
   public async parse(
@@ -35,9 +35,9 @@ export class MarketParser extends Parser {
     const symbol = msg.execute_msg['buy']
       ? msg.execute_msg['buy'].symbol
       : msg.execute_msg['sell'].symbol
-    const transactionEntity = Object.assign(new MirrorTxEntity(), {
+    const transactionEntity = Object.assign(new TxEntity(), {
       txHash: txInfo.txhash,
-      type: msg.execute_msg['buy'] ? MirrorTxType.BUY : MirrorTxType.SELL,
+      type: msg.execute_msg['buy'] ? TxType.BUY : TxType.SELL,
       symbol,
       data: {
         offer: log.events[1].attributes[2].value,
@@ -48,6 +48,6 @@ export class MarketParser extends Parser {
       datetime: new Date(txInfo.timestamp),
       contract,
     })
-    await entityManager.getRepository(MirrorTxEntity).save(transactionEntity)
+    await entityManager.getRepository(TxEntity).save(transactionEntity)
   }
 }

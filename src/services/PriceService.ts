@@ -2,15 +2,14 @@ import { Service, Inject } from 'typedi'
 import { Repository, FindConditions } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { PriceEntity, AssetEntity } from 'orm'
-import { AssetService, ContractService } from 'services'
+import { ContractService } from 'services'
 import { num } from 'lib/num'
 
 @Service()
 export class PriceService {
   constructor(
     @InjectRepository(PriceEntity) private readonly priceRepo: Repository<PriceEntity>,
-    @Inject((type) => ContractService) private readonly contractService: ContractService,
-    @Inject((type) => AssetService) private readonly assetService: AssetService
+    @Inject((type) => ContractService) private readonly contractService: ContractService
   ) {}
 
   async get(conditions: FindConditions<PriceEntity>): Promise<PriceEntity> {

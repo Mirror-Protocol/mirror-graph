@@ -8,8 +8,8 @@ import {
 } from 'typeorm'
 import { ContractEntity } from 'orm'
 
-@Entity('mirror_tx')
-export class MirrorTxEntity {
+@Entity('tx')
+export class TxEntity {
   @CreateDateColumn()
   createdAt: Date
 

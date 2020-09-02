@@ -7,7 +7,7 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm'
-import { ObjectType, Field, ID } from 'type-graphql'
+import { ObjectType, Field } from 'type-graphql'
 import { ContractEntity } from 'orm'
 
 @ObjectType()
@@ -18,7 +18,6 @@ export class AssetEntity {
   @CreateDateColumn()
   createdAt: Date
 
-  @Field((type) => ID)
   @PrimaryGeneratedColumn()
   id: number
 

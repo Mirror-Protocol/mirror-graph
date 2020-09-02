@@ -30,17 +30,20 @@ export class PriceEntity {
   @Column()
   datetime: Date
 
-  @Column('decimal', { precision: 40, scale: 18 })
+  @Column('decimal', { precision: 40, scale: 6 })
   open: string
 
-  @Column('decimal', { precision: 40, scale: 18 })
+  @Column('decimal', { precision: 40, scale: 6 })
   high: string
 
-  @Column('decimal', { precision: 40, scale: 18 })
+  @Column('decimal', { precision: 40, scale: 6 })
   low: string
 
-  @Column('decimal', { precision: 40, scale: 18 })
+  @Column('decimal', { precision: 40, scale: 6 })
   close: string
+
+  @Column('decimal', { precision: 40, scale: 6, default: '1' })
+  priceMultiplier: string
 
   @ManyToOne(() => AssetEntity, { onDelete: 'CASCADE' })
   @JoinColumn()

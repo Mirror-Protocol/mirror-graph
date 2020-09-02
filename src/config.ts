@@ -50,7 +50,7 @@ const config = {
   STAKING_INIT_MSG: {
     depositPeriod: '86400', // 1 day
     rewardsDenom: 'uusd',
-    rollUnit: '100000000',
+    rollUnit: '100000000000000', // 1million
   },
   CREATE_MARKET_POOL_CONFIG: {
     basePool: '10000000000000',

@@ -1,9 +1,10 @@
+import * as Bluebird from 'bluebird'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions } from 'typeorm'
 import { Service, Inject } from 'typedi'
 import { Key, Coin, Coins, TxInfo } from '@terra-money/terra.js'
-import { AssetEntity, OraclePrice, MintWhitelist, AmountResponse } from 'orm'
-import { ContractService } from 'services'
+import { AssetEntity, MintWhitelist, AmountResponse, ListedAsset } from 'orm'
+import { ContractService, PriceService } from 'services'
 import { instantiate, contractQuery, execute } from 'lib/terra'
 import * as logger from 'lib/logger'
 
@@ -11,7 +12,8 @@ import * as logger from 'lib/logger'
 export class AssetService {
   constructor(
     @InjectRepository(AssetEntity) private readonly assetRepo: Repository<AssetEntity>,
-    @Inject((type) => ContractService) private readonly contractService: ContractService
+    @Inject((type) => ContractService) private readonly contractService: ContractService,
+    @Inject((type) => PriceService) private readonly priceService: PriceService
   ) {}
 
   async get(conditions: FindConditions<AssetEntity>): Promise<AssetEntity> {
@@ -82,11 +84,6 @@ export class AssetService {
     return amount
   }
 
-  async getPrice(symbol: string): Promise<OraclePrice> {
-    const asset = await this.get({ symbol })
-    return contractQuery<OraclePrice>(asset.oracle, { price: {} })
-  }
-
   async getBalance(symbol: string, address: string): Promise<string> {
     const asset = await this.get({ symbol })
     const { balance } = await contractQuery<{ balance: string }>(asset.token, {
@@ -94,5 +91,13 @@ export class AssetService {
     })
 
     return balance
+  }
+
+  async getListedAssets(): Promise<ListedAsset[]> {
+    return Bluebird.map(await this.getAll(), async (asset) =>
+      Object.assign(asset, {
+        price: (await this.priceService.getLatestPrice(asset)).close,
+      })
+    )
   }
 }
