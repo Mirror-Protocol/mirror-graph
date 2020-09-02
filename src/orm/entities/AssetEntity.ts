@@ -14,7 +14,6 @@ import { ContractEntity } from 'orm'
 @Entity('asset')
 @Index('index_asset_symbol_and_contract', ['symbol', 'contract'], { unique: true })
 export class AssetEntity {
-  @Field((type) => Date)
   @CreateDateColumn()
   createdAt: Date
 

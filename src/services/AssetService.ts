@@ -94,9 +94,10 @@ export class AssetService {
   }
 
   async getListedAssets(): Promise<ListedAsset[]> {
-    return Bluebird.map(await this.getAll(), async (asset) =>
-      Object.assign(asset, {
+    return Bluebird.map(this.getAll(), async (asset) =>
+      Object.assign(new ListedAsset(), {
         price: (await this.priceService.getLatestPrice(asset)).close,
+        ...asset,
       })
     )
   }

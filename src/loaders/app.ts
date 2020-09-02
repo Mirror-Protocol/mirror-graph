@@ -1,7 +1,6 @@
 import * as Koa from 'koa'
 import * as bodyParser from 'koa-body'
 import * as Router from 'koa-router'
-import * as morgan from 'koa-morgan'
 import * as helmet from 'koa-helmet'
 import { configureRoutes } from 'koa-joi-controllers'
 import controllers from 'endpoints/controllers'
@@ -16,7 +15,6 @@ export async function initApp(): Promise<Koa> {
   app.proxy = true
 
   app
-    .use(morgan('common'))
     .use(helmet())
     .use(apiErrorHandler(error))
     .use(async (ctx, next) => {

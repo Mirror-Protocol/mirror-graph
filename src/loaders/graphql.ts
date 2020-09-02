@@ -9,7 +9,7 @@ let server: ApolloServer
 // eslint-disable-next-line
 export const ErrorInterceptor: TypeGraphQL.MiddlewareFn<any> = async ({ context, info }, next) => {
   try {
-    return await next()
+    return next()
   } catch (error) {
     errorHandler(error)
     throw error

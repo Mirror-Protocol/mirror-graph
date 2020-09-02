@@ -30,7 +30,6 @@
     "koa-body": "^4.2.0",
     "koa-helmet": "^5.2.0",
     "koa-joi-controllers": "^1.2.3",
-    "koa-morgan": "^1.0.1",
     "koa-router": "^9.4.0",
     "node-cron": "^2.0.3",
     "node-fetch": "^2.6.0",
