@@ -22,16 +22,6 @@ export enum ErrorTypes {
   SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE',
 }
 
-export class ResponseError extends Error {
-  public response: object | string
-
-  constructor(response: object | string) {
-    super('Response Error')
-
-    this.response = response
-  }
-}
-
 export class APIError extends Error {
   public type: string
   public message: string

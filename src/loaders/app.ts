@@ -2,10 +2,11 @@ import * as Koa from 'koa'
 import * as bodyParser from 'koa-body'
 import * as Router from 'koa-router'
 import * as helmet from 'koa-helmet'
+import * as path from 'path'
+import * as glob from 'glob'
 import { configureRoutes } from 'koa-joi-controllers'
-import controllers from 'endpoints/controllers'
 import { apiErrorHandler, APIError, ErrorTypes } from 'error'
-import { error } from 'lib/response'
+import { error } from 'endpoints'
 
 const API_VERSION_PREFIX = '/v1'
 
@@ -28,7 +29,7 @@ export async function initApp(): Promise<Koa> {
       bodyParser({
         multipart: true,
         onError: (error) => {
-          throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR, '', error.message)
+          throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR, undefined, error.message)
         },
       })
     )
@@ -40,7 +41,12 @@ export async function initApp(): Promise<Koa> {
     ctx.body = 'OK'
   })
 
-  configureRoutes(app, controllers, API_VERSION_PREFIX)
+  const paths = glob.sync(path.dirname(require.main.filename) + '/endpoints/controllers/*.ts')
+  configureRoutes(
+    app,
+    paths.map((fileName) => new (require(fileName).default)()),
+    API_VERSION_PREFIX
+  )
 
   // routes && init
   // router.all(

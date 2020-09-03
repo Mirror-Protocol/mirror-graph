@@ -3,8 +3,9 @@ import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions } from 'typeorm'
 import { Service, Inject } from 'typedi'
 import { Key, Coin, Coins, TxInfo } from '@terra-money/terra.js'
-import { AssetEntity, MintWhitelist, AmountResponse, ListedAsset } from 'orm'
+import { AssetEntity, MintWhitelist, AmountResponse } from 'orm'
 import { ContractService, PriceService } from 'services'
+import { ListedAsset } from 'endpoints'
 import { instantiate, contractQuery, execute } from 'lib/terra'
 import * as logger from 'lib/logger'
 
@@ -94,11 +95,14 @@ export class AssetService {
   }
 
   async getListedAssets(): Promise<ListedAsset[]> {
-    return Bluebird.map(this.getAll(), async (asset) =>
-      Object.assign(new ListedAsset(), {
-        price: (await this.priceService.getLatestPrice(asset)).close,
-        ...asset,
-      })
+    return Bluebird.map(
+      this.getAll(),
+      async (asset) =>
+        new ListedAsset(
+          Object.assign(asset, {
+            price: (await this.priceService.getLatestPrice(asset)).close,
+          })
+        )
     )
   }
 }

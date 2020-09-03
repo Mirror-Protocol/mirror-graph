@@ -1,5 +1,5 @@
 import { Resolver, Query } from 'type-graphql'
-import { ListedAsset } from 'orm'
+import { ListedAsset } from 'endpoints'
 import { AssetService } from 'services'
 
 @Resolver((of) => ListedAsset)

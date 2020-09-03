@@ -17,29 +17,15 @@ const TYPES_TO_HTTP_STATUS_CODES = {
 export function success(ctx: Context, body = null): void {
   ctx.status = 200
 
-  if (body === null) {
-    ctx.body = JSON.stringify(body)
-  } else {
-    ctx.body = body
-  }
+  ctx.body = body === null ? JSON.stringify(body) : body
 }
 
 export function error(ctx: Context, type: string, code = undefined, message = undefined): void {
   ctx.status = TYPES_TO_HTTP_STATUS_CODES[type] || 500
 
-  const body: { type: string; message: string | undefined; code: string | undefined } = {
+  ctx.body = {
     type,
-    message: undefined,
-    code: undefined,
+    code,
+    message,
   }
-
-  if (message) {
-    body.message = message
-  }
-
-  if (code) {
-    body.code = code
-  }
-
-  ctx.body = body
 }
