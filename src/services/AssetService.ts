@@ -3,11 +3,10 @@ import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions } from 'typeorm'
 import { Service, Inject } from 'typedi'
 import { Key, Coin, Coins, TxInfo } from '@terra-money/terra.js'
-import { AssetEntity, MintWhitelist, AmountResponse } from 'orm'
+import { AssetEntity } from 'orm'
 import { ContractService, PriceService } from 'services'
-import { ListedAsset } from 'endpoints'
-import { instantiate, contractQuery, execute } from 'lib/terra'
-import * as logger from 'lib/logger'
+import { ListedAsset, AmountResponse } from 'types'
+import { contractQuery, execute } from 'lib/terra'
 
 @Service()
 export class AssetService {
@@ -27,39 +26,6 @@ export class AssetService {
     return this.assetRepo.find({ contract })
   }
 
-  async whitelisting(
-    symbol: string,
-    name: string,
-    ownerKey: Key,
-    oracleKey: Key
-  ): Promise<AssetEntity> {
-    if (await this.get({ symbol })) {
-      throw new Error('already registered symbol asset')
-    }
-
-    const contract = this.contractService.getContract()
-
-    const token = await instantiate(
-      contract.codeIds.token,
-      { minter: contract.mint, symbol, name, decimals: 6, initialBalances: [] },
-      ownerKey
-    )
-
-    const oracle = await instantiate(
-      contract.codeIds.oracle,
-      { assetToken: token, baseDenom: symbol, quoteDenom: 'uusd' },
-      oracleKey
-    )
-
-    // execute mint.whitelist function for whitelist
-    await execute(contract.mint, { whitelist: { assetToken: token, oracle, symbol } }, ownerKey)
-
-    logger.info(`whitelisted asset ${symbol}`)
-
-    // save asset entity to database
-    return this.assetRepo.save({ symbol, name, token, oracle, contract })
-  }
-
   // deposit uluna for mint
   async deposit(symbol: string, coin: Coin, key: Key): Promise<TxInfo> {
     const contract = this.contractService.getContract()
@@ -70,11 +36,6 @@ export class AssetService {
   async approve(coin: Coin, spender: string, key: Key): Promise<TxInfo> {
     const asset = await this.get({ symbol: coin.denom })
     return execute(asset.token, { approve: { amount: coin.amount.toString(), spender } }, key)
-  }
-
-  async getWhitelist(symbol: string): Promise<MintWhitelist> {
-    const contract = this.contractService.getContract()
-    return contractQuery(contract.mint, { whitelist: { symbol } })
   }
 
   async getDepositAmount(symbol: string, address: string): Promise<string> {

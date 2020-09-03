@@ -8,13 +8,6 @@ export function market(): void {
   const assetService = Container.get(AssetService)
 
   program
-    .command('price <symbol>')
-    .description('print whitelisted information')
-    .action(async (symbol) => {
-      logger.info(await assetService.getPrice(symbol))
-    })
-
-  program
     .command('oracle-address <path>')
     .description('save oracle address json file to path')
     .action(async (path) => {

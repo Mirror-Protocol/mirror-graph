@@ -18,7 +18,7 @@ export const ErrorInterceptor: TypeGraphQL.MiddlewareFn<any> = async ({ context,
 
 export async function initGraphQL(app): Promise<void> {
   const schema = await TypeGraphQL.buildSchema({
-    resolvers: [require('path').dirname(require.main.filename) + '/endpoints/resolvers/*.ts'],
+    resolvers: [require('path').dirname(require.main.filename) + '/endpoints/graphql/*.ts'],
     container: Container,
     globalMiddlewares: [ErrorInterceptor],
   })

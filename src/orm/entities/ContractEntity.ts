@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Column } from 'typeorm'
 import { ObjectType, Field, ID } from 'type-graphql'
 import graphqlTypeJson from 'graphql-type-json'
-import { CodeIds } from '../types'
+import { CodeIds } from 'types'
 
 @ObjectType()
 @Entity('contract')

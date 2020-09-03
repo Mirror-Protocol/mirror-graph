@@ -1,5 +1,6 @@
 import { BlockInfo } from '@terra-money/terra.js'
 import * as sentry from '@sentry/node'
+import { format } from 'date-fns'
 import { getManager, EntityManager, getRepository } from 'typeorm'
 import { BlockEntity } from 'orm'
 import { lcd } from 'lib/terra'
@@ -11,7 +12,7 @@ let lastBlockHeight
 
 async function getNewBlockHeight(): Promise<number> {
   if (!lastBlockHeight) {
-    return undefined
+    // return 219000
     const latestBlockFromDB = await getRepository(BlockEntity).findOne({ order: { id: 'DESC' } })
     lastBlockHeight = latestBlockFromDB?.height || 0
   }
@@ -29,7 +30,7 @@ async function saveBlock(entityManager: EntityManager, blockInfo: BlockInfo): Pr
 }
 
 export async function updateBlock(): Promise<boolean> {
-  const blockInfo = await lcd.tendermint
+  const blockInfo: BlockInfo = await lcd.tendermint
     .blockInfo(await getNewBlockHeight())
     .catch((error) => undefined)
 
@@ -45,6 +46,15 @@ export async function updateBlock(): Promise<boolean> {
     })
     .then(() => {
       lastBlockHeight = +blockInfo.block.header.height
+
+      const { chain_id: chainId, time } = blockInfo.block.header
+      const txs = blockInfo.block.data.txs.length
+      logger.info(
+        `collected: ${chainId}, ${lastBlockHeight}, ${format(
+          new Date(time),
+          'yyyy-MM-dd HH:mm:ss'
+        )}, ${txs} txs`
+      )
       return true
     })
     .catch((error) => {

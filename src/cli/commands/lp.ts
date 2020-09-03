@@ -1,13 +1,14 @@
 import { Coin } from '@terra-money/terra.js'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { LPService, AssetService } from 'services'
+import { LPService, AssetService, GovService } from 'services'
 import * as logger from 'lib/logger'
 import { getKey } from 'lib/keystore'
 import config from 'config'
 
 export function whitelisting(): void {
   const assetService = Container.get(AssetService)
+  const govService = Container.get(GovService)
 
   program
     .command('whitelisting <symbol> <name>')
@@ -15,7 +16,7 @@ export function whitelisting(): void {
     .requiredOption('--owner <owner-password>', 'owner key password')
     .requiredOption('--oracle <oracle-password>', 'oracle key password')
     .action(async (symbol, name, { owner, oracle }) => {
-      await assetService.whitelisting(
+      await govService.whitelisting(
         symbol,
         name,
         getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner),
@@ -38,7 +39,7 @@ export function whitelisting(): void {
     .command('print-whitelist <symbol>')
     .description('print whitelisted information')
     .action(async (symbol) => {
-      logger.info(await assetService.getWhitelist(symbol))
+      logger.info(await govService.getWhitelist(symbol))
     })
 
   program

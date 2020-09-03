@@ -1,6 +1,6 @@
 import { Service, Inject } from 'typedi'
 import { Key, Coin, Coins, TxInfo } from '@terra-money/terra.js'
-import { MintPosition, AmountResponse } from 'orm'
+import { MintPosition, AmountResponse } from 'types'
 import { AssetService, ContractService } from 'services'
 import { contractQuery, execute } from 'lib/terra'
 

@@ -41,7 +41,7 @@ export async function initApp(): Promise<Koa> {
     ctx.body = 'OK'
   })
 
-  const paths = glob.sync(path.dirname(require.main.filename) + '/endpoints/controllers/*.ts')
+  const paths = glob.sync(path.dirname(require.main.filename) + '/endpoints/api/*.ts')
   configureRoutes(
     app,
     paths.map((fileName) => new (require(fileName).default)()),

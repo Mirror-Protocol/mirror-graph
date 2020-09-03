@@ -7,7 +7,7 @@ import {
   Msg,
   TxInfo,
 } from '@terra-money/terra.js'
-import { ContractInfo } from 'orm'
+import { ContractInfo } from 'types'
 import * as fs from 'fs'
 import * as logger from 'lib/logger'
 import { toSnakeCase, toCamelCase } from 'lib/caseStyles'

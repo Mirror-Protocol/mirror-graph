@@ -2,7 +2,14 @@ import * as fs from 'fs'
 import { Container } from 'typedi'
 import { program } from 'commander'
 import { MnemonicKey, Coin, Coins } from '@terra-money/terra.js'
-import { AssetService, ContractService, LPService, OwnerService } from 'services'
+import {
+  AssetService,
+  ContractService,
+  LPService,
+  OwnerService,
+  GovService,
+  PriceService,
+} from 'services'
 import * as logger from 'lib/logger'
 import { num } from 'lib/num'
 import { storeCode, execute, lcd } from 'lib/terra'
@@ -47,6 +54,12 @@ export function testnet(): void {
   const lpService = Container.get(LPService)
   const assetService = Container.get(AssetService)
   const ownerService = Container.get(OwnerService)
+  const govService = Container.get(GovService)
+  const priceService = Container.get(PriceService)
+
+  program.command('testnet-blockinfo').action(async () => {
+    logger.info(await lcd.tendermint.blockInfo())
+  })
 
   program.command('testnet-store-codes').action(async () => {
     // 1. store code
@@ -93,13 +106,13 @@ export function testnet(): void {
     // 4. whitelisting symbols
     for (const symbol of symbols) {
       // whitelisting
-      await assetService.whitelisting(symbol, symbol.substring(1), lpKey, oracleKey)
+      await govService.whitelisting(symbol, symbol.substring(1), lpKey, oracleKey)
       // deposit 1luna
       await assetService.deposit(symbol, Coin.fromString('1000000uluna'), lpKey)
       // create pool
       await ownerService.createPool(symbol, lpKey)
 
-      const whitelistInfo = await assetService.getWhitelist(symbol)
+      const whitelistInfo = await govService.getWhitelist(symbol)
       logger.info(
         `deposit to ${symbol}, mintable: ${whitelistInfo.isMintable}, total deposit: ${whitelistInfo.totalDeposit}`
       )
@@ -207,8 +220,8 @@ export function testnet(): void {
 
     const assets = await assetService.getAll()
     for (const asset of assets) {
-      const priceInfo = await assetService.getPrice(asset.symbol)
-      logger.info(`${asset.symbol}: ${priceInfo.price}`)
+      const priceInfo = await priceService.getLatestPrice(asset)
+      logger.info(`${asset.symbol}: ${priceInfo.close}`)
     }
   })
 

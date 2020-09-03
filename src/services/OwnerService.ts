@@ -1,6 +1,6 @@
 import { Service, Inject } from 'typedi'
 import { Key, TxInfo } from '@terra-money/terra.js'
-import { AssetPool, MintConfig, MarketConfig, MarketPoolConfig } from 'orm'
+import { AssetPool, MintConfig, MarketConfig, MarketPoolConfig } from 'types'
 import { AssetService, ContractService } from 'services'
 import { contractQuery, execute } from 'lib/terra'
 import { num } from 'lib/num'
