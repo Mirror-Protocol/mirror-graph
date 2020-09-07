@@ -17,7 +17,7 @@ export class AssetResolver {
   @Query((returns) => AssetHistory, { description: 'Get asset price history' })
   async assetHistory(
     @Arg('symbol') symbol: string,
-    @Arg('range', {
+    @Arg('range', (type) => HistoryRanges, {
       description: `${Object.keys(HistoryRanges).map((key) => HistoryRanges[key])}`,
     })
     range: HistoryRanges
@@ -29,10 +29,10 @@ export class AssetResolver {
   @Query((returns) => AssetOHLC, { description: 'Get asset Open/High/Low/Close' })
   async assetOHLC(
     @Arg('symbol') symbol: string,
-    @Arg('from', { description: 'timestamp' }) from: Date,
-    @Arg('to', { description: 'timestamp' }) to: Date
+    @Arg('from', { description: 'timestamp' }) from: number,
+    @Arg('to', { description: 'timestamp' }) to: number
   ): Promise<AssetOHLC> {
     const asset = await this.assetService.get({ symbol })
-    return this.priceService.getOHLC(asset, from.getTime(), to.getTime())
+    return this.priceService.getOHLC(asset, from, to)
   }
 }

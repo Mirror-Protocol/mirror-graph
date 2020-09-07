@@ -7,6 +7,7 @@ import { AssetEntity } from 'orm'
 import { ContractService, PriceService } from 'services'
 import { ListedAsset, AssetHistory } from 'types'
 import { contractQuery, execute } from 'lib/terra'
+import { ErrorTypes, APIError } from 'lib/error'
 
 @Service()
 export class AssetService {
@@ -17,8 +18,16 @@ export class AssetService {
   ) {}
 
   async get(conditions: FindConditions<AssetEntity>): Promise<AssetEntity> {
-    const contract = conditions.contract || this.contractService.getContract()
-    return this.assetRepo.findOne({ ...conditions, contract })
+    const asset = await this.assetRepo.findOne({
+      ...conditions,
+      contract: conditions.contract || this.contractService.getContract(),
+    })
+
+    if (!asset) {
+      throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR)
+    }
+
+    return asset
   }
 
   async getAll(): Promise<AssetEntity[]> {

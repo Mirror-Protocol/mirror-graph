@@ -1,4 +1,4 @@
-import { ObjectType, Field } from 'type-graphql'
+import { ObjectType, Field, Int } from 'type-graphql'
 import { pick } from 'lodash'
 import { AssetEntity } from 'orm'
 
@@ -14,10 +14,10 @@ export class ListedAsset {
   @Field()
   name: string
 
-  @Field({ description: 'token account address' })
+  @Field((type) => String, { description: 'token account address' })
   token: string
 
-  @Field({ description: 'oracle account address' })
+  @Field((type) => String, { description: 'oracle account address' })
   oracle: string
 
   @Field()
@@ -62,16 +62,16 @@ export class AssetOHLC {
   @Field()
   close: string
 
-  @Field()
+  @Field((type) => Int)
   from: number
 
-  @Field()
+  @Field((type) => Int)
   to: number
 }
 
 @ObjectType()
 export class HistoryPrice {
-  @Field()
+  @Field((type) => Int)
   timestamp: number
 
   @Field()

@@ -2,7 +2,7 @@ import { KoaController, Get, Controller, Validate, Validator } from 'koa-joi-con
 import Container from 'typedi'
 import { AssetService, PriceService } from 'services'
 import { success } from 'endpoints'
-import { ErrorTypes, HttpStatusCodes, APIError } from 'lib/error'
+import { ErrorTypes, HttpStatusCodes } from 'lib/error'
 import { HistoryRanges } from 'types'
 
 const Joi = Validator.Joi
@@ -37,9 +37,6 @@ export default class AssetController extends KoaController {
     const { range } = ctx.request.query
 
     const asset = await this.assetService.get({ symbol })
-    if (!asset) {
-      throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR)
-    }
 
     success(ctx, await this.priceService.getHistory(asset, range))
   }
