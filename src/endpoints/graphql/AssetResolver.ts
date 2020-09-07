@@ -1,13 +1,10 @@
 import { Resolver, Query, Arg } from 'type-graphql'
 import { ListedAsset, HistoryRanges, AssetOHLC, AssetHistory } from 'types'
-import { AssetService, PriceService } from 'services'
+import { AssetService } from 'services'
 
 @Resolver()
 export class AssetResolver {
-  constructor(
-    private readonly assetService: AssetService,
-    private readonly priceService: PriceService
-  ) {}
+  constructor(private readonly assetService: AssetService) {}
 
   @Query((returns) => [ListedAsset], { description: 'Get all listed assets' })
   async assets(): Promise<ListedAsset[]> {
@@ -22,8 +19,7 @@ export class AssetResolver {
     })
     range: HistoryRanges
   ): Promise<AssetHistory> {
-    const asset = await this.assetService.get({ symbol })
-    return this.priceService.getHistory(asset, range)
+    return this.assetService.getHistory(symbol, range)
   }
 
   @Query((returns) => AssetOHLC, { description: 'Get asset Open/High/Low/Close' })
@@ -32,7 +28,6 @@ export class AssetResolver {
     @Arg('from', { description: 'timestamp' }) from: number,
     @Arg('to', { description: 'timestamp' }) to: number
   ): Promise<AssetOHLC> {
-    const asset = await this.assetService.get({ symbol })
-    return this.priceService.getOHLC(asset, from, to)
+    return this.assetService.getOHLC(symbol, from, to)
   }
 }

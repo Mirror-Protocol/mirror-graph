@@ -5,7 +5,7 @@ import { Service, Inject } from 'typedi'
 import { Key, Coin, TxInfo } from '@terra-money/terra.js'
 import { AssetEntity } from 'orm'
 import { ContractService, PriceService } from 'services'
-import { ListedAsset, AssetHistory } from 'types'
+import { ListedAsset, AssetOHLC, AssetHistory, HistoryRanges } from 'types'
 import { contractQuery, execute } from 'lib/terra'
 import { ErrorTypes, APIError } from 'lib/error'
 
@@ -62,9 +62,13 @@ export class AssetService {
     )
   }
 
-  async getHistory(symbol: string): Promise<AssetHistory> {
-    // const asset = await this.get({ symbol })
+  async getOHLC(symbol: string, from: number, to: number): Promise<AssetOHLC> {
+    const asset = await this.get({ symbol })
+    return this.priceService.getOHLC(asset, from, to)
+  }
 
-    return new AssetHistory()
+  async getHistory(symbol: string, range: HistoryRanges): Promise<AssetHistory> {
+    const asset = await this.get({ symbol })
+    return this.priceService.getHistory(asset, range)
   }
 }
