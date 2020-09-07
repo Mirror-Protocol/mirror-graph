@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import * as TypeGraphQL from 'type-graphql'
 import { Container } from 'typedi'
 import { ApolloServer } from 'apollo-server-koa'
-import { errorHandler } from 'error'
+import { errorHandler } from 'lib/error'
 
 let server: ApolloServer
 

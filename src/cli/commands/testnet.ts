@@ -108,7 +108,7 @@ export function testnet(): void {
       // whitelisting
       await govService.whitelisting(symbol, symbol.substring(1), lpKey, oracleKey)
       // deposit 1luna
-      await assetService.deposit(symbol, Coin.fromString('1000000uluna'), lpKey)
+      await govService.deposit(symbol, Coin.fromString('1000000uluna'), lpKey)
       // create pool
       await ownerService.createPool(symbol, lpKey)
 

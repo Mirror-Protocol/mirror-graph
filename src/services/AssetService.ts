@@ -2,10 +2,10 @@ import * as Bluebird from 'bluebird'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions } from 'typeorm'
 import { Service, Inject } from 'typedi'
-import { Key, Coin, Coins, TxInfo } from '@terra-money/terra.js'
+import { Key, Coin, TxInfo } from '@terra-money/terra.js'
 import { AssetEntity } from 'orm'
 import { ContractService, PriceService } from 'services'
-import { ListedAsset, AmountResponse } from 'types'
+import { ListedAsset, AssetHistory } from 'types'
 import { contractQuery, execute } from 'lib/terra'
 
 @Service()
@@ -26,24 +26,10 @@ export class AssetService {
     return this.assetRepo.find({ contract })
   }
 
-  // deposit uluna for mint
-  async deposit(symbol: string, coin: Coin, key: Key): Promise<TxInfo> {
-    const contract = this.contractService.getContract()
-    return execute(contract.mint, { deposit: { symbol } }, key, new Coins([coin]))
-  }
-
   // approve token transfer
   async approve(coin: Coin, spender: string, key: Key): Promise<TxInfo> {
     const asset = await this.get({ symbol: coin.denom })
     return execute(asset.token, { approve: { amount: coin.amount.toString(), spender } }, key)
-  }
-
-  async getDepositAmount(symbol: string, address: string): Promise<string> {
-    const contract = this.contractService.getContract()
-    const { amount } = await contractQuery<AmountResponse>(contract.mint, {
-      deposit: { symbol, address },
-    })
-    return amount
   }
 
   async getBalance(symbol: string, address: string): Promise<string> {
@@ -65,5 +51,11 @@ export class AssetService {
           })
         )
     )
+  }
+
+  async getHistory(symbol: string): Promise<AssetHistory> {
+    // const asset = await this.get({ symbol })
+
+    return new AssetHistory()
   }
 }

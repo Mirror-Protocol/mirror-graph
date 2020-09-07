@@ -22,6 +22,19 @@ export enum ErrorTypes {
   SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE',
 }
 
+export const HttpStatusCodes = {
+  [ErrorTypes.INVALID_REQUEST_ERROR]: 400, // Bad Request
+  [ErrorTypes.AUTHENTICATION_ERROR]: 401, // Unauthorized
+  [ErrorTypes.NO_PERMISSION_ERROR]: 401,
+  [ErrorTypes.FORBIDDEN]: 403, // Forbidden
+  [ErrorTypes.VALIDATOR_DOES_NOT_EXISTS]: 404,
+  [ErrorTypes.NOT_FOUND_ERROR]: 404,
+  [ErrorTypes.TIMEOUT]: 408,
+  [ErrorTypes.RATE_LIMIT_ERROR]: 429, // Too Many Requests
+  [ErrorTypes.API_ERROR]: 500,
+  [ErrorTypes.SERVICE_UNAVAILABLE]: 503,
+}
+
 export class APIError extends Error {
   public type: string
   public message: string
@@ -43,7 +56,9 @@ export function apiErrorHandler(
     try {
       await next()
     } catch (error) {
-      if (error.isJoi) {
+      if (error instanceof APIError) {
+        callback(ctx, error.type, error.code, error.message)
+      } else if (error.isJoi) {
         callback(ctx, 'INVALID_REQUEST_ERROR', error.statusCode, error.message)
       } else {
         logger.error(error)

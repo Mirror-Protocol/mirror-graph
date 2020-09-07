@@ -1,16 +1,14 @@
-import { Service, Inject } from 'typedi'
+import { Service } from 'typedi'
 import { Repository, FindConditions } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { PriceEntity, AssetEntity } from 'orm'
-import { ContractService } from 'services'
+import { AssetHistory, AssetOHLC, HistoryRanges, HistoryPrice } from 'types'
 import { num } from 'lib/num'
+import { getHistoryRangeValues } from 'lib/time'
 
 @Service()
 export class PriceService {
-  constructor(
-    @InjectRepository(PriceEntity) private readonly priceRepo: Repository<PriceEntity>,
-    @Inject((type) => ContractService) private readonly contractService: ContractService
-  ) {}
+  constructor(@InjectRepository(PriceEntity) private readonly priceRepo: Repository<PriceEntity>) {}
 
   async get(conditions: FindConditions<PriceEntity>): Promise<PriceEntity> {
     return this.priceRepo.findOne(conditions)
@@ -46,5 +44,45 @@ export class PriceService {
     }
 
     return needSave ? this.priceRepo.save(priceEntity) : priceEntity
+  }
+
+  async getOHLC(asset: AssetEntity, from: number, to: number): Promise<AssetOHLC> {
+    const ohlc = await this.priceRepo
+      .createQueryBuilder()
+      .select('(array_agg(open ORDER BY datetime ASC))[1]', 'open')
+      .addSelect('MAX(high)', 'high')
+      .addSelect('MIN(low)', 'low')
+      .addSelect('(array_agg(close ORDER BY datetime DESC))[1]', 'close')
+      .where('asset_id = :assetId', { assetId: asset.id })
+      .andWhere('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .getRawOne()
+
+    return Object.assign(new AssetOHLC(), {
+      symbol: asset.symbol,
+      from,
+      to,
+      ...ohlc,
+    })
+  }
+
+  async getHistory(asset: AssetEntity, range: HistoryRanges): Promise<AssetHistory> {
+    const to = Date.now()
+    const { from, interval } = getHistoryRangeValues(to, range)
+
+    const prices = await this.priceRepo
+      .createQueryBuilder()
+      .select(['datetime', 'close'])
+      .where('asset_id = :assetId', { assetId: asset.id })
+      .andWhere('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .andWhere("int4(date_part('minute', datetime)) % :interval = 0", { interval })
+      .getRawMany()
+
+    return Object.assign(new AssetHistory(), {
+      symbol: asset.symbol,
+      history: prices.map((price) => ({
+        timestamp: new Date(price.datetime).getTime(),
+        price: price.close,
+      })) as HistoryPrice[],
+    })
   }
 }

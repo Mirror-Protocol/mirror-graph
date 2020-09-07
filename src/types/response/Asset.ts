@@ -23,3 +23,66 @@ export class ListedAsset {
   @Field()
   price: string
 }
+
+@ObjectType()
+export class AssetInfo {
+  @Field()
+  symbol: string
+
+  @Field()
+  price: string
+
+  @Field()
+  open: string
+
+  @Field()
+  high: string
+
+  @Field()
+  low: string
+
+  @Field()
+  close: string
+}
+
+@ObjectType()
+export class AssetOHLC {
+  @Field()
+  symbol: string
+
+  @Field()
+  open: string
+
+  @Field()
+  high: string
+
+  @Field()
+  low: string
+
+  @Field()
+  close: string
+
+  @Field()
+  from: number
+
+  @Field()
+  to: number
+}
+
+@ObjectType()
+export class HistoryPrice {
+  @Field()
+  timestamp: number
+
+  @Field()
+  price: string
+}
+
+@ObjectType()
+export class AssetHistory {
+  @Field()
+  symbol: string
+
+  @Field((type) => [HistoryPrice])
+  history: HistoryPrice[]
+}

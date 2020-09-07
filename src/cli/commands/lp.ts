@@ -1,13 +1,12 @@
 import { Coin } from '@terra-money/terra.js'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { LPService, AssetService, GovService } from 'services'
+import { LPService, GovService } from 'services'
 import * as logger from 'lib/logger'
 import { getKey } from 'lib/keystore'
 import config from 'config'
 
 export function whitelisting(): void {
-  const assetService = Container.get(AssetService)
   const govService = Container.get(GovService)
 
   program
@@ -32,7 +31,7 @@ export function whitelisting(): void {
       const coin = Coin.fromString(coinAmount)
       const key = getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
 
-      await assetService.deposit(symbol, coin, key)
+      await govService.deposit(symbol, coin, key)
     })
 
   program
@@ -48,7 +47,7 @@ export function whitelisting(): void {
     .requiredOption('-p, --password <owner-password>', 'owner key password')
     .action(async (symbol, { password }) => {
       const key = getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
-      logger.info(await assetService.getDepositAmount(symbol, key.accAddress))
+      logger.info(await govService.getDepositAmount(symbol, key.accAddress))
     })
 }
 

@@ -1,7 +1,8 @@
 import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
 import { EntityManager } from 'typeorm'
 import { Parser } from './Parser'
-import { TxEntity, TxType } from 'orm'
+import { TxEntity } from 'orm'
+import { TxType } from 'types'
 
 export class MarketParser extends Parser {
   public async parse(

@@ -3,7 +3,7 @@ import { Repository } from 'typeorm'
 import { Service, Inject } from 'typedi'
 import { Key, Coin, Coins, TxInfo } from '@terra-money/terra.js'
 import { AssetEntity } from 'orm'
-import { MintWhitelist } from 'types'
+import { MintWhitelist, AmountResponse } from 'types'
 import { ContractService, AssetService } from 'services'
 import { instantiate, contractQuery, execute } from 'lib/terra'
 import * as logger from 'lib/logger'
@@ -58,5 +58,13 @@ export class GovService {
   async getWhitelist(symbol: string): Promise<MintWhitelist> {
     const contract = this.contractService.getContract()
     return contractQuery(contract.mint, { whitelist: { symbol } })
+  }
+
+  async getDepositAmount(symbol: string, address: string): Promise<string> {
+    const contract = this.contractService.getContract()
+    const { amount } = await contractQuery<AmountResponse>(contract.mint, {
+      deposit: { symbol, address },
+    })
+    return amount
   }
 }

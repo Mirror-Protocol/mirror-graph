@@ -1,5 +1,5 @@
 import * as sentry from '@sentry/node'
-import * as logger from '../lib/logger'
+import * as logger from 'lib/logger'
 
 export function init(
   opts: {
