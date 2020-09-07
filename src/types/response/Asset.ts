@@ -86,3 +86,12 @@ export class AssetHistory {
   @Field((type) => [HistoryPrice])
   history: HistoryPrice[]
 }
+
+@ObjectType()
+export class AssetBalance {
+  @Field()
+  symbol: string
+
+  @Field()
+  balance: string
+}
