@@ -24,11 +24,20 @@ export class AssetEntity {
   @Column()
   name: string
 
+  @Column({ nullable: true })
+  mint?: string
+
+  @Column()
+  market: string
+
   @Column()
   token: string
 
   @Column()
-  oracle: string
+  lpToken: string
+
+  @Column({ nullable: true })
+  oracle?: string
 
   @ManyToOne(() => ContractEntity, { onDelete: 'CASCADE' })
   @JoinColumn()

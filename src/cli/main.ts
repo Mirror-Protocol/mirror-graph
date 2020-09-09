@@ -4,10 +4,10 @@ import { Container } from 'typedi'
 import { program } from 'commander'
 import { values } from 'lodash'
 import { initORM } from 'orm'
-import { init as initErrorHandler, errorHandler } from 'error'
+import { init as initErrorHandler, errorHandler } from 'lib/error'
 import { initMirror } from 'loaders'
 import * as logger from 'lib/logger'
-import config, { validateConfig } from 'config'
+import { validateConfig } from 'config'
 import * as commands from './commands'
 
 Bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
@@ -16,13 +16,13 @@ global.Promise = Bluebird as any // eslint-disable-line
 async function main(): Promise<void> {
   logger.info('initialize cli')
 
-  initErrorHandler({ sentryDsn: config.SENTRY_DSN })
+  initErrorHandler({ sentryDsn: process.env.SENTRY })
 
   validateConfig()
 
   await initORM(Container)
 
-  await initMirror()
+  await initMirror().catch((error) => console.log(error.message))
 
   // regist commands
   values(commands).forEach((func) => func())

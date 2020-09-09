@@ -20,7 +20,12 @@ export async function checkTx(txHash: string, timeout = 120000): Promise<TxInfo>
   }
 }
 
-export async function transaction(wallet: Wallet, msgs: Msg[], timeout = 60000): Promise<TxInfo> {
+export async function transaction(
+  wallet: Wallet,
+  msgs: Msg[],
+  sequence = undefined,
+  timeout = 60000
+): Promise<TxInfo> {
   return wallet
     .createAndSignTx({ msgs })
     .then((signed) => lcd.tx.broadcast(signed))

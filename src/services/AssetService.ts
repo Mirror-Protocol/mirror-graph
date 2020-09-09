@@ -2,11 +2,11 @@ import * as Bluebird from 'bluebird'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions } from 'typeorm'
 import { Service, Inject } from 'typedi'
-import { Key, Coin, TxInfo } from '@terra-money/terra.js'
+import { Wallet, Coin, TxInfo } from '@terra-money/terra.js'
 import { AssetEntity } from 'orm'
 import { ContractService, PriceService } from 'services'
 import { ListedAsset, AssetOHLC, AssetHistory, HistoryRanges } from 'types'
-import { contractQuery, execute } from 'lib/terra'
+import { contractQuery, contractInfo, execute } from 'lib/terra'
 import { ErrorTypes, APIError } from 'lib/error'
 
 @Service()
@@ -36,9 +36,9 @@ export class AssetService {
   }
 
   // approve token transfer
-  async approve(coin: Coin, spender: string, key: Key): Promise<TxInfo> {
+  async approve(coin: Coin, spender: string, wallet: Wallet): Promise<TxInfo> {
     const asset = await this.get({ symbol: coin.denom })
-    return execute(asset.token, { approve: { amount: coin.amount.toString(), spender } }, key)
+    return execute(asset.token, { approve: { amount: coin.amount.toString(), spender } }, wallet)
   }
 
   async getBalance(symbol: string, address: string): Promise<string> {
@@ -70,5 +70,12 @@ export class AssetService {
   async getHistory(symbol: string, range: HistoryRanges): Promise<AssetHistory> {
     const asset = await this.get({ symbol })
     return this.priceService.getHistory(asset, range)
+  }
+
+  async getContractInfo(symbol: string): Promise<void> {
+    const asset = await this.get({ symbol })
+    console.log(await contractInfo(asset.mint))
+    console.log(await contractQuery(asset.mint, { configGeneral: {} }))
+    console.log(await contractQuery(asset.mint, { configAsset: {} }))
   }
 }

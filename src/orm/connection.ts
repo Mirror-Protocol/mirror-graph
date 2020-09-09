@@ -10,7 +10,7 @@ import {
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
 import { values } from 'lodash'
 import * as entities from './entities'
-import * as CamelToSnakeNamingStrategy from './lib/CamelToSnakeNamingStrategy'
+import * as CamelToSnakeNamingStrategy from './CamelToSnakeNamingStrategy'
 
 const debug = require('debug')('orm') // eslint-disable-line
 

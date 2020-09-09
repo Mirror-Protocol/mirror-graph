@@ -3,7 +3,7 @@ import {
   MsgInstantiateContract,
   MsgExecuteContract,
   Coins,
-  Key,
+  Wallet,
   Msg,
   TxInfo,
 } from '@terra-money/terra.js'
@@ -13,11 +13,11 @@ import * as logger from 'lib/logger'
 import { toSnakeCase, toCamelCase } from 'lib/caseStyles'
 import { lcd, transaction } from '.'
 
-export async function storeCode(path: string, key: Key): Promise<number> {
+export async function storeCode(path: string, wallet: Wallet): Promise<number> {
   const wasmBinary = fs.readFileSync(path)
 
-  const tx = await transaction(lcd.wallet(key), [
-    new MsgStoreCode(key.accAddress, wasmBinary.toString('base64')),
+  const tx = await transaction(wallet, [
+    new MsgStoreCode(wallet.key.accAddress, wasmBinary.toString('base64')),
   ])
 
   if (tx.code) {
@@ -36,10 +36,24 @@ export async function storeCode(path: string, key: Key): Promise<number> {
   }
 }
 
-export async function instantiate(codeId: number, initMsg: object, key: Key): Promise<string> {
+export async function instantiate(
+  codeId: number,
+  initMsg: object,
+  wallet: Wallet,
+  sequence = undefined
+): Promise<string> {
   const tx = await transaction(
-    lcd.wallet(key),
-    [new MsgInstantiateContract(key.accAddress, codeId, toSnakeCase(initMsg), new Coins([]), true)],
+    wallet,
+    [
+      new MsgInstantiateContract(
+        wallet.key.accAddress,
+        codeId,
+        toSnakeCase(initMsg),
+        new Coins([]),
+        true
+      ),
+    ],
+    sequence,
     300000
   )
 
@@ -50,7 +64,7 @@ export async function instantiate(codeId: number, initMsg: object, key: Key): Pr
   try {
     const contractAddress = tx.logs[0].events[0].attributes[2].value
 
-    logger.info(`instantiated code ${codeId}, contractAddress: ${contractAddress}`)
+    logger.info(`instantiated code ${codeId}, address: ${contractAddress}`)
 
     return contractAddress
   } catch (error) {
@@ -68,8 +82,8 @@ export async function contractQuery<T>(address: string, query: object): Promise<
   return toCamelCase(await lcd.wasm.contractQuery<T>(address, toSnakeCase(query)))
 }
 
-export async function executeMsgs(msgs: Msg[], key: Key): Promise<TxInfo> {
-  const tx = await transaction(lcd.wallet(key), msgs)
+export async function executeMsgs(msgs: Msg[], wallet: Wallet): Promise<TxInfo> {
+  const tx = await transaction(wallet, msgs)
 
   if (tx.code) {
     throw new Error(`[${tx.code}] ${tx.raw_log}`)
@@ -90,11 +104,11 @@ export async function executeMsgs(msgs: Msg[], key: Key): Promise<TxInfo> {
 export async function execute(
   contractAddress: string,
   msg: object,
-  key: Key,
+  wallet: Wallet,
   coins: Coins = new Coins([])
 ): Promise<TxInfo> {
   return executeMsgs(
-    [new MsgExecuteContract(key.accAddress, contractAddress, toSnakeCase(msg), coins)],
-    key
+    [new MsgExecuteContract(wallet.key.accAddress, contractAddress, toSnakeCase(msg), coins)],
+    wallet
   )
 }

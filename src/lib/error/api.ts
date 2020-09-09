@@ -11,7 +11,6 @@ export enum ErrorTypes {
   FORBIDDEN = 'FORBIDDEN',
   // 404
   NOT_FOUND_ERROR = 'NOT_FOUND_ERROR',
-  VALIDATOR_DOES_NOT_EXISTS = 'VALIDATOR_DOES_NOT_EXISTS',
   // 408
   TIMEOUT = 'TIMEOUT',
   // 429 Too Many Requests
@@ -27,7 +26,6 @@ export const HttpStatusCodes = {
   [ErrorTypes.AUTHENTICATION_ERROR]: 401, // Unauthorized
   [ErrorTypes.NO_PERMISSION_ERROR]: 401,
   [ErrorTypes.FORBIDDEN]: 403, // Forbidden
-  [ErrorTypes.VALIDATOR_DOES_NOT_EXISTS]: 404,
   [ErrorTypes.NOT_FOUND_ERROR]: 404,
   [ErrorTypes.TIMEOUT]: 408,
   [ErrorTypes.RATE_LIMIT_ERROR]: 429, // Too Many Requests

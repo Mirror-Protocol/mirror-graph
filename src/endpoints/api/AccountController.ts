@@ -1,7 +1,7 @@
 import { KoaController, Get, Controller, Validate, Validator } from 'koa-joi-controllers'
 import Container from 'typedi'
 import { AccountService } from 'services'
-import { success } from 'endpoints'
+import { success } from 'lib/response'
 import { ErrorTypes, HttpStatusCodes } from 'lib/error'
 
 const Joi = Validator.Joi

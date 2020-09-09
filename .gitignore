@@ -52,3 +52,4 @@ keystore.json
 address.json
 keystore-local.json
 *.envrc
+test.ts

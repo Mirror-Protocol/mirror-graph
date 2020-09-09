@@ -1,6 +1,4 @@
-export * from './contract/contract'
-export * from './contract/msgExecute'
-export * from './contract/tx'
+export * from './contract'
 export * from './response/asset'
 // export * from './response/account'
 export * from './enums'

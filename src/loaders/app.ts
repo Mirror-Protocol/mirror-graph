@@ -6,7 +6,7 @@ import * as path from 'path'
 import * as glob from 'glob'
 import { configureRoutes } from 'koa-joi-controllers'
 import { apiErrorHandler, APIError, ErrorTypes } from 'lib/error'
-import { error } from 'endpoints'
+import { error } from 'lib/response'
 
 const API_VERSION_PREFIX = '/v1'
 
