@@ -136,7 +136,7 @@ export class GovService {
     const { codeIds } = contract
 
     // create mint contract
-    const mint = await oracleWallet.instantiate(codeIds.mint, initMsgs.mint)
+    const mint = await ownerWallet.instantiate(codeIds.mint, initMsgs.mint)
     // create token
     const token = await this.createToken(ownerWallet, codeIds, symbol, name, mint)
     // create oracle

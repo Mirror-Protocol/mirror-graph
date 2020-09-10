@@ -1,11 +1,11 @@
-import { Coin } from '@terra-money/terra.js'
+import { Coin, Coins } from '@terra-money/terra.js'
 import * as fs from 'fs'
 import { Container } from 'typedi'
 import { program } from 'commander'
 import { GovService, AssetService, MintService, MarketService, AccountService } from 'services'
 import { getKey } from 'lib/keystore'
 import * as logger from 'lib/logger'
-import { TxWallet } from 'lib/terra'
+import { TxWallet, contractQuery } from 'lib/terra'
 import { num } from 'lib/num'
 import config from 'config'
 
@@ -28,12 +28,12 @@ async function prices(): Promise<void> {
   const assets = await assetService.getAll()
 
   for (const asset of assets) {
-    // if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
-    //   continue
-    // }
+    const pool = await assetService.getPool(asset.symbol)
+    const price = await assetService.getPrice(asset.symbol)
 
-    console.log(await assetService.getPool(asset.symbol))
-    console.log(await assetService.getPrice(asset.symbol))
+    logger.info(
+      `${asset.symbol} - price: ${price}, assetPool: ${pool.assetPool}, collateral: ${pool.collateralPool}, total: ${pool.totalShare}`
+    )
   }
 }
 
@@ -52,15 +52,15 @@ export function testnet(): void {
       const assets = {
         mAAPL: 'Apple',
         mGOOGL: 'Google',
-        // mTSLA: 'Tesla',
-        // mNFLX: 'Netflix',
-        // mQQQ: 'Invesco QQQ Trust',
-        // mTWTR: 'Twitter',
-        // mBABA: 'Alibaba Group Holdings Ltd ADR',
-        // mIAU: 'iShares Gold Trust',
-        // mSLV: 'iShares Silver Trust',
-        // mUSO: 'United States Oil Fund, LP',
-        // mVIXY: 'ProShares VIX',
+        mTSLA: 'Tesla',
+        mNFLX: 'Netflix',
+        mQQQ: 'Invesco QQQ Trust',
+        mTWTR: 'Twitter',
+        mBABA: 'Alibaba Group Holdings Ltd ADR',
+        mIAU: 'iShares Gold Trust',
+        mSLV: 'iShares Silver Trust',
+        mUSO: 'United States Oil Fund, LP',
+        mVIXY: 'ProShares VIX',
       }
       for (const symbol of Object.keys(assets)) {
         await govService.whitelisting(
@@ -100,11 +100,84 @@ export function testnet(): void {
           new Coin('uusd', num(oraclePrice.price).multipliedBy(balance).toFixed(0)),
           wallet
         )
-        await prices()
       }
+      await prices()
     })
 
   program.command('price-testnet').action(async () => {
     await prices()
   })
+
+  program.command('buy-simul <symbol> <coin>').action(async (symbol, coinString) => {
+    const coin = Coin.fromString(coinString)
+    const asset = await assetService.get({ symbol })
+
+    const simulated = await contractQuery(asset.market, {
+      simulation: { offerAmount: coin.amount.toString(), operation: 'buy', symbol },
+    })
+
+    logger.info(simulated)
+  })
+
+  program.command('sell-simul <coin>').action(async (coinString) => {
+    const coin = Coin.fromString(coinString)
+    const asset = await assetService.get({ symbol: coin.denom })
+
+    const simulated = await contractQuery(asset.market, {
+      simulation: { offerAmount: coin.amount.toString(), operation: 'sell', symbol: coin.denom },
+    })
+
+    logger.info(simulated)
+  })
+
+  program
+    .command('buy <symbol> <coin>')
+    .requiredOption('--owner <owner-password>', 'owner key password')
+    .action(async (symbol, coin, { owner }) => {
+      const asset = await assetService.get({ symbol })
+      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
+
+      logger.info(`buy ${symbol}, ${coin}`)
+      const tx = await wallet
+        .execute(asset.market, { buy: { symbol } }, new Coins(coin))
+        .catch((error) => {
+          throw new Error(error)
+        })
+
+      const offer = tx.logs[0].events[1].attributes[2].value
+      const receive = tx.logs[0].events[1].attributes[3].value
+      const spread = tx.logs[0].events[1].attributes[4].value
+      const fee = tx.logs[0].events[1].attributes[5].value
+
+      logger.info(`offer: ${offer}, receive: ${receive}, spread: ${spread}, fee ${fee}`)
+      logger.info(await accountService.getBalances(wallet.key.accAddress))
+    })
+
+  program
+    .command('sell <coin>')
+    .requiredOption('--owner <owner-password>', 'owner key password')
+    .action(async (coin, { owner }) => {
+      const sellCoin = Coin.fromString(coin)
+      const asset = await assetService.get({ symbol: sellCoin.denom })
+      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
+
+      // approve coin transfer
+      await wallet.execute(asset.token, {
+        increaseAllowance: { amount: sellCoin.amount.toString(), spender: asset.market },
+      })
+
+      // execute sell
+      console.log(`sell ${sellCoin.amount.toString()}${sellCoin.denom}`)
+      const tx = await wallet.execute(asset.market, {
+        sell: { symbol: sellCoin.denom, amount: sellCoin.amount.toString() },
+      })
+
+      const offer = tx.logs[0].events[1].attributes[2].value
+      const receive = tx.logs[0].events[1].attributes[3].value
+      const spread = tx.logs[0].events[1].attributes[4].value
+      const fee = tx.logs[0].events[1].attributes[5].value
+
+      logger.info(`offer: ${offer}, receive: ${receive}, spread: ${spread}, fee ${fee}`)
+      logger.info(await accountService.getBalances(wallet.key.accAddress))
+    })
 }
