@@ -12,6 +12,17 @@ export default class AccountController extends KoaController {
     return Container.get(AccountService)
   }
 
+  @Get('/:address/balances/:symbol')
+  @Validate({
+    params: { address: Joi.string().required(), symbol: Joi.string().required() },
+    failure: HttpStatusCodes[ErrorTypes.INVALID_REQUEST_ERROR],
+  })
+  async getAccountBalance(ctx): Promise<void> {
+    const { address, symbol } = ctx.params
+
+    success(ctx, await this.accountService.getBalance(address, symbol))
+  }
+
   @Get('/:address/balances')
   @Validate({
     params: { address: Joi.string().required() },
