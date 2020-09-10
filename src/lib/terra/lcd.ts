@@ -1,8 +1,54 @@
-import { LCDClient } from '@terra-money/terra.js'
+import { LCDClient, TxInfo, Wallet, Msg } from '@terra-money/terra.js'
+import { delay } from 'bluebird'
+import { ContractInfo } from 'types'
+import { toSnakeCase, toCamelCase } from 'lib/caseStyles'
 
 export let lcd: LCDClient = undefined
 
 export function initLCD(URL: string, chainID: string): LCDClient {
   lcd = new LCDClient({ URL, chainID, gasPrices: { uusd: 0.15 } })
   return lcd
+}
+
+export async function checkTx(txHash: string, timeout = 60000): Promise<TxInfo> {
+  const startedAt = Date.now()
+
+  while (Date.now() - startedAt < timeout) {
+    const txInfo = await lcd.tx.txInfo(txHash).catch(() => undefined)
+
+    if (txInfo) {
+      return txInfo
+    }
+
+    await delay(1000)
+  }
+}
+
+export async function transaction(
+  wallet: Wallet,
+  msgs: Msg[],
+  accountNumber = undefined,
+  sequence = undefined,
+  timeout = 60000
+): Promise<TxInfo> {
+  return (
+    wallet
+      // eslint-disable-next-line @typescript-eslint/camelcase
+      .createAndSignTx({ msgs, account_number: accountNumber, sequence })
+      .then((signed) => lcd.tx.broadcast(signed))
+      .then(async (broadcastResult) => {
+        if (broadcastResult.code) {
+          throw new Error(broadcastResult.raw_log)
+        }
+        return checkTx(broadcastResult.txhash, timeout)
+      })
+  )
+}
+
+export async function contractInfo(address: string): Promise<ContractInfo> {
+  return toCamelCase(await lcd.wasm.contractInfo(address))
+}
+
+export async function contractQuery<T>(address: string, query: object): Promise<T> {
+  return toCamelCase(await lcd.wasm.contractQuery<T>(address, toSnakeCase(query)))
 }

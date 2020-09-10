@@ -20,7 +20,6 @@ export class ContractService {
     this.contract = await this.contractRepo.findOne(findOptions)
     if (!this.contract) {
       logger.warn(`can't load any contract. id: ${id}`)
-      // throw new Error(`There is no contract ${id}`)
     }
 
     return this.contract

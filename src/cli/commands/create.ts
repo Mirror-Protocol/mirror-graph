@@ -2,7 +2,7 @@ import { Container } from 'typedi'
 import { program } from 'commander'
 import { ContractService, GovService } from 'services'
 import * as logger from 'lib/logger'
-import { storeCode, lcd } from 'lib/terra'
+import { TxWallet } from 'lib/terra'
 import { getKey } from 'lib/keystore'
 import config from 'config'
 
@@ -22,19 +22,19 @@ export function contract(): void {
     .option('--market', 'market contract')
     .action(
       async ({ password, all, collector, factory, gov, market, mint, oracle, staking, token }) => {
-        const wallet = lcd.wallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
+        const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
         const codeIds = {
           collector:
-            (collector || all) && (await storeCode('src/contracts/mirror_collector.wasm', wallet)),
+            (collector || all) && (await wallet.storeCode('src/contracts/mirror_collector.wasm')),
           factory:
-            (factory || all) && (await storeCode('src/contracts/mirror_factory.wasm', wallet)),
-          gov: (gov || all) && (await storeCode('src/contracts/mirror_gov.wasm', wallet)),
-          market: (market || all) && (await storeCode('src/contracts/mirror_market.wasm', wallet)),
-          mint: (mint || all) && (await storeCode('src/contracts/mirror_mint.wasm', wallet)),
-          oracle: (oracle || all) && (await storeCode('src/contracts/mirror_oracle.wasm', wallet)),
+            (factory || all) && (await wallet.storeCode('src/contracts/mirror_factory.wasm')),
+          gov: (gov || all) && (await wallet.storeCode('src/contracts/mirror_gov.wasm')),
+          market: (market || all) && (await wallet.storeCode('src/contracts/mirror_market.wasm')),
+          mint: (mint || all) && (await wallet.storeCode('src/contracts/mirror_mint.wasm')),
+          oracle: (oracle || all) && (await wallet.storeCode('src/contracts/mirror_oracle.wasm')),
           staking:
-            (staking || all) && (await storeCode('src/contracts/mirror_staking.wasm', wallet)),
-          token: (token || all) && (await storeCode('src/contracts/mirror_token.wasm', wallet)),
+            (staking || all) && (await wallet.storeCode('src/contracts/mirror_staking.wasm')),
+          token: (token || all) && (await wallet.storeCode('src/contracts/mirror_token.wasm')),
         }
         logger.info(codeIds)
       }
@@ -46,14 +46,14 @@ export function contract(): void {
     .requiredOption('-p, --password <owner-password>', 'owner key password')
     .action(async ({ password }) => {
       const codeIds = {
-        collector: 25,
-        factory: 26,
-        gov: 27,
-        market: 28,
-        mint: 29,
-        oracle: 30,
-        staking: 31,
-        token: 32,
+        collector: 41,
+        factory: 42,
+        gov: 43,
+        market: 44,
+        mint: 45,
+        oracle: 46,
+        staking: 47,
+        token: 48,
       }
       const contract = await contractService.create(
         codeIds,
@@ -62,7 +62,7 @@ export function contract(): void {
       logger.info(`created mirror contract. id: ${contract.id}`)
 
       await contractService.load(-1)
-      const wallet = lcd.wallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
+      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
       await govService.create(wallet)
       logger.info(`created mirror gov`)
     })

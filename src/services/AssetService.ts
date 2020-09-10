@@ -2,11 +2,10 @@ import * as Bluebird from 'bluebird'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions } from 'typeorm'
 import { Service, Inject } from 'typedi'
-import { Wallet, Coin, TxInfo } from '@terra-money/terra.js'
 import { AssetEntity } from 'orm'
 import { ContractService, PriceService } from 'services'
 import { ListedAsset, AssetOHLC, AssetHistory, HistoryRanges } from 'types'
-import { contractQuery, contractInfo, execute } from 'lib/terra'
+import { contractQuery, contractInfo } from 'lib/terra'
 import { ErrorTypes, APIError } from 'lib/error'
 
 @Service()
@@ -35,29 +34,12 @@ export class AssetService {
     return this.assetRepo.find({ contract })
   }
 
-  // approve token transfer
-  async approve(coin: Coin, spender: string, wallet: Wallet): Promise<TxInfo> {
-    const asset = await this.get({ symbol: coin.denom })
-    return execute(asset.token, { approve: { amount: coin.amount.toString(), spender } }, wallet)
-  }
-
-  async getBalance(symbol: string, address: string): Promise<string> {
-    const asset = await this.get({ symbol })
-    const { balance } = await contractQuery<{ balance: string }>(asset.token, {
-      balance: { address },
-    })
-
-    return balance
-  }
-
   async getListedAssets(): Promise<ListedAsset[]> {
     return Bluebird.map(
       this.getAll(),
       async (asset) =>
         new ListedAsset(
-          Object.assign(asset, {
-            price: (await this.priceService.getLatestPrice(asset)).close,
-          })
+          Object.assign(asset, { price: (await this.priceService.getLatestPrice(asset)).close })
         )
     )
   }

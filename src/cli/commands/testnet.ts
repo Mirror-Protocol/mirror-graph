@@ -1,10 +1,12 @@
+import { Coin } from '@terra-money/terra.js'
 import * as fs from 'fs'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { GovService, AssetService } from 'services'
+import { GovService, AssetService, MintService, MarketService, AccountService } from 'services'
 import { getKey } from 'lib/keystore'
 import * as logger from 'lib/logger'
 import { TxWallet } from 'lib/terra'
+import { num } from 'lib/num'
 import config from 'config'
 
 async function writeOracleAddresses(): Promise<void> {
@@ -21,23 +23,12 @@ async function writeOracleAddresses(): Promise<void> {
   logger.info(address)
 }
 
-export function whitelisting(): void {
+export function testnet(): void {
   const govService = Container.get(GovService)
-
-  program
-    .command('whitelisting <symbol> <name>')
-    .description('whitelisting new asset')
-    .requiredOption('--owner <owner-password>', 'owner key password')
-    .requiredOption('--oracle <oracle-password>', 'oracle key password')
-    .action(async (symbol, name, { owner, oracle }) => {
-      await govService.whitelisting(
-        symbol,
-        name,
-        new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner)),
-        new TxWallet(getKey(config.KEYSTORE_PATH, config.ORACLE_KEY, oracle))
-      )
-      await writeOracleAddresses()
-    })
+  const mintService = Container.get(MintService)
+  const marketService = Container.get(MarketService)
+  const assetService = Container.get(AssetService)
+  const accountService = Container.get(AccountService)
 
   program
     .command('whitelisting-testnet')
@@ -69,9 +60,21 @@ export function whitelisting(): void {
     })
 
   program
-    .command('oracle-address')
-    .description('save oracle address json file to path')
-    .action(async () => {
-      await writeOracleAddresses()
+    .command('lp-testnet')
+    .requiredOption('-p, --password <lp-password>', 'lp key password')
+    .action(async ({ password }) => {
+      const assets = await assetService.getAll()
+      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.LP_KEY, password))
+
+      for (const asset of assets) {
+        await mintService.mint(asset.symbol, Coin.fromString('100000000uusd'), wallet)
+
+        const { balance } = await accountService.getBalance(asset.symbol, wallet.key.accAddress)
+        await marketService.provideLiquidity(
+          new Coin(asset.symbol, balance),
+          new Coin('uusd', num(100000000).dividedBy(balance).toString()),
+          wallet
+        )
+      }
     })
 }

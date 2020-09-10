@@ -1,10 +1,9 @@
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository } from 'typeorm'
 import { Service, Inject } from 'typedi'
-import { Wallet } from '@terra-money/terra.js'
 import { AssetEntity } from 'orm'
 import { ContractService, AssetService } from 'services'
-import { instantiate, execute } from 'lib/terra'
+import { TxWallet } from 'lib/terra'
 import * as logger from 'lib/logger'
 import initMsgs from 'contracts/initMsgs'
 import config from 'config'
@@ -17,26 +16,25 @@ export class GovService {
     @Inject((type) => AssetService) private readonly assetService: AssetService
   ) {}
 
-  async create(wallet: Wallet): Promise<void> {
+  async create(wallet: TxWallet): Promise<void> {
     const contract = this.contractService.getContract()
 
     // create factory, collector contract
-    const factory = await instantiate(contract.codeIds.factory, initMsgs.factory, wallet)
-    const collector = await instantiate(
-      contract.codeIds.collector,
-      { ...initMsgs.collector, factoryContract: factory },
-      wallet
-    )
+    const factory = await wallet.instantiate(contract.codeIds.factory, initMsgs.factory)
+    const collector = await wallet.instantiate(contract.codeIds.collector, {
+      ...initMsgs.collector,
+      factoryContract: factory,
+    })
 
     // save
     await this.contractService.set({ factory, collector })
 
     // whitelisting mirror token and create gov contract
     const mirrorToken = await this.whitelisting(config.MIRROR_SYMBOL, 'Mirror Token', wallet)
-    const gov = await instantiate(contract.codeIds.gov, { mirrorToken: mirrorToken.token }, wallet)
+    const gov = await wallet.instantiate(contract.codeIds.gov, { mirrorToken: mirrorToken.token })
 
     // set mirror token to factory
-    await execute(factory, { PostInitialize: { mirrorToken: mirrorToken.token } }, wallet)
+    await wallet.execute(factory, { PostInitialize: { mirrorToken: mirrorToken.token } })
 
     // save
     await this.contractService.set({ gov })
@@ -45,8 +43,8 @@ export class GovService {
   async whitelisting(
     symbol: string,
     name: string,
-    ownerWallet: Wallet,
-    oracleWallet?: Wallet
+    ownerWallet: TxWallet,
+    oracleWallet?: TxWallet
   ): Promise<AssetEntity> {
     logger.info('whitelisting', symbol, name)
 
@@ -57,83 +55,56 @@ export class GovService {
 
     const contract = this.contractService.getContract()
 
-    let ownerSequence = await ownerWallet.sequence()
-
     const mint =
-      oracleWallet &&
-      (await instantiate(contract.codeIds.mint, initMsgs.mint, ownerWallet, ownerSequence))
-    ownerSequence += 1
+      oracleWallet && (await oracleWallet.instantiate(contract.codeIds.mint, initMsgs.mint))
     const minter = oracleWallet ? mint : contract.factory
 
-    const token = await instantiate(
-      contract.codeIds.token,
-      { ...initMsgs.token, symbol, name, mint: { cap: '100000000000', minter } },
-      ownerWallet,
-      ownerSequence
-    )
-    ownerSequence += 1
+    const token = await ownerWallet.instantiate(contract.codeIds.token, {
+      ...initMsgs.token,
+      symbol,
+      name,
+      mint: { cap: '100000000000', minter },
+    })
 
     const oracle =
       oracleWallet &&
-      (await instantiate(
-        contract.codeIds.oracle,
-        { assetToken: token, baseDenom: symbol, quoteDenom: 'uusd' },
-        oracleWallet
-      ))
-
-    const market = await instantiate(
-      contract.codeIds.market,
-      {
-        ...initMsgs.market,
-        commissionCollector: contract.collector,
+      (await oracleWallet.instantiate(contract.codeIds.oracle, {
         assetToken: token,
-        assetSymbol: symbol,
-        assetOracle: oracle,
-      },
-      ownerWallet,
-      ownerSequence
-    )
-    ownerSequence += 1
+        baseDenom: symbol,
+        quoteDenom: 'uusd',
+      }))
 
-    const lpToken = await instantiate(
-      contract.codeIds.token,
-      {
-        ...initMsgs.token,
-        mint: { cap: '100000000000000', minter: market },
-        symbol: `${symbol}-LP`,
-        name: `${symbol}-UST LP`,
-      },
-      ownerWallet,
-      ownerSequence
-    )
-    ownerSequence += 1
+    const market = await ownerWallet.instantiate(contract.codeIds.market, {
+      ...initMsgs.market,
+      commissionCollector: contract.collector,
+      assetToken: token,
+      assetSymbol: symbol,
+      assetOracle: oracle,
+    })
 
-    const staking = await instantiate(
-      contract.codeIds.staking,
-      {
-        mirrorToken:
-          symbol !== config.MIRROR_SYMBOL
-            ? (await this.assetService.get({ symbol: config.MIRROR_SYMBOL })).token
-            : token,
-        stakingToken: lpToken,
-      },
-      ownerWallet,
-      ownerSequence
-    )
-    ownerSequence += 1
+    const lpToken = await ownerWallet.instantiate(contract.codeIds.token, {
+      ...initMsgs.token,
+      mint: { cap: '100000000000000', minter: market },
+      symbol: `${symbol}-LP`,
+      name: `${symbol}-UST LP`,
+    })
+
+    const staking = await ownerWallet.instantiate(contract.codeIds.staking, {
+      mirrorToken:
+        symbol !== config.MIRROR_SYMBOL
+          ? (await this.assetService.get({ symbol: config.MIRROR_SYMBOL })).token
+          : token,
+      stakingToken: lpToken,
+    })
 
     // set asset infomation to mint contract
     oracleWallet &&
-      (await execute(
-        mint,
-        {
-          PostInitialize: { assetToken: token, assetOracle: oracle, assetSymbol: symbol },
-        },
-        ownerWallet
-      ))
+      (await oracleWallet.execute(mint, {
+        PostInitialize: { assetToken: token, assetOracle: oracle, assetSymbol: symbol },
+      }))
 
     // set liquidity token to market
-    await execute(market, { PostInitialize: { liquidityToken: lpToken } }, ownerWallet)
+    await ownerWallet.execute(market, { PostInitialize: { liquidityToken: lpToken } })
 
     logger.info(`whitelisted asset ${symbol}`)
 

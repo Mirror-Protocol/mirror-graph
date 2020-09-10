@@ -4,7 +4,7 @@ import { program } from 'commander'
 import { MarketService } from 'services'
 import * as logger from 'lib/logger'
 import { getKey } from 'lib/keystore'
-import { lcd } from 'lib/terra'
+import { TxWallet } from 'lib/terra'
 import config from 'config'
 
 export function market(): void {
@@ -15,7 +15,7 @@ export function market(): void {
     .description('provide liquidity. eg) provide-liquidity 100mAAPL 10000uusd')
     .requiredOption('-p, --password <lp-password>', 'lp key password')
     .action(async (assetAmount, uusdAmount, { password }) => {
-      const wallet = lcd.wallet(getKey(config.KEYSTORE_PATH, config.LP_KEY, password))
+      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.LP_KEY, password))
 
       logger.info(
         await marketService.provideLiquidity(
@@ -31,7 +31,7 @@ export function market(): void {
     .description('withdraw liquidity. eg) withdraw-liquidity mAAPL 10')
     .requiredOption('-p, --password <lp-password>', 'lp key password')
     .action(async (symbol, amount, { password }) => {
-      const wallet = lcd.wallet(getKey(config.KEYSTORE_PATH, config.LP_KEY, password))
+      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.LP_KEY, password))
 
       await marketService.withdrawLiquidity(symbol, amount, wallet)
     })
