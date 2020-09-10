@@ -4,7 +4,7 @@ import { Repository, FindConditions } from 'typeorm'
 import { Service, Inject } from 'typedi'
 import { AssetEntity } from 'orm'
 import { ContractService, PriceService } from 'services'
-import { ListedAsset, AssetOHLC, AssetHistory, HistoryRanges } from 'types'
+import { ListedAsset, AssetOHLC, AssetHistory, HistoryRanges, OraclePrice } from 'types'
 import { contractQuery, contractInfo } from 'lib/terra'
 import { ErrorTypes, APIError } from 'lib/error'
 
@@ -59,5 +59,10 @@ export class AssetService {
     console.log(await contractInfo(asset.mint))
     console.log(await contractQuery(asset.mint, { configGeneral: {} }))
     console.log(await contractQuery(asset.mint, { configAsset: {} }))
+  }
+
+  async getOraclePrice(symbol: string): Promise<OraclePrice> {
+    const asset = await this.get({ symbol })
+    return contractQuery<OraclePrice>(asset.oracle, { price: {} })
   }
 }

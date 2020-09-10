@@ -40,35 +40,6 @@ export function whitelisting(): void {
     })
 
   program
-    .command('whitelisting-testnet')
-    .requiredOption('--owner <owner-password>', 'owner key password')
-    .requiredOption('--oracle <oracle-password>', 'oracle key password')
-    .action(async ({ owner, oracle }) => {
-      const assets = {
-        mAAPL: 'Apple',
-        mGOOGL: 'Google',
-        mTSLA: 'Tesla',
-        mNFLX: 'Netflix',
-        mQQQ: 'Invesco QQQ Trust',
-        mTWTR: 'Twitter',
-        mBABA: 'Alibaba Group Holdings Ltd ADR',
-        mIAU: 'iShares Gold Trust',
-        mSLV: 'iShares Silver Trust',
-        mUSO: 'United States Oil Fund, LP',
-        mVIXY: 'ProShares VIX',
-      }
-      for (const symbol of Object.keys(assets)) {
-        await govService.whitelisting(
-          symbol,
-          assets[symbol],
-          new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner)),
-          new TxWallet(getKey(config.KEYSTORE_PATH, config.ORACLE_KEY, oracle))
-        )
-      }
-      await writeOracleAddresses()
-    })
-
-  program
     .command('oracle-address')
     .description('save oracle address json file to path')
     .action(async () => {

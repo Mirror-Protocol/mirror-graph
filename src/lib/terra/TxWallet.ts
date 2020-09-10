@@ -108,13 +108,13 @@ export class TxWallet extends Wallet {
     }
   }
 
-  async execute(
-    contractAddress: string,
-    msg: object,
-    coins: Coins = new Coins([])
-  ): Promise<TxInfo> {
+  async execute(contract: string, msg: object, coins: Coins = new Coins([])): Promise<TxInfo> {
+    if (!contract) {
+      throw new Error('wrong contract')
+    }
+
     return this.executeMsgs([
-      new MsgExecuteContract(this.key.accAddress, contractAddress, toSnakeCase(msg), coins),
+      new MsgExecuteContract(this.key.accAddress, contract, toSnakeCase(msg), coins),
     ])
   }
 }

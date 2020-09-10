@@ -67,12 +67,23 @@ export function testnet(): void {
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.LP_KEY, password))
 
       for (const asset of assets) {
+        if (asset.symbol === config.MIRROR_SYMBOL) {
+          continue
+        }
         await mintService.mint(asset.symbol, Coin.fromString('100000000uusd'), wallet)
 
         const { balance } = await accountService.getBalance(asset.symbol, wallet.key.accAddress)
+        const oraclePrice = await assetService.getOraclePrice(asset.symbol)
+
+        console.log(
+          `${asset.symbol} provide liquidity -`,
+          `price: ${oraclePrice.price},`,
+          `balance: ${balance},`,
+          `uusd: ${num(oraclePrice.price).multipliedBy(balance)}`
+        )
         await marketService.provideLiquidity(
           new Coin(asset.symbol, balance),
-          new Coin('uusd', num(100000000).dividedBy(balance).toString()),
+          new Coin('uusd', num(oraclePrice.price).multipliedBy(balance).toFixed(0)),
           wallet
         )
       }

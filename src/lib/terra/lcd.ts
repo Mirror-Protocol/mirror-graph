@@ -46,9 +46,15 @@ export async function transaction(
 }
 
 export async function contractInfo(address: string): Promise<ContractInfo> {
+  if (!address) {
+    throw new Error('wrong address')
+  }
   return toCamelCase(await lcd.wasm.contractInfo(address))
 }
 
 export async function contractQuery<T>(address: string, query: object): Promise<T> {
+  if (!address) {
+    throw new Error('wrong address')
+  }
   return toCamelCase(await lcd.wasm.contractQuery<T>(address, toSnakeCase(query)))
 }
