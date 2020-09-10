@@ -76,7 +76,7 @@ export class GovService {
     name: string,
     minter: string
   ): Promise<string> {
-    return wallet.instantiate(this.contractService.getContract().codeIds.token, {
+    return wallet.instantiate(codeIds.token, {
       ...initMsgs.token,
       symbol,
       name,

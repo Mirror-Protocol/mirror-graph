@@ -10,6 +10,7 @@ const initMsgs = {
   },
   factory: {
     mintPerBlock: '100',
+    mirrorToken: undefined,
   },
   gov: {
     mirrorToken: undefined,
@@ -17,6 +18,8 @@ const initMsgs = {
   token: {
     decimals: 6,
     initialBalances: [],
+    name: undefined,
+    symbol: undefined,
   },
   mint: {
     collateralDenom: config.COLLATERAL_SYMBOL,
@@ -26,10 +29,11 @@ const initMsgs = {
   },
   market: {
     collateralDenom: config.COLLATERAL_SYMBOL,
-    maxSpread: '0.2',
-    maxMinusSpread: '0.02',
     activeCommission: '0.003',
     inactiveCommission: '0.001',
+    assetSymbol: undefined,
+    assetToken: undefined,
+    commissionCollector: undefined,
   },
 }
 
