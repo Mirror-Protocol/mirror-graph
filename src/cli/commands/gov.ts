@@ -12,7 +12,7 @@ async function writeOracleAddresses(): Promise<void> {
   const assets = await assetService.getAll()
   const address = {}
   for (const asset of assets) {
-    if (asset.symbol === config.MIRROR_SYMBOL) {
+    if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
       continue
     }
     address[asset.symbol.substring(1)] = asset.oracle

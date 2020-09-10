@@ -14,13 +14,27 @@ async function writeOracleAddresses(): Promise<void> {
   const assets = await assetService.getAll()
   const address = {}
   for (const asset of assets) {
-    if (asset.symbol === config.MIRROR_SYMBOL) {
+    if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
       continue
     }
     address[asset.symbol.substring(1)] = asset.oracle
   }
   fs.writeFileSync('./address.json', JSON.stringify(address))
   logger.info(address)
+}
+
+async function prices(): Promise<void> {
+  const assetService = Container.get(AssetService)
+  const assets = await assetService.getAll()
+
+  for (const asset of assets) {
+    // if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
+    //   continue
+    // }
+
+    console.log(await assetService.getPool(asset.symbol))
+    console.log(await assetService.getPrice(asset.symbol))
+  }
 }
 
 export function testnet(): void {
@@ -38,15 +52,15 @@ export function testnet(): void {
       const assets = {
         mAAPL: 'Apple',
         mGOOGL: 'Google',
-        mTSLA: 'Tesla',
-        mNFLX: 'Netflix',
-        mQQQ: 'Invesco QQQ Trust',
-        mTWTR: 'Twitter',
-        mBABA: 'Alibaba Group Holdings Ltd ADR',
-        mIAU: 'iShares Gold Trust',
-        mSLV: 'iShares Silver Trust',
-        mUSO: 'United States Oil Fund, LP',
-        mVIXY: 'ProShares VIX',
+        // mTSLA: 'Tesla',
+        // mNFLX: 'Netflix',
+        // mQQQ: 'Invesco QQQ Trust',
+        // mTWTR: 'Twitter',
+        // mBABA: 'Alibaba Group Holdings Ltd ADR',
+        // mIAU: 'iShares Gold Trust',
+        // mSLV: 'iShares Silver Trust',
+        // mUSO: 'United States Oil Fund, LP',
+        // mVIXY: 'ProShares VIX',
       }
       for (const symbol of Object.keys(assets)) {
         await govService.whitelisting(
@@ -67,10 +81,10 @@ export function testnet(): void {
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.LP_KEY, password))
 
       for (const asset of assets) {
-        if (asset.symbol === config.MIRROR_SYMBOL) {
+        if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
           continue
         }
-        await mintService.mint(asset.symbol, Coin.fromString('100000000uusd'), wallet)
+        await mintService.mint(asset.symbol, Coin.fromString('1000000000uusd'), wallet)
 
         const { balance } = await accountService.getBalance(asset.symbol, wallet.key.accAddress)
         const oraclePrice = await assetService.getOraclePrice(asset.symbol)
@@ -86,6 +100,11 @@ export function testnet(): void {
           new Coin('uusd', num(oraclePrice.price).multipliedBy(balance).toFixed(0)),
           wallet
         )
+        await prices()
       }
     })
+
+  program.command('price-testnet').action(async () => {
+    await prices()
+  })
 }

@@ -747,10 +747,10 @@
   dependencies:
     defer-to-connect "^1.0.1"
 
-"@terra-money/terra.js@^0.4.14-beta.2":
-  version "0.4.14-beta.2"
-  resolved "https://registry.yarnpkg.com/@terra-money/terra.js/-/terra.js-0.4.14-beta.2.tgz#5a2cbcae2d3fdc3917ebdb1014e4cacd99da434e"
-  integrity sha512-f76IIus4MkAaVN4fiFGP01tHSktZAMGzTtNaCO3D7D/2azF8oxjH7oyrPB1xsbwAcz7sz6ZSyONIy8C8DOM9DQ==
+"@terra-money/terra.js@^0.4.15":
+  version "0.4.15"
+  resolved "https://registry.yarnpkg.com/@terra-money/terra.js/-/terra.js-0.4.15.tgz#fddf1c9db28649a209fb1e5c610fce65c10ead4e"
+  integrity sha512-cjf8CNM0m9bYB2U2iY7H6HqwTAQzZjD5U2y5sYD+pxtWckfqKDZF9PaMnPL5MXYxdt6A1onBFo7MRcnI18xWNw==
   dependencies:
     axios "^0.20.0"
     bech32 "^1.1.4"

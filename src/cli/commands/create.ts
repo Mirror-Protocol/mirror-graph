@@ -15,11 +15,14 @@ export function contract(): void {
     .description('store contract code to chain and return codeId')
     .requiredOption('-p, --password <owner-password>', 'owner key password')
     .option('--all', 'mint/oracle/token/market contracts')
+    .option('--collector', 'collector contract')
+    .option('--factory', 'factory contract')
     .option('--gov', 'gov contract')
+    .option('--market', 'market contract')
     .option('--mint', 'mint contract')
     .option('--oracle', 'oracle contract')
-    .option('--token', 'token(cw20) contract')
-    .option('--market', 'market contract')
+    .option('--staking', 'staking contract')
+    .option('--token', 'token contract')
     .action(
       async ({ password, all, collector, factory, gov, market, mint, oracle, staking, token }) => {
         const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
@@ -46,10 +49,10 @@ export function contract(): void {
     .requiredOption('-p, --password <owner-password>', 'owner key password')
     .action(async ({ password }) => {
       const codeIds = {
-        collector: 41,
+        collector: 59,
         factory: 42,
-        gov: 43,
-        market: 44,
+        gov: 60,
+        market: 61,
         mint: 45,
         oracle: 46,
         staking: 47,
@@ -63,7 +66,7 @@ export function contract(): void {
 
       await contractService.load(-1)
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
-      await govService.create(wallet)
+      await govService.create(wallet, codeIds)
       logger.info(`created mirror gov`)
     })
 }

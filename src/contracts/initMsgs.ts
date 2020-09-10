@@ -3,8 +3,10 @@ import config from 'config'
 const initMsgs = {
   collector: {
     collateralDenom: config.COLLATERAL_SYMBOL,
-    mirrorSymbol: config.MIRROR_SYMBOL,
     factoryContract: undefined,
+    govContract: undefined,
+    mirrorSymbol: config.MIRROR_TOKEN_SYMBOL,
+    mirrorToken: undefined,
   },
   factory: {
     mintPerBlock: '100',

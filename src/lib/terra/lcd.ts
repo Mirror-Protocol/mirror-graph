@@ -1,6 +1,5 @@
 import { LCDClient, TxInfo, Wallet, Msg } from '@terra-money/terra.js'
 import { delay } from 'bluebird'
-import { ContractInfo } from 'types'
 import { toSnakeCase, toCamelCase } from 'lib/caseStyles'
 
 export let lcd: LCDClient = undefined
@@ -45,16 +44,16 @@ export async function transaction(
   )
 }
 
-export async function contractInfo(address: string): Promise<ContractInfo> {
+export async function contractInfo<T>(address: string): Promise<T> {
   if (!address) {
     throw new Error('wrong address')
   }
-  return toCamelCase(await lcd.wasm.contractInfo(address))
+  return toCamelCase(await lcd.wasm.contractInfo(address)) as T
 }
 
 export async function contractQuery<T>(address: string, query: object): Promise<T> {
   if (!address) {
     throw new Error('wrong address')
   }
-  return toCamelCase(await lcd.wasm.contractQuery<T>(address, toSnakeCase(query)))
+  return toCamelCase(await lcd.wasm.contractQuery<T>(address, toSnakeCase(query))) as T
 }

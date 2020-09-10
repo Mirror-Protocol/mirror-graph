@@ -25,6 +25,9 @@ export class ContractEntity {
   collector: string
 
   @Column()
+  mirrorToken: string
+
+  @Column()
   owner: string
 
   @Column()

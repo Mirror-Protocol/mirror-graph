@@ -5,7 +5,7 @@ import { AssetEntity } from 'orm'
 @ObjectType()
 export class ListedAsset {
   constructor(asset: AssetEntity & { price: string }) {
-    Object.assign(this, pick(asset, ['symbol', 'name', 'price', 'token', 'oracle']))
+    Object.assign(this, pick(asset, ['symbol', 'name', 'price', 'token']))
   }
 
   @Field()
@@ -17,11 +17,8 @@ export class ListedAsset {
   @Field((type) => String, { description: 'token account address' })
   token: string
 
-  @Field((type) => String, { description: 'oracle account address' })
-  oracle: string
-
-  @Field()
-  price: string
+  @Field({ nullable: true })
+  price?: string
 }
 
 @ObjectType()

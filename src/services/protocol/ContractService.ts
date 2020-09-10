@@ -31,6 +31,7 @@ export class ContractService {
       factory: '',
       collector: '',
       gov: '',
+      mirrorToken: '',
       owner: key.accAddress,
       chainId: config.TERRA_CHAIN_ID,
     })

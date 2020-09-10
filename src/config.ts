@@ -19,7 +19,8 @@ const config = {
   OWNER_KEY: 'owner',
   ORACLE_KEY: 'oracle',
   LP_KEY: 'lp',
-  MIRROR_SYMBOL: 'MIR',
+  MIRROR_TOKEN_SYMBOL: 'MIR',
+  MIRROR_TOKEN_NAME: 'Mirror Token',
   COLLATERAL_SYMBOL: 'uusd',
 }
 
