@@ -53,3 +53,4 @@ address.json
 keystore-local.json
 *.envrc
 test.ts
+*.ormconfig.json
