@@ -2,7 +2,13 @@ import { Coin, Coins } from '@terra-money/terra.js'
 import * as fs from 'fs'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { GovService, AssetService, MintService, MarketService, AccountService } from 'services'
+import {
+  WhitelistingService,
+  AssetService,
+  MintService,
+  MarketService,
+  AccountService,
+} from 'services'
 import { getKey } from 'lib/keystore'
 import * as logger from 'lib/logger'
 import { TxWallet, contractQuery } from 'lib/terra'
@@ -38,7 +44,7 @@ async function prices(): Promise<void> {
 }
 
 export function testnet(): void {
-  const govService = Container.get(GovService)
+  const whitelistingService = Container.get(WhitelistingService)
   const mintService = Container.get(MintService)
   const marketService = Container.get(MarketService)
   const assetService = Container.get(AssetService)
@@ -63,7 +69,7 @@ export function testnet(): void {
         mVIXY: 'ProShares VIX',
       }
       for (const symbol of Object.keys(assets)) {
-        await govService.whitelisting(
+        await whitelistingService.whitelisting(
           symbol,
           assets[symbol],
           new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner)),

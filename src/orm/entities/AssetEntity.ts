@@ -2,18 +2,22 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   CreateDateColumn,
+  UpdateDateColumn,
   Column,
   ManyToOne,
   JoinColumn,
   Index,
 } from 'typeorm'
-import { ContractEntity } from 'orm'
+import { GovEntity } from 'orm'
 
 @Entity('asset')
 @Index('index_asset_symbol_and_contract', ['symbol', 'contract'], { unique: true })
 export class AssetEntity {
   @CreateDateColumn()
   createdAt: Date
+
+  @UpdateDateColumn()
+  updatedAt: Date
 
   @PrimaryGeneratedColumn()
   id: number
@@ -39,7 +43,7 @@ export class AssetEntity {
   @Column({ nullable: true })
   oracle?: string
 
-  @ManyToOne(() => ContractEntity, { onDelete: 'CASCADE' })
+  @ManyToOne(() => GovEntity, { onDelete: 'CASCADE' })
   @JoinColumn()
-  contract: ContractEntity
+  gov: GovEntity
 }

@@ -6,7 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm'
-import { ContractEntity } from 'orm'
+import { GovEntity } from 'orm'
 
 @Entity('tx')
 export class TxEntity {
@@ -31,7 +31,7 @@ export class TxEntity {
   @Column()
   datetime: Date
 
-  @ManyToOne(() => ContractEntity, { onDelete: 'CASCADE' })
+  @ManyToOne(() => GovEntity, { onDelete: 'CASCADE' })
   @JoinColumn()
-  contract: ContractEntity
+  gov: GovEntity
 }

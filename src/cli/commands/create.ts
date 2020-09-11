@@ -1,14 +1,14 @@
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { ContractService, GovService } from 'services'
+import { GovService, WhitelistingService } from 'services'
 import * as logger from 'lib/logger'
 import { TxWallet } from 'lib/terra'
 import { getKey } from 'lib/keystore'
 import config from 'config'
 
 export function contract(): void {
-  const contractService = Container.get(ContractService)
   const govService = Container.get(GovService)
+  const whitelistingService = Container.get(WhitelistingService)
 
   program
     .command('store-code')
@@ -45,7 +45,7 @@ export function contract(): void {
 
   program
     .command('create')
-    .description('create contract')
+    .description('create gov')
     .requiredOption('-p, --password <owner-password>', 'owner key password')
     .action(async ({ password }) => {
       const codeIds = {
@@ -58,15 +58,15 @@ export function contract(): void {
         staking: 47,
         token: 48,
       }
-      const contract = await contractService.create(
+      const gov = await govService.create(
         codeIds,
         getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
       )
-      logger.info(`created mirror contract. id: ${contract.id}`)
 
-      await contractService.load(-1)
+      await govService.load(-1)
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
-      await govService.create(wallet, codeIds)
-      logger.info(`created mirror gov`)
+      await whitelistingService.create(wallet, codeIds)
+
+      logger.info(`created mirror gov. id: ${gov.id}`)
     })
 }

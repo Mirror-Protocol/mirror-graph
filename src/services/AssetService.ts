@@ -6,21 +6,21 @@ import { contractQuery, contractInfo } from 'lib/terra'
 import { ErrorTypes, APIError } from 'lib/error'
 import { num } from 'lib/num'
 import { AssetEntity } from 'orm'
-import { ContractService, PriceService } from 'services'
+import { GovService, PriceService } from 'services'
 import { ListedAsset, AssetOHLC, AssetHistory, HistoryRanges, OraclePrice, MarketPool } from 'types'
 
 @Service()
 export class AssetService {
   constructor(
     @InjectRepository(AssetEntity) private readonly assetRepo: Repository<AssetEntity>,
-    @Inject((type) => ContractService) private readonly contractService: ContractService,
+    @Inject((type) => GovService) private readonly govService: GovService,
     @Inject((type) => PriceService) private readonly priceService: PriceService
   ) {}
 
   async get(conditions: FindConditions<AssetEntity>): Promise<AssetEntity> {
     const asset = await this.assetRepo.findOne({
       ...conditions,
-      contract: conditions.contract || this.contractService.getContract(),
+      gov: conditions.gov || this.govService.getGov(),
     })
 
     if (!asset) {
@@ -31,8 +31,7 @@ export class AssetService {
   }
 
   async getAll(): Promise<AssetEntity[]> {
-    const contract = this.contractService.getContract()
-    return this.assetRepo.find({ contract })
+    return this.assetRepo.find({ gov: this.govService.getGov() })
   }
 
   async getListedAssets(): Promise<ListedAsset[]> {

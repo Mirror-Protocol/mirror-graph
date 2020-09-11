@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Column } from 'typeorm'
 import { CodeIds } from 'types'
 
-@Entity('contract')
-export class ContractEntity {
+@Entity('gov')
+export class GovEntity {
   @CreateDateColumn()
   createdAt: Date
 
@@ -16,6 +16,12 @@ export class ContractEntity {
   codeIds: CodeIds
 
   @Column()
+  chainId: string
+
+  @Column()
+  owner: string
+
+  @Column()
   gov: string
 
   @Column()
@@ -26,10 +32,4 @@ export class ContractEntity {
 
   @Column()
   mirrorToken: string
-
-  @Column()
-  owner: string
-
-  @Column()
-  chainId: string
 }

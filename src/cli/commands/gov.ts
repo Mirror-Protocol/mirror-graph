@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { GovService, AssetService } from 'services'
+import { WhitelistingService, AssetService } from 'services'
 import { getKey } from 'lib/keystore'
 import * as logger from 'lib/logger'
 import { TxWallet } from 'lib/terra'
@@ -22,7 +22,7 @@ async function writeOracleAddresses(): Promise<void> {
 }
 
 export function whitelisting(): void {
-  const govService = Container.get(GovService)
+  const whitelistingService = Container.get(WhitelistingService)
 
   program
     .command('whitelisting <symbol> <name>')
@@ -30,7 +30,7 @@ export function whitelisting(): void {
     .requiredOption('--owner <owner-password>', 'owner key password')
     .requiredOption('--oracle <oracle-password>', 'oracle key password')
     .action(async (symbol, name, { owner, oracle }) => {
-      await govService.whitelisting(
+      await whitelistingService.whitelisting(
         symbol,
         name,
         new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner)),
