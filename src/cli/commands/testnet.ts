@@ -84,7 +84,7 @@ export function testnet(): void {
         }
         await mintService.mint(asset.symbol, Coin.fromString('1000000000uusd'), wallet)
 
-        const { balance } = await accountService.getBalance(asset.symbol, wallet.key.accAddress)
+        const { balance } = await accountService.getBalance(wallet.key.accAddress, asset.symbol)
         const oraclePrice = await assetService.getOraclePrice(asset.symbol)
 
         console.log(
