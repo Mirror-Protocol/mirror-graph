@@ -14,7 +14,7 @@ export class MarketService {
 
     // approve token transfer to market contract
     await wallet.execute(asset.token.address, {
-      increaseAllowance: { amount: assetCoin.amount.toString(), spender: asset.market },
+      increaseAllowance: { amount: assetCoin.amount.toString(), spender: asset.market.address },
     })
 
     return wallet.execute(

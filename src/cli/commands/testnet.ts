@@ -160,9 +160,9 @@ export function testnet(): void {
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
 
       // approve coin transfer
-      await wallet.execute(asset.token.address, {
-        increaseAllowance: { amount: sellCoin.amount.toString(), spender: asset.market },
-      })
+      // await wallet.execute(asset.token.address, {
+      //   increaseAllowance: { amount: sellCoin.amount.toString(), spender: asset.market },
+      // })
 
       // execute sell
       console.log(`sell ${sellCoin.amount.toString()}${sellCoin.denom}`)
