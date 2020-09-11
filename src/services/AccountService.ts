@@ -11,6 +11,10 @@ export class AccountService {
   constructor(@Inject((type) => AssetService) private readonly assetService: AssetService) {}
 
   async getBalance(address: string, symbol: string): Promise<AssetBalance> {
+    if (symbol === 'uusd') {
+      const coin = (await lcd.bank.balance(address)).get(symbol)
+      return { symbol, balance: coin.amount.toString() }
+    }
     const asset = await this.assetService.get({ symbol })
     const { balance } = await contractQuery(asset.token.address, { balance: { address } })
 
