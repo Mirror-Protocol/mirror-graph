@@ -10,37 +10,37 @@ export class MintService {
 
   async mint(symbol: string, coin: Coin, wallet: TxWallet): Promise<TxInfo> {
     const asset = await this.assetService.get({ symbol })
-    return wallet.execute(asset.mint, { mint: {} }, new Coins([coin]))
+    return wallet.execute(asset.mint.address, { mint: {} }, new Coins([coin]))
   }
 
   async burn(symbol: string, amount: string, wallet: TxWallet): Promise<TxInfo> {
     const asset = await this.assetService.get({ symbol })
-    return wallet.execute(asset.mint, { burn: { symbol, amount } })
+    return wallet.execute(asset.mint.address, { burn: { symbol, amount } })
   }
 
   // owner: minter
   async auction(symbol: string, amount: string, owner: string, wallet: TxWallet): Promise<TxInfo> {
     const asset = await this.assetService.get({ symbol })
-    return wallet.execute(asset.mint, { auction: { amount, owner } })
+    return wallet.execute(asset.mint.address, { auction: { amount, owner } })
   }
 
   async config(symbol: string, amount: string, owner: string, wallet: TxWallet): Promise<TxInfo> {
     const asset = await this.assetService.get({ symbol })
-    return wallet.execute(asset.mint, { updateConfig: { amount, owner } })
+    return wallet.execute(asset.mint.address, { updateConfig: { amount, owner } })
   }
 
   async getPosition(symbol: string, address: string): Promise<MintPosition> {
     const asset = await this.assetService.get({ symbol })
-    return contractQuery<MintPosition>(asset.mint, { position: { address } })
+    return contractQuery<MintPosition>(asset.mint.address, { position: { address } })
   }
 
   async getConfigGeneral(symbol: string): Promise<MintConfigGeneral> {
     const asset = await this.assetService.get({ symbol })
-    return contractQuery<MintConfigGeneral>(asset.mint, { configGeneral: {} })
+    return contractQuery<MintConfigGeneral>(asset.mint.address, { configGeneral: {} })
   }
 
   async getConfigAsset(symbol: string): Promise<MintConfigAsset> {
     const asset = await this.assetService.get({ symbol })
-    return contractQuery<MintConfigAsset>(asset.mint, { configAsset: {} })
+    return contractQuery<MintConfigAsset>(asset.mint.address, { configAsset: {} })
   }
 }

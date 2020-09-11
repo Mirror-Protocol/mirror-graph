@@ -12,7 +12,7 @@ export class AccountService {
 
   async getBalance(address: string, symbol: string): Promise<AssetBalance> {
     const asset = await this.assetService.get({ symbol })
-    const { balance } = await contractQuery(asset.token, { balance: { address } })
+    const { balance } = await contractQuery(asset.token.address, { balance: { address } })
 
     return { symbol, balance }
   }

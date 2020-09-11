@@ -14,6 +14,9 @@ const initMsgs = {
   },
   gov: {
     mirrorToken: undefined,
+    quorum: '0.3',
+    threshold: '0.5',
+    votingPeriod: 10000,
   },
   token: {
     decimals: 6,

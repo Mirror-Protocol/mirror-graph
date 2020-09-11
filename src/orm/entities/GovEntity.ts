@@ -1,5 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Column } from 'typeorm'
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Column,
+  JoinColumn,
+  OneToOne,
+} from 'typeorm'
 import { CodeIds } from 'types'
+import { ContractEntity } from 'orm'
 
 @Entity('gov')
 export class GovEntity {
@@ -21,15 +30,19 @@ export class GovEntity {
   @Column()
   owner: string
 
-  @Column()
-  gov: string
+  @OneToOne((type) => ContractEntity, { eager: true })
+  @JoinColumn()
+  gov: ContractEntity
 
-  @Column()
-  factory: string
+  @OneToOne((type) => ContractEntity, { eager: true })
+  @JoinColumn()
+  factory: ContractEntity
 
-  @Column()
-  collector: string
+  @OneToOne((type) => ContractEntity, { eager: true })
+  @JoinColumn()
+  collector: ContractEntity
 
-  @Column()
-  mirrorToken: string
+  @OneToOne((type) => ContractEntity, { eager: true })
+  @JoinColumn()
+  mirrorToken: ContractEntity
 }

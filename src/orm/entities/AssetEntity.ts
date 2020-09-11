@@ -6,12 +6,13 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToOne,
   Index,
 } from 'typeorm'
-import { GovEntity } from 'orm'
+import { GovEntity, ContractEntity } from 'orm'
 
 @Entity('asset')
-@Index('index_asset_symbol_and_contract', ['symbol', 'contract'], { unique: true })
+@Index('index_asset_symbol_and_gov', ['symbol', 'gov'], { unique: true })
 export class AssetEntity {
   @CreateDateColumn()
   createdAt: Date
@@ -28,20 +29,25 @@ export class AssetEntity {
   @Column()
   name: string
 
-  @Column({ nullable: true })
-  mint?: string
+  @OneToOne((type) => ContractEntity, { eager: true })
+  @JoinColumn()
+  mint?: ContractEntity
 
-  @Column()
-  market: string
+  @OneToOne((type) => ContractEntity, { eager: true })
+  @JoinColumn()
+  market: ContractEntity
 
-  @Column()
-  token: string
+  @OneToOne((type) => ContractEntity, { eager: true })
+  @JoinColumn()
+  token: ContractEntity
 
-  @Column()
-  lpToken: string
+  @OneToOne((type) => ContractEntity, { eager: true })
+  @JoinColumn()
+  lpToken: ContractEntity
 
-  @Column({ nullable: true })
-  oracle?: string
+  @OneToOne((type) => ContractEntity, { eager: true })
+  @JoinColumn()
+  oracle?: ContractEntity
 
   @ManyToOne(() => GovEntity, { onDelete: 'CASCADE' })
   @JoinColumn()

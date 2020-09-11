@@ -1,6 +1,7 @@
+import * as fs from 'fs'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { GovService, WhitelistingService } from 'services'
+import { GovService } from 'services'
 import * as logger from 'lib/logger'
 import { TxWallet } from 'lib/terra'
 import { getKey } from 'lib/keystore'
@@ -8,7 +9,6 @@ import config from 'config'
 
 export function contract(): void {
   const govService = Container.get(GovService)
-  const whitelistingService = Container.get(WhitelistingService)
 
   program
     .command('store-code')
@@ -25,21 +25,32 @@ export function contract(): void {
     .option('--token', 'token contract')
     .action(
       async ({ password, all, collector, factory, gov, market, mint, oracle, staking, token }) => {
-        const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
-        const codeIds = {
-          collector:
-            (collector || all) && (await wallet.storeCode('src/contracts/mirror_collector.wasm')),
-          factory:
-            (factory || all) && (await wallet.storeCode('src/contracts/mirror_factory.wasm')),
-          gov: (gov || all) && (await wallet.storeCode('src/contracts/mirror_gov.wasm')),
-          market: (market || all) && (await wallet.storeCode('src/contracts/mirror_market.wasm')),
-          mint: (mint || all) && (await wallet.storeCode('src/contracts/mirror_mint.wasm')),
-          oracle: (oracle || all) && (await wallet.storeCode('src/contracts/mirror_oracle.wasm')),
-          staking:
-            (staking || all) && (await wallet.storeCode('src/contracts/mirror_staking.wasm')),
-          token: (token || all) && (await wallet.storeCode('src/contracts/mirror_token.wasm')),
+        // eslint-disable-next-line
+        let codeIds: any = {}
+        try {
+          codeIds = JSON.parse(fs.readFileSync('./codeIds.json', 'utf8') || '{}')
+        } catch (error) {
+          console.log('there is no codeIds.json file')
         }
+
+        const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
+
+        if (collector || all)
+          codeIds.collector = await wallet.storeCode('src/contracts/mirror_collector.wasm')
+        if (factory || all)
+          codeIds.factory = await wallet.storeCode('src/contracts/mirror_factory.wasm')
+        if (gov || all) codeIds.gov = await wallet.storeCode('src/contracts/mirror_gov.wasm')
+        if (market || all)
+          codeIds.market = await wallet.storeCode('src/contracts/mirror_market.wasm')
+        if (mint || all) codeIds.mint = await wallet.storeCode('src/contracts/mirror_mint.wasm')
+        if (oracle || all)
+          codeIds.oracle = await wallet.storeCode('src/contracts/mirror_oracle.wasm')
+        if (staking || all)
+          codeIds.staking = await wallet.storeCode('src/contracts/mirror_staking.wasm')
+        if (token || all) codeIds.token = await wallet.storeCode('src/contracts/mirror_token.wasm')
+
         logger.info(codeIds)
+        fs.writeFileSync('./codeIds.json', JSON.stringify(codeIds))
       }
     )
 
@@ -48,25 +59,12 @@ export function contract(): void {
     .description('create gov')
     .requiredOption('-p, --password <owner-password>', 'owner key password')
     .action(async ({ password }) => {
-      const codeIds = {
-        collector: 59,
-        factory: 42,
-        gov: 60,
-        market: 61,
-        mint: 45,
-        oracle: 46,
-        staking: 47,
-        token: 48,
+      const codeIds = JSON.parse(fs.readFileSync('./codeIds.json', 'utf8'))
+      if (!codeIds) {
+        throw new Error('not provided codeIds.json')
       }
-      const gov = await govService.create(
-        codeIds,
-        getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password)
-      )
-
-      await govService.load(-1)
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
-      await whitelistingService.create(wallet, codeIds)
-
+      const gov = await govService.create(wallet, codeIds)
       logger.info(`created mirror gov. id: ${gov.id}`)
     })
 }

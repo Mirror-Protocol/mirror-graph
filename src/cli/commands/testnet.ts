@@ -2,13 +2,7 @@ import { Coin, Coins } from '@terra-money/terra.js'
 import * as fs from 'fs'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import {
-  WhitelistingService,
-  AssetService,
-  MintService,
-  MarketService,
-  AccountService,
-} from 'services'
+import { GovService, AssetService, MintService, MarketService, AccountService } from 'services'
 import { getKey } from 'lib/keystore'
 import * as logger from 'lib/logger'
 import { TxWallet, contractQuery } from 'lib/terra'
@@ -44,7 +38,7 @@ async function prices(): Promise<void> {
 }
 
 export function testnet(): void {
-  const whitelistingService = Container.get(WhitelistingService)
+  const govService = Container.get(GovService)
   const mintService = Container.get(MintService)
   const marketService = Container.get(MarketService)
   const assetService = Container.get(AssetService)
@@ -53,8 +47,7 @@ export function testnet(): void {
   program
     .command('whitelisting-testnet')
     .requiredOption('--owner <owner-password>', 'owner key password')
-    .requiredOption('--oracle <oracle-password>', 'oracle key password')
-    .action(async ({ owner, oracle }) => {
+    .action(async ({ owner }) => {
       const assets = {
         mAAPL: 'Apple',
         mGOOGL: 'Google',
@@ -69,11 +62,10 @@ export function testnet(): void {
         mVIXY: 'ProShares VIX',
       }
       for (const symbol of Object.keys(assets)) {
-        await whitelistingService.whitelisting(
+        await govService.whitelisting(
           symbol,
           assets[symbol],
-          new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner)),
-          new TxWallet(getKey(config.KEYSTORE_PATH, config.ORACLE_KEY, oracle))
+          new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
         )
       }
       await writeOracleAddresses()
@@ -118,7 +110,7 @@ export function testnet(): void {
     const coin = Coin.fromString(coinString)
     const asset = await assetService.get({ symbol })
 
-    const simulated = await contractQuery(asset.market, {
+    const simulated = await contractQuery(asset.market.address, {
       simulation: { offerAmount: coin.amount.toString(), operation: 'buy', symbol },
     })
 
@@ -129,7 +121,7 @@ export function testnet(): void {
     const coin = Coin.fromString(coinString)
     const asset = await assetService.get({ symbol: coin.denom })
 
-    const simulated = await contractQuery(asset.market, {
+    const simulated = await contractQuery(asset.market.address, {
       simulation: { offerAmount: coin.amount.toString(), operation: 'sell', symbol: coin.denom },
     })
 
@@ -145,7 +137,7 @@ export function testnet(): void {
 
       logger.info(`buy ${symbol}, ${coin}`)
       const tx = await wallet
-        .execute(asset.market, { buy: { symbol } }, new Coins(coin))
+        .execute(asset.market.address, { buy: { symbol } }, new Coins(coin))
         .catch((error) => {
           throw new Error(error)
         })
@@ -168,13 +160,13 @@ export function testnet(): void {
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
 
       // approve coin transfer
-      await wallet.execute(asset.token, {
+      await wallet.execute(asset.token.address, {
         increaseAllowance: { amount: sellCoin.amount.toString(), spender: asset.market },
       })
 
       // execute sell
       console.log(`sell ${sellCoin.amount.toString()}${sellCoin.denom}`)
-      const tx = await wallet.execute(asset.market, {
+      const tx = await wallet.execute(asset.market.address, {
         sell: { symbol: sellCoin.denom, amount: sellCoin.amount.toString() },
       })
 

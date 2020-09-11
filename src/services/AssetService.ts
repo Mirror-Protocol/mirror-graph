@@ -20,7 +20,7 @@ export class AssetService {
   async get(conditions: FindConditions<AssetEntity>): Promise<AssetEntity> {
     const asset = await this.assetRepo.findOne({
       ...conditions,
-      gov: conditions.gov || this.govService.getGov(),
+      gov: conditions.gov || this.govService.get(),
     })
 
     if (!asset) {
@@ -31,7 +31,7 @@ export class AssetService {
   }
 
   async getAll(): Promise<AssetEntity[]> {
-    return this.assetRepo.find({ gov: this.govService.getGov() })
+    return this.assetRepo.find({ gov: this.govService.get() })
   }
 
   async getListedAssets(): Promise<ListedAsset[]> {
@@ -54,19 +54,19 @@ export class AssetService {
 
   async getContractInfo(symbol: string): Promise<void> {
     const asset = await this.get({ symbol })
-    console.log(await contractInfo(asset.mint))
-    console.log(await contractQuery(asset.mint, { configGeneral: {} }))
-    console.log(await contractQuery(asset.mint, { configAsset: {} }))
+    console.log(await contractInfo(asset.mint.address))
+    console.log(await contractQuery(asset.mint.address, { configGeneral: {} }))
+    console.log(await contractQuery(asset.mint.address, { configAsset: {} }))
   }
 
   async getOraclePrice(symbol: string): Promise<OraclePrice> {
     const asset = await this.get({ symbol })
-    return contractQuery<OraclePrice>(asset.oracle, { price: {} })
+    return contractQuery<OraclePrice>(asset.oracle.address, { price: {} })
   }
 
   async getPool(symbol: string): Promise<MarketPool> {
     const asset = await this.get({ symbol })
-    return contractQuery<MarketPool>(asset.market, { pool: {} })
+    return contractQuery<MarketPool>(asset.market.address, { pool: {} })
   }
 
   async getPrice(symbol: string): Promise<string> {

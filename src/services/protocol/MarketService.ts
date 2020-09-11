@@ -13,12 +13,12 @@ export class MarketService {
     const asset = await this.assetService.get({ symbol: assetCoin.denom })
 
     // approve token transfer to market contract
-    await wallet.execute(asset.token, {
+    await wallet.execute(asset.token.address, {
       increaseAllowance: { amount: assetCoin.amount.toString(), spender: asset.market },
     })
 
     return wallet.execute(
-      asset.market,
+      asset.market.address,
       { provideLiquidity: { coins: [assetCoin.toData(), collateralCoin.toData()] } },
       new Coins([collateralCoin])
     )
@@ -27,10 +27,10 @@ export class MarketService {
   async withdrawLiquidity(symbol: string, amount: string, wallet: TxWallet): Promise<TxInfo> {
     const asset = await this.assetService.get({ symbol })
 
-    return wallet.execute(asset.market, { withdrawLiquidity: { amount } })
+    return wallet.execute(asset.market.address, { withdrawLiquidity: { amount } })
   }
 
   async getMarketContractInfo(asset: AssetEntity): Promise<MarketContractInfo> {
-    return contractInfo<MarketContractInfo>(asset.market)
+    return contractInfo<MarketContractInfo>(asset.market.address)
   }
 }

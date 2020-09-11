@@ -15,3 +15,15 @@ export interface ContractInfo {
   owner: string
   migratable: boolean
 }
+
+export enum ContractType {
+  COLLECTOR = 'collector',
+  FACTORY = 'factory',
+  GOV = 'gov',
+  MARKET = 'market',
+  MINT = 'mint',
+  ORACLE = 'oracle',
+  STAKING = 'staking',
+  TOKEN = 'token',
+  LPTOKEN = 'lptoken',
+}
