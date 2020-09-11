@@ -15,7 +15,7 @@ async function writeOracleAddresses(): Promise<void> {
     if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
       continue
     }
-    address[asset.symbol.substring(1)] = asset.oracle
+    address[asset.symbol.substring(1)] = asset.oracle.address
   }
   fs.writeFileSync('./address.json', JSON.stringify(address))
   logger.info(address)

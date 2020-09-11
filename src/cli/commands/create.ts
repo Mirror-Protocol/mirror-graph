@@ -30,7 +30,7 @@ export function contract(): void {
         try {
           codeIds = JSON.parse(fs.readFileSync('./codeIds.json', 'utf8') || '{}')
         } catch (error) {
-          console.log('there is no codeIds.json file')
+          logger.info('there is no codeIds.json file')
         }
 
         const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
