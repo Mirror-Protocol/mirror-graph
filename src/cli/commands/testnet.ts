@@ -166,8 +166,14 @@ export function testnet(): void {
 
       // execute sell
       console.log(`sell ${sellCoin.amount.toString()}${sellCoin.denom}`)
-      const tx = await wallet.execute(asset.market.address, {
-        sell: { symbol: sellCoin.denom, amount: sellCoin.amount.toString() },
+      console.log(asset)
+      console.log(await accountService.getBalances(wallet.key.accAddress))
+      const tx = await wallet.execute(asset.token.address, {
+        send: {
+          amount: sellCoin.amount.toString(),
+          contract: asset.market.address,
+          msg: new Buffer('{"sell": {"max_spread": "0.1"}}').toString('base64'),
+        },
       })
 
       const offer = tx.logs[0].events[1].attributes[2].value
