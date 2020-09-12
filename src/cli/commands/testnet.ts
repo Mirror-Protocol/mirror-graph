@@ -168,11 +168,13 @@ export function testnet(): void {
       console.log(`sell ${sellCoin.amount.toString()}${sellCoin.denom}`)
       console.log(asset)
       console.log(await accountService.getBalances(wallet.key.accAddress))
+      const msg = Buffer.from('{"sell": {"max_spread": "0.1"}}').toString('base64')
+      console.log(msg)
       const tx = await wallet.execute(asset.token.address, {
         send: {
           amount: sellCoin.amount.toString(),
           contract: asset.market.address,
-          msg: new Buffer('{"sell": {"max_spread": "0.1"}}').toString('base64'),
+          msg,
         },
       })
 

@@ -69,8 +69,6 @@ export function contract(): void {
       logger.info(`created mirror gov. id: ${gov.id}`)
     })
 
-  // terracli tx wasm migrate terra1m90lan8ctecgdndc03wjmx29ujewnk5wvwc5sd {70} ‘{}’ --from {terra18tamrs6p3auq0ldz0h9nylptp7a2v9njpzkfc4} --chain-id tequila-0004
-
   program
     .command('migrate-token')
     .requiredOption('-p, --password <owner-password>', 'owner key password')
@@ -84,8 +82,25 @@ export function contract(): void {
       const assets = await assetService.getAll()
 
       for (const asset of assets) {
-        await wallet.migrate(asset.token.address, codeIds.token)
+        console.log(await wallet.migrate(asset.token.address, codeIds.token))
         await wallet.migrate(asset.lpToken.address, codeIds.token)
+      }
+    })
+
+  program
+    .command('migrate-market')
+    .requiredOption('-p, --password <owner-password>', 'owner key password')
+    .action(async ({ password }) => {
+      const codeIds = JSON.parse(fs.readFileSync('./codeIds.json', 'utf8'))
+      if (!codeIds) {
+        throw new Error('not provided codeIds.json')
+      }
+      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
+
+      const assets = await assetService.getAll()
+
+      for (const asset of assets) {
+        console.log(await wallet.migrate(asset.market.address, codeIds.market))
       }
     })
 }
