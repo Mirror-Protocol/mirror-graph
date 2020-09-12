@@ -82,7 +82,7 @@ export function testnet(): void {
         if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
           continue
         }
-        await mintService.mint(asset.symbol, Coin.fromString('1000000000uusd'), wallet)
+        await mintService.mint(asset.symbol, Coin.fromString('10000000000uusd'), wallet)
 
         const { balance } = await accountService.getBalance(wallet.key.accAddress, asset.symbol)
         const oraclePrice = await assetService.getOraclePrice(asset.symbol)
@@ -159,22 +159,14 @@ export function testnet(): void {
       const asset = await assetService.get({ symbol: sellCoin.denom })
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
 
-      // approve coin transfer
-      // await wallet.execute(asset.token.address, {
-      //   increaseAllowance: { amount: sellCoin.amount.toString(), spender: asset.market },
-      // })
-
       // execute sell
       console.log(`sell ${sellCoin.amount.toString()}${sellCoin.denom}`)
-      console.log(asset)
       console.log(await accountService.getBalances(wallet.key.accAddress))
-      const msg = Buffer.from('{"sell": {"max_spread": "0.1"}}').toString('base64')
-      console.log(msg)
       const tx = await wallet.execute(asset.token.address, {
         send: {
           amount: sellCoin.amount.toString(),
           contract: asset.market.address,
-          msg,
+          msg: Buffer.from('{"sell": {"max_spread": "0.1"}}').toString('base64'),
         },
       })
 

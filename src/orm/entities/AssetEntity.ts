@@ -47,6 +47,10 @@ export class AssetEntity {
 
   @OneToOne((type) => ContractEntity, { eager: true })
   @JoinColumn()
+  staking: ContractEntity
+
+  @OneToOne((type) => ContractEntity, { eager: true })
+  @JoinColumn()
   oracle?: ContractEntity
 
   @ManyToOne(() => GovEntity, { onDelete: 'CASCADE' })

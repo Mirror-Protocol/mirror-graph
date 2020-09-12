@@ -122,4 +122,8 @@ export class GovService {
     // save asset entity to database
     return this.assetRepo.save({ symbol, name, mint, token, lpToken, oracle, market, staking, gov })
   }
+
+  async save(gov: GovEntity): Promise<GovEntity> {
+    return this.govRepo.save(gov)
+  }
 }
