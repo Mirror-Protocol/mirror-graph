@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { GovService } from 'services'
+import { GovService, AssetService } from 'services'
 import * as logger from 'lib/logger'
 import { TxWallet } from 'lib/terra'
 import { getKey } from 'lib/keystore'
@@ -9,6 +9,7 @@ import config from 'config'
 
 export function contract(): void {
   const govService = Container.get(GovService)
+  const assetService = Container.get(AssetService)
 
   program
     .command('store-code')
@@ -66,5 +67,25 @@ export function contract(): void {
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
       const gov = await govService.create(wallet, codeIds)
       logger.info(`created mirror gov. id: ${gov.id}`)
+    })
+
+  // terracli tx wasm migrate terra1m90lan8ctecgdndc03wjmx29ujewnk5wvwc5sd {70} ‘{}’ --from {terra18tamrs6p3auq0ldz0h9nylptp7a2v9njpzkfc4} --chain-id tequila-0004
+
+  program
+    .command('migrate-token')
+    .requiredOption('-p, --password <owner-password>', 'owner key password')
+    .action(async ({ password }) => {
+      const codeIds = JSON.parse(fs.readFileSync('./codeIds.json', 'utf8'))
+      if (!codeIds) {
+        throw new Error('not provided codeIds.json')
+      }
+      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
+
+      const assets = await assetService.getAll()
+
+      for (const asset of assets) {
+        await wallet.migrate(asset.token.address, codeIds.token)
+        await wallet.migrate(asset.lpToken.address, codeIds.token)
+      }
     })
 }

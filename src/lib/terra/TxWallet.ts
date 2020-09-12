@@ -7,6 +7,7 @@ import {
   MsgStoreCode,
   MsgInstantiateContract,
   MsgExecuteContract,
+  MsgMigrateContract,
 } from '@terra-money/terra.js'
 import * as fs from 'fs'
 import * as logger from 'lib/logger'
@@ -116,5 +117,9 @@ export class TxWallet extends Wallet {
     return this.executeMsgs([
       new MsgExecuteContract(this.key.accAddress, contract, toSnakeCase(msg), coins),
     ])
+  }
+
+  async migrate(contract: string, newCodeId: number): Promise<TxInfo> {
+    return this.executeMsgs([new MsgMigrateContract(this.key.accAddress, contract, newCodeId, {})])
   }
 }
