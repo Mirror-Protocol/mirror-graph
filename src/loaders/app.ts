@@ -10,7 +10,7 @@ import { apiErrorHandler, APIError, ErrorTypes } from 'lib/error'
 import { error } from 'lib/response'
 
 const API_VERSION_PREFIX = '/v1'
-const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}mirrorprotocol\.(?:com)(?::\d{4,5})?(?:\/|$)/
+const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}mirrorprotocol\.com(?::\d{4,5})?(?:\/|$)/
 
 export async function initApp(): Promise<Koa> {
   const app = new Koa()
@@ -32,9 +32,9 @@ export async function initApp(): Promise<Koa> {
         origin: (ctx) => {
           const requestOrigin = ctx.get('Origin')
 
-          if (process.env.NODE_ENV !== 'production') {
-            return requestOrigin
-          }
+          // if (process.env.NODE_ENV !== 'production') {
+          //   return requestOrigin
+          // }
 
           return CORS_REGEXP.test(requestOrigin) ? requestOrigin : ''
         },
