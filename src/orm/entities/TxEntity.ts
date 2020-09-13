@@ -3,7 +3,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   Column,
-  OneToOne,
+  ManyToOne,
   JoinColumn,
   Index,
 } from 'typeorm'
@@ -34,7 +34,7 @@ export class TxEntity {
   @Column()
   datetime: Date
 
-  @OneToOne((type) => GovEntity, { onDelete: 'CASCADE' })
+  @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE' })
   @JoinColumn()
   gov: GovEntity
 }

@@ -4,7 +4,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   PrimaryGeneratedColumn,
-  OneToOne,
+  ManyToOne,
   JoinColumn,
   Index,
 } from 'typeorm'
@@ -42,7 +42,7 @@ export class PriceEntity {
   @Column('decimal', { precision: 40, scale: 6 })
   close: string
 
-  @OneToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
+  @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
   @JoinColumn()
   asset: AssetEntity
 }

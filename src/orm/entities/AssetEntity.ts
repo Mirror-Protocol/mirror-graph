@@ -5,6 +5,7 @@ import {
   UpdateDateColumn,
   Column,
   JoinColumn,
+  ManyToOne,
   OneToOne,
   Index,
 } from 'typeorm'
@@ -52,7 +53,7 @@ export class AssetEntity {
   @JoinColumn()
   oracle?: ContractEntity
 
-  @OneToOne(() => GovEntity, { onDelete: 'CASCADE' })
+  @ManyToOne(() => GovEntity, { onDelete: 'CASCADE' })
   @JoinColumn()
   gov: GovEntity
 }

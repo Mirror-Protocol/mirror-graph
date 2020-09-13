@@ -4,7 +4,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   PrimaryGeneratedColumn,
-  OneToOne,
+  ManyToOne,
   JoinColumn,
   Index,
 } from 'typeorm'
@@ -45,7 +45,7 @@ export class OraclePriceEntity {
   @Column('decimal', { precision: 40, scale: 6, default: '1' })
   priceMultiplier: string
 
-  @OneToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
+  @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
   @JoinColumn()
   asset: AssetEntity
 }

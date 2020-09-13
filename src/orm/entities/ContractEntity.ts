@@ -3,7 +3,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   Column,
-  OneToOne,
+  ManyToOne,
   JoinColumn,
   Index,
 } from 'typeorm'
@@ -25,7 +25,7 @@ export class ContractEntity {
   @Column({ type: 'enum', enum: ContractType })
   type: ContractType
 
-  @OneToOne((type) => GovEntity, { onDelete: 'CASCADE' })
+  @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE' })
   @JoinColumn()
   gov: GovEntity
 }
