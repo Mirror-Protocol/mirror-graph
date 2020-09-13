@@ -1,13 +1,14 @@
 import { ObjectType, Field, Int } from 'type-graphql'
 import { pick } from 'lodash'
 import { AssetEntity } from 'orm'
+import { ContractType } from 'types'
 
 @ObjectType()
 export class ListedAsset {
   constructor(asset: AssetEntity & { price: string }) {
     Object.assign(this, pick(asset, ['symbol', 'name', 'price']))
-    this.token = asset.token.address
-    this.market = asset.market.address
+    this.token = asset.getContract(ContractType.TOKEN).address
+    this.market = asset.getContract(ContractType.MARKET).address
   }
 
   @Field()

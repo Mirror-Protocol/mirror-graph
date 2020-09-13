@@ -17,13 +17,14 @@ export interface ContractInfo {
 }
 
 export enum ContractType {
-  COLLECTOR = 'collector',
-  FACTORY = 'factory',
-  GOV = 'gov',
-  MARKET = 'market',
-  MINT = 'mint',
-  ORACLE = 'oracle',
-  STAKING = 'staking',
-  TOKEN = 'token',
-  LPTOKEN = 'lptoken',
+  COLLECTOR = 'COLLECTOR',
+  FACTORY = 'FACTORY',
+  GOV = 'GOV',
+  MARKET = 'MARKET',
+  MINT = 'MINT',
+  ORACLE = 'ORACLE',
+  STAKING = 'STAKING',
+  TOKEN = 'TOKEN',
+  LP_TOKEN = 'LP_TOKEN',
+  MIRROR_TOKEN = 'MIRROR_TOKEN',
 }

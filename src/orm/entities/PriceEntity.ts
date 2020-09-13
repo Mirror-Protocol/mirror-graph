@@ -42,7 +42,7 @@ export class PriceEntity {
   @Column('decimal', { precision: 40, scale: 6 })
   close: string
 
-  @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
+  @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE', eager: true })
   @JoinColumn()
   asset: AssetEntity
 }

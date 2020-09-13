@@ -45,7 +45,7 @@ export class OraclePriceEntity {
   @Column('decimal', { precision: 40, scale: 6, default: '1' })
   priceMultiplier: string
 
-  @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
+  @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE', eager: true })
   @JoinColumn()
   asset: AssetEntity
 }

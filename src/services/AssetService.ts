@@ -6,8 +6,16 @@ import { contractQuery, contractInfo } from 'lib/terra'
 import { ErrorTypes, APIError } from 'lib/error'
 import { num } from 'lib/num'
 import { AssetEntity } from 'orm'
+import {
+  ListedAsset,
+  AssetOHLC,
+  AssetHistory,
+  HistoryRanges,
+  OraclePrice,
+  MarketPool,
+  ContractType,
+} from 'types'
 import { GovService, OraclePriceService } from 'services'
-import { ListedAsset, AssetOHLC, AssetHistory, HistoryRanges, OraclePrice, MarketPool } from 'types'
 
 @Service()
 export class AssetService {
@@ -54,19 +62,23 @@ export class AssetService {
 
   async getContractInfo(symbol: string): Promise<void> {
     const asset = await this.get({ symbol })
-    console.log(await contractInfo(asset.mint.address))
-    console.log(await contractQuery(asset.mint.address, { configGeneral: {} }))
-    console.log(await contractQuery(asset.mint.address, { configAsset: {} }))
+    console.log(await contractInfo(asset.getContract(ContractType.MINT).address))
+    console.log(
+      await contractQuery(asset.getContract(ContractType.MINT).address, { configGeneral: {} })
+    )
+    console.log(
+      await contractQuery(asset.getContract(ContractType.MINT).address, { configAsset: {} })
+    )
   }
 
   async getOraclePrice(symbol: string): Promise<OraclePrice> {
     const asset = await this.get({ symbol })
-    return contractQuery<OraclePrice>(asset.oracle.address, { price: {} })
+    return contractQuery<OraclePrice>(asset.getContract(ContractType.ORACLE).address, { price: {} })
   }
 
   async getPool(symbol: string): Promise<MarketPool> {
     const asset = await this.get({ symbol })
-    return contractQuery<MarketPool>(asset.market.address, { pool: {} })
+    return contractQuery<MarketPool>(asset.getContract(ContractType.MARKET).address, { pool: {} })
   }
 
   async getPrice(symbol: string): Promise<string> {

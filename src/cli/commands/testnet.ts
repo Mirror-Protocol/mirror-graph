@@ -2,11 +2,12 @@ import { Coin, Coins } from '@terra-money/terra.js'
 import * as fs from 'fs'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { GovService, AssetService, MintService, MarketService, AccountService } from 'services'
 import { getKey } from 'lib/keystore'
 import * as logger from 'lib/logger'
 import { TxWallet, contractQuery } from 'lib/terra'
 import { num } from 'lib/num'
+import { GovService, AssetService, MintService, MarketService, AccountService } from 'services'
+import { ContractType } from 'types'
 import config from 'config'
 
 async function writeOracleAddresses(): Promise<void> {
@@ -17,7 +18,7 @@ async function writeOracleAddresses(): Promise<void> {
     if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
       continue
     }
-    address[asset.symbol.substring(1)] = asset.oracle.address
+    address[asset.symbol.substring(1)] = asset.getContract(ContractType.ORACLE).address
   }
   fs.writeFileSync('./address.json', JSON.stringify(address))
   logger.info(address)
@@ -49,7 +50,7 @@ export function testnet(): void {
     .requiredOption('--owner <owner-password>', 'owner key password')
     .action(async ({ owner }) => {
       const assets = {
-        mAAPL: 'Apple',
+        // mAAPL: 'Apple',
         mGOOGL: 'Google',
         mTSLA: 'Tesla',
         mNFLX: 'Netflix',
@@ -110,7 +111,7 @@ export function testnet(): void {
     const coin = Coin.fromString(coinString)
     const asset = await assetService.get({ symbol })
 
-    const simulated = await contractQuery(asset.market.address, {
+    const simulated = await contractQuery(asset.getContract(ContractType.MARKET).address, {
       simulation: { offerAmount: coin.amount.toString(), operation: 'buy', symbol },
     })
 
@@ -121,7 +122,7 @@ export function testnet(): void {
     const coin = Coin.fromString(coinString)
     const asset = await assetService.get({ symbol: coin.denom })
 
-    const simulated = await contractQuery(asset.market.address, {
+    const simulated = await contractQuery(asset.getContract(ContractType.MARKET).address, {
       simulation: { offerAmount: coin.amount.toString(), operation: 'sell', symbol: coin.denom },
     })
 
@@ -137,7 +138,11 @@ export function testnet(): void {
 
       logger.info(`buy ${symbol}, ${coin}`)
       const tx = await wallet
-        .execute(asset.market.address, { buy: { symbol } }, new Coins(coin))
+        .execute(
+          asset.getContract(ContractType.MARKET).address,
+          { buy: { symbol } },
+          new Coins(coin)
+        )
         .catch((error) => {
           throw new Error(error)
         })
@@ -162,20 +167,28 @@ export function testnet(): void {
       // execute sell
       console.log(`sell ${sellCoin.amount.toString()}${sellCoin.denom}`)
       console.log(await accountService.getBalances(wallet.key.accAddress))
-      const tx = await wallet.execute(asset.token.address, {
+      const tx = await wallet.execute(asset.getContract(ContractType.TOKEN).address, {
         send: {
           amount: sellCoin.amount.toString(),
-          contract: asset.market.address,
+          contract: asset.getContract(ContractType.MARKET).address,
           msg: Buffer.from('{"sell": {"max_spread": "0.1"}}').toString('base64'),
         },
       })
 
-      const offer = tx.logs[0].events[1].attributes[2].value
-      const receive = tx.logs[0].events[1].attributes[3].value
-      const spread = tx.logs[0].events[1].attributes[4].value
-      const fee = tx.logs[0].events[1].attributes[5].value
+      const offer = tx.logs[0].events[1].attributes[7].value
+      const receive = tx.logs[0].events[1].attributes[8].value
+      const spread = tx.logs[0].events[1].attributes[9].value
+      const fee = tx.logs[0].events[1].attributes[10].value
 
       logger.info(`offer: ${offer}, receive: ${receive}, spread: ${spread}, fee ${fee}`)
+      logger.info(await accountService.getBalances(wallet.key.accAddress))
+    })
+
+  program
+    .command('balance')
+    .requiredOption('--owner <owner-password>', 'owner key password')
+    .action(async ({ owner }) => {
+      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
       logger.info(await accountService.getBalances(wallet.key.accAddress))
     })
 }

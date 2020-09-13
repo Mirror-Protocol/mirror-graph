@@ -6,14 +6,19 @@ import {
   Column,
   JoinColumn,
   ManyToOne,
-  OneToOne,
+  OneToMany,
   Index,
 } from 'typeorm'
 import { GovEntity, ContractEntity } from 'orm'
+import { ContractType } from 'types'
 
 @Entity('asset')
 @Index('index_asset_symbol_and_gov', ['symbol', 'gov'], { unique: true })
 export class AssetEntity {
+  constructor(options: Partial<AssetEntity>) {
+    Object.assign(this, options)
+  }
+
   @CreateDateColumn()
   createdAt: Date
 
@@ -29,31 +34,18 @@ export class AssetEntity {
   @Column()
   name: string
 
-  @OneToOne((type) => ContractEntity, { eager: true })
-  @JoinColumn()
-  mint?: ContractEntity
-
-  @OneToOne((type) => ContractEntity, { eager: true })
-  @JoinColumn()
-  market: ContractEntity
-
-  @OneToOne((type) => ContractEntity, { eager: true })
-  @JoinColumn()
-  token: ContractEntity
-
-  @OneToOne((type) => ContractEntity, { eager: true })
-  @JoinColumn()
-  lpToken: ContractEntity
-
-  @OneToOne((type) => ContractEntity, { eager: true })
-  @JoinColumn()
-  staking: ContractEntity
-
-  @OneToOne((type) => ContractEntity, { eager: true })
-  @JoinColumn()
-  oracle?: ContractEntity
-
-  @ManyToOne(() => GovEntity, { onDelete: 'CASCADE' })
+  @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE', eager: true })
   @JoinColumn()
   gov: GovEntity
+
+  @OneToMany((type) => ContractEntity, (contracts) => contracts.asset, {
+    cascade: true,
+    eager: true,
+  })
+  @JoinColumn()
+  contracts: ContractEntity[]
+
+  getContract(type: ContractType): ContractEntity {
+    return this.contracts.find((contract) => contract.type === type)
+  }
 }

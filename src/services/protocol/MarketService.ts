@@ -1,9 +1,9 @@
 import { Service, Inject } from 'typedi'
 import { Coin, Coins, TxInfo } from '@terra-money/terra.js'
-import { AssetEntity } from 'orm'
-import { MarketContractInfo } from 'types'
-import { AssetService } from 'services'
 import { contractInfo, TxWallet } from 'lib/terra'
+import { AssetEntity } from 'orm'
+import { MarketContractInfo, ContractType } from 'types'
+import { AssetService } from 'services'
 
 @Service()
 export class MarketService {
@@ -13,12 +13,15 @@ export class MarketService {
     const asset = await this.assetService.get({ symbol: assetCoin.denom })
 
     // approve token transfer to market contract
-    await wallet.execute(asset.token.address, {
-      increaseAllowance: { amount: assetCoin.amount.toString(), spender: asset.market.address },
+    await wallet.execute(asset.getContract(ContractType.TOKEN).address, {
+      increaseAllowance: {
+        amount: assetCoin.amount.toString(),
+        spender: asset.getContract(ContractType.MARKET).address,
+      },
     })
 
     return wallet.execute(
-      asset.market.address,
+      asset.getContract(ContractType.MARKET).address,
       { provideLiquidity: { coins: [assetCoin.toData(), collateralCoin.toData()] } },
       new Coins([collateralCoin])
     )
@@ -27,10 +30,12 @@ export class MarketService {
   async withdrawLiquidity(symbol: string, amount: string, wallet: TxWallet): Promise<TxInfo> {
     const asset = await this.assetService.get({ symbol })
 
-    return wallet.execute(asset.market.address, { withdrawLiquidity: { amount } })
+    return wallet.execute(asset.getContract(ContractType.MARKET).address, {
+      withdrawLiquidity: { amount },
+    })
   }
 
   async getMarketContractInfo(asset: AssetEntity): Promise<MarketContractInfo> {
-    return contractInfo<MarketContractInfo>(asset.market.address)
+    return contractInfo<MarketContractInfo>(asset.getContract(ContractType.MARKET).address)
   }
 }

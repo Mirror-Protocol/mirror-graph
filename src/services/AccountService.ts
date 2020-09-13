@@ -4,7 +4,7 @@ import { contractQuery } from 'lib/terra'
 import { lcd } from 'lib/terra'
 import { num } from 'lib/num'
 import { AssetService } from 'services'
-import { AssetBalance } from 'types'
+import { AssetBalance, ContractType } from 'types'
 
 @Service()
 export class AccountService {
@@ -16,7 +16,9 @@ export class AccountService {
       return { symbol, balance: coin.amount.toString() }
     }
     const asset = await this.assetService.get({ symbol })
-    const { balance } = await contractQuery(asset.token.address, { balance: { address } })
+    const { balance } = await contractQuery(asset.getContract(ContractType.TOKEN).address, {
+      balance: { address },
+    })
 
     return { symbol, balance }
   }

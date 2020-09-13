@@ -25,8 +25,7 @@ export class ContractService {
     initMsg: object
   ): Promise<ContractEntity> {
     const address = await wallet.instantiate(codeId, initMsg)
-    // return Object.assign(new ContractEntity(), { address, type, gov })
-    return this.contractRepo.save({ address, type, gov })
+    return new ContractEntity({ address, type, gov })
   }
 
   async createFactory(wallet: TxWallet, gov: GovEntity): Promise<ContractEntity> {
@@ -36,16 +35,16 @@ export class ContractService {
   async createGov(wallet: TxWallet, gov: GovEntity): Promise<ContractEntity> {
     return this.create(wallet, gov, ContractType.GOV, gov.codeIds.gov, {
       ...initMsgs.gov,
-      mirrorToken: gov.mirrorToken.address,
+      mirrorToken: gov.getContract(ContractType.MIRROR_TOKEN).address,
     })
   }
 
   async createCollector(wallet: TxWallet, gov: GovEntity): Promise<ContractEntity> {
     return this.create(wallet, gov, ContractType.COLLECTOR, gov.codeIds.collector, {
       ...initMsgs.collector,
-      govContract: gov.gov.address,
-      factoryContract: gov.factory.address,
-      mirrorToken: gov.mirrorToken.address,
+      govContract: gov.getContract(ContractType.GOV).address,
+      factoryContract: gov.getContract(ContractType.FACTORY).address,
+      mirrorToken: gov.getContract(ContractType.MIRROR_TOKEN).address,
     })
   }
 
@@ -70,6 +69,7 @@ export class ContractService {
   async createToken(
     wallet: TxWallet,
     gov: GovEntity,
+    type: ContractType,
     symbol: string,
     name: string,
     minter: ContractEntity
@@ -80,7 +80,7 @@ export class ContractService {
       name,
       mint: { cap: '100000000000', minter: minter.address },
     }
-    return this.create(wallet, gov, ContractType.TOKEN, gov.codeIds.token, initMsg)
+    return this.create(wallet, gov, type, gov.codeIds.token, initMsg)
   }
 
   async createMarket(
@@ -92,13 +92,13 @@ export class ContractService {
   ): Promise<{ market: ContractEntity; lpToken: ContractEntity; staking: ContractEntity }> {
     const market = await this.create(wallet, gov, ContractType.MARKET, gov.codeIds.market, {
       ...initMsgs.market,
-      commissionCollector: gov.collector.address,
+      commissionCollector: gov.getContract(ContractType.COLLECTOR).address,
       assetSymbol: symbol,
       assetToken: token.address,
       assetOracle: oracle?.address,
     })
 
-    const lpToken = await this.create(wallet, gov, ContractType.LPTOKEN, gov.codeIds.token, {
+    const lpToken = await this.create(wallet, gov, ContractType.LP_TOKEN, gov.codeIds.token, {
       ...initMsgs.token,
       symbol: `${symbol}-LP`,
       name: `${symbol}-${config.COLLATERAL_SYMBOL} LP`,
@@ -106,7 +106,7 @@ export class ContractService {
     })
 
     const staking = await this.create(wallet, gov, ContractType.STAKING, gov.codeIds.staking, {
-      mirrorToken: gov.mirrorToken.address,
+      mirrorToken: gov.getContract(ContractType.MIRROR_TOKEN).address,
       stakingToken: lpToken.address,
     })
 

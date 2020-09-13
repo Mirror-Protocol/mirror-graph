@@ -1,10 +1,11 @@
 import * as fs from 'fs'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { GovService, AssetService } from 'services'
 import { getKey } from 'lib/keystore'
 import * as logger from 'lib/logger'
 import { TxWallet } from 'lib/terra'
+import { ContractType } from 'types'
+import { GovService, AssetService } from 'services'
 import config from 'config'
 
 async function writeOracleAddresses(): Promise<void> {
@@ -15,7 +16,7 @@ async function writeOracleAddresses(): Promise<void> {
     if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
       continue
     }
-    address[asset.symbol.substring(1)] = asset.oracle.address
+    address[asset.symbol.substring(1)] = asset.getContract(ContractType.ORACLE).address
   }
   fs.writeFileSync('./address.json', JSON.stringify(address))
   logger.info(address)

@@ -5,13 +5,17 @@ import {
   UpdateDateColumn,
   Column,
   JoinColumn,
-  OneToOne,
+  OneToMany,
 } from 'typeorm'
-import { CodeIds } from 'types'
+import { CodeIds, ContractType } from 'types'
 import { ContractEntity } from 'orm'
 
 @Entity('gov')
 export class GovEntity {
+  constructor(options: Partial<GovEntity>) {
+    Object.assign(this, options)
+  }
+
   @CreateDateColumn()
   createdAt: Date
 
@@ -30,19 +34,15 @@ export class GovEntity {
   @Column()
   owner: string
 
-  @OneToOne((type) => ContractEntity, { eager: true })
+  @OneToMany((type) => ContractEntity, (contracts) => contracts.gov, { cascade: true, eager: true })
   @JoinColumn()
-  gov: ContractEntity
+  contracts: ContractEntity[]
 
-  @OneToOne((type) => ContractEntity, { eager: true })
-  @JoinColumn()
-  factory: ContractEntity
+  // @OneToMany((type) => AssetEntity, (assets) => assets.gov, { cascade: true, eager: true })
+  // @JoinColumn()
+  // assets: AssetEntity[]
 
-  @OneToOne((type) => ContractEntity, { eager: true })
-  @JoinColumn()
-  collector: ContractEntity
-
-  @OneToOne((type) => ContractEntity, { eager: true })
-  @JoinColumn()
-  mirrorToken: ContractEntity
+  getContract(type: ContractType): ContractEntity {
+    return this.contracts.find((contract) => contract.type === type)
+  }
 }

@@ -3,7 +3,7 @@ import { Msg, MsgMigrateContract } from '@terra-money/terra.js'
 import { Container } from 'typedi'
 import { program } from 'commander'
 import { GovService, AssetService } from 'services'
-import { CodeIds } from 'types'
+import { CodeIds, ContractType } from 'types'
 import * as logger from 'lib/logger'
 import { TxWallet } from 'lib/terra'
 import { getKey } from 'lib/keystore'
@@ -76,12 +76,12 @@ export function ownerCommands(): void {
     })
 
   program
-    .command('migrate <gov-id> <contract>')
+    .command('migrate <gov-id> <contract-type>')
     .description(
       `migrate contract of <gov-id>. contract is one of [collector, factory, gov, market, mint, oracle, staking, token]`
     )
     .requiredOption('-p, --password <owner-password>', 'owner key password')
-    .action(async (govId, contract, { password }) => {
+    .action(async (govId, contract: string, { password }) => {
       const codeIds = loadCodeIds()
       if (!codeIds) {
         logger.error('not provided codeIds.json')
@@ -101,17 +101,45 @@ export function ownerCommands(): void {
         case 'collector':
         case 'factory':
         case 'gov':
-          msgs.push(new MsgMigrateContract(owner, gov[contract].address, codeIds[contract], {}))
+          msgs.push(
+            new MsgMigrateContract(
+              owner,
+              gov.getContract(ContractType[contract.toUpperCase()]).address,
+              codeIds[contract],
+              {}
+            )
+          )
           gov.codeIds[contract] = codeIds[contract]
           break
 
         case 'token': {
           const assets = await assetService.getAll()
           assets.map((asset) => {
-            msgs.push(new MsgMigrateContract(owner, asset.token.address, codeIds.token, {}))
-            msgs.push(new MsgMigrateContract(owner, asset.lpToken.address, codeIds.token, {}))
+            msgs.push(
+              new MsgMigrateContract(
+                owner,
+                asset.getContract(ContractType.TOKEN).address,
+                codeIds.token,
+                {}
+              )
+            )
+            msgs.push(
+              new MsgMigrateContract(
+                owner,
+                asset.getContract(ContractType.LP_TOKEN).address,
+                codeIds.token,
+                {}
+              )
+            )
           })
-          msgs.push(new MsgMigrateContract(owner, gov.mirrorToken.address, codeIds.token, {}))
+          msgs.push(
+            new MsgMigrateContract(
+              owner,
+              gov.getContract(ContractType.MIRROR_TOKEN).address,
+              codeIds.token,
+              {}
+            )
+          )
 
           gov.codeIds.token = codeIds.token
           break
