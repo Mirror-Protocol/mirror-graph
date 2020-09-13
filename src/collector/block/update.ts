@@ -6,7 +6,7 @@ import { BlockEntity } from 'orm'
 import { lcd } from 'lib/terra'
 import * as logger from 'lib/logger'
 import { getTxHashs } from './blockInfo'
-import { parseTransactions } from './parser'
+import { parseBlock } from '../parser'
 
 let lastBlockHeight
 
@@ -20,8 +20,8 @@ async function getNewBlockHeight(): Promise<number> {
   return lastBlockHeight + 1
 }
 
-async function saveBlock(entityManager: EntityManager, blockInfo: BlockInfo): Promise<BlockEntity> {
-  return entityManager.getRepository(BlockEntity).save({
+async function saveBlock(manager: EntityManager, blockInfo: BlockInfo): Promise<BlockEntity> {
+  return manager.getRepository(BlockEntity).save({
     chainId: blockInfo.block.header.chain_id,
     height: +blockInfo.block.header.height,
     datetime: new Date(blockInfo.block.header.time),
@@ -40,9 +40,9 @@ export async function updateBlock(): Promise<boolean> {
   }
 
   return getManager()
-    .transaction(async (entityManager: EntityManager) => {
-      await saveBlock(entityManager, blockInfo)
-      await parseTransactions(entityManager, blockInfo)
+    .transaction(async (manager: EntityManager) => {
+      await saveBlock(manager, blockInfo)
+      await parseBlock(manager, blockInfo)
     })
     .then(() => {
       lastBlockHeight = +blockInfo.block.header.height
@@ -50,10 +50,8 @@ export async function updateBlock(): Promise<boolean> {
       const { chain_id: chainId, time } = blockInfo.block.header
       const txs = blockInfo.block.data.txs.length
       logger.info(
-        `collected: ${chainId}, ${lastBlockHeight}, ${format(
-          new Date(time),
-          'yyyy-MM-dd HH:mm:ss'
-        )}, ${txs} txs`
+        `collected: ${chainId}, ${lastBlockHeight},`,
+        `${format(new Date(time), 'YYYY-MM-DD HH:mm:ss')}, ${txs} txs`
       )
       return true
     })

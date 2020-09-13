@@ -1,4 +1,4 @@
-import * as Bluebird from 'bluebird'
+import * as bluebird from 'bluebird'
 import { Service, Inject } from 'typedi'
 import { contractQuery } from 'lib/terra'
 import { lcd } from 'lib/terra'
@@ -25,7 +25,7 @@ export class AccountService {
     const terraBalances = (await lcd.bank.balance(address))
       .toArray()
       .map((coin) => ({ symbol: coin.denom, balance: coin.amount.toString() }))
-    const mirrorBalances = await Bluebird.map(this.assetService.getAll(), (asset) =>
+    const mirrorBalances = await bluebird.map(this.assetService.getAll(), (asset) =>
       this.getBalance(address, asset.symbol)
     )
     return [...terraBalances, ...mirrorBalances].filter((balance) =>

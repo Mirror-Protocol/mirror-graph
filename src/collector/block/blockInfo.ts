@@ -1,4 +1,5 @@
 import { BlockInfo, TxInfo } from '@terra-money/terra.js'
+import * as bluebird from 'bluebird'
 import * as crypto from 'crypto'
 import { checkTx } from 'lib/terra'
 
@@ -15,12 +16,7 @@ export function getTxHashs(blockInfo: BlockInfo): string[] {
 }
 
 export async function getTxInfos(blockInfo: BlockInfo): Promise<TxInfo[]> {
-  const txs = []
-  for (const txHash of getTxHashs(blockInfo)) {
-    const txInfo = await checkTx(txHash)
-    if (txInfo && !txInfo.code) {
-      txs.push(txInfo)
-    }
-  }
-  return txs
+  return bluebird
+    .map(getTxHashs(blockInfo), (txHash) => checkTx(txHash))
+    .filter((txInfo) => txInfo && !txInfo.code)
 }

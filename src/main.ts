@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import * as Bluebird from 'bluebird'
+import * as bluebird from 'bluebird'
 import { Container } from 'typedi'
 import { once } from 'lodash'
 import * as logger from 'lib/logger'
@@ -8,18 +8,18 @@ import { initORM, finalizeORM } from 'orm'
 import { initServer, finalizeServer, initMirror } from 'loaders'
 import { validateConfig } from 'config'
 
-Bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
-global.Promise = Bluebird as any // eslint-disable-line
+bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
+global.Promise = bluebird as any // eslint-disable-line
 
 async function gracefulShutdown(): Promise<void> {
   // Docker will stop to direct traffic 10 seconds after stop signal
   logger.info('Shutdown procedure started')
-  await Bluebird.delay(+process.env.SHUTDOWNTIMEOUT ?? 10000)
+  await bluebird.delay(+process.env.SHUTDOWNTIMEOUT ?? 10000)
 
   // Stop accepting new connection
   logger.info('Closing listening port')
   await finalizeServer()
-  await Bluebird.delay(+process.env.SHUTDOWNTIMEOUT ?? 30000)
+  await bluebird.delay(+process.env.SHUTDOWNTIMEOUT ?? 30000)
 
   // Close db connections
   logger.info('Closing db connection')

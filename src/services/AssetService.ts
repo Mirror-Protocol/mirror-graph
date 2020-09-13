@@ -1,4 +1,4 @@
-import * as Bluebird from 'bluebird'
+import * as bluebird from 'bluebird'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions } from 'typeorm'
 import { Service, Inject } from 'typedi'
@@ -6,7 +6,7 @@ import { contractQuery, contractInfo } from 'lib/terra'
 import { ErrorTypes, APIError } from 'lib/error'
 import { num } from 'lib/num'
 import { AssetEntity } from 'orm'
-import { GovService, PriceService } from 'services'
+import { GovService, OraclePriceService } from 'services'
 import { ListedAsset, AssetOHLC, AssetHistory, HistoryRanges, OraclePrice, MarketPool } from 'types'
 
 @Service()
@@ -14,7 +14,7 @@ export class AssetService {
   constructor(
     @InjectRepository(AssetEntity) private readonly assetRepo: Repository<AssetEntity>,
     @Inject((type) => GovService) private readonly govService: GovService,
-    @Inject((type) => PriceService) private readonly priceService: PriceService
+    @Inject((type) => OraclePriceService) private readonly oraclePriceService: OraclePriceService
   ) {}
 
   async get(conditions: FindConditions<AssetEntity>): Promise<AssetEntity> {
@@ -35,7 +35,7 @@ export class AssetService {
   }
 
   async getListedAssets(): Promise<ListedAsset[]> {
-    return Bluebird.map(
+    return bluebird.map(
       this.getAll(),
       async (asset) =>
         new ListedAsset(Object.assign(asset, { price: await this.getPrice(asset.symbol) }))
@@ -44,12 +44,12 @@ export class AssetService {
 
   async getOHLC(symbol: string, from: number, to: number): Promise<AssetOHLC> {
     const asset = await this.get({ symbol })
-    return this.priceService.getOHLC(asset, from, to)
+    return this.oraclePriceService.getOHLC(asset, from, to)
   }
 
   async getHistory(symbol: string, range: HistoryRanges): Promise<AssetHistory> {
     const asset = await this.get({ symbol })
-    return this.priceService.getHistory(asset, range)
+    return this.oraclePriceService.getHistory(asset, range)
   }
 
   async getContractInfo(symbol: string): Promise<void> {

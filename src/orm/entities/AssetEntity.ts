@@ -4,7 +4,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Column,
-  ManyToOne,
   JoinColumn,
   OneToOne,
   Index,
@@ -53,7 +52,7 @@ export class AssetEntity {
   @JoinColumn()
   oracle?: ContractEntity
 
-  @ManyToOne(() => GovEntity, { onDelete: 'CASCADE' })
+  @OneToOne(() => GovEntity, { onDelete: 'CASCADE' })
   @JoinColumn()
   gov: GovEntity
 }

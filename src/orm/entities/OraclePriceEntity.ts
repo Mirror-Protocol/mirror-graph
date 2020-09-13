@@ -10,11 +10,11 @@ import {
 } from 'typeorm'
 import { AssetEntity } from 'orm'
 
-@Entity('price')
-@Index('index_price_symbol_and_datetime_and_asset', ['symbol', 'datetime', 'asset'], {
+@Entity('oracle_price')
+@Index('index_oracle_price_symbol_and_datetime_and_asset', ['symbol', 'datetime', 'asset'], {
   unique: true,
 })
-export class PriceEntity {
+export class OraclePriceEntity {
   @CreateDateColumn()
   createdAt: Date
 
@@ -41,6 +41,9 @@ export class PriceEntity {
 
   @Column('decimal', { precision: 40, scale: 6 })
   close: string
+
+  @Column('decimal', { precision: 40, scale: 6, default: '1' })
+  priceMultiplier: string
 
   @OneToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
   @JoinColumn()

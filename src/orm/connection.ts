@@ -1,4 +1,4 @@
-import * as Bluebird from 'bluebird'
+import * as bluebird from 'bluebird'
 import {
   Connection,
   createConnection,
@@ -50,7 +50,7 @@ export async function initORM(container: ContainerInterface = undefined): Promis
     options[0]['name' as string] = 'default'
   }
 
-  connections = await Bluebird.map(options, (opt) => initConnection(opt, container))
+  connections = await bluebird.map(options, (opt) => initConnection(opt, container))
   return connections
 }
 

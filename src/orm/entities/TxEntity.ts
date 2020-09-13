@@ -3,12 +3,15 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   Column,
-  ManyToOne,
+  OneToOne,
   JoinColumn,
+  Index,
 } from 'typeorm'
 import { GovEntity } from 'orm'
+import { TxType } from 'types'
 
 @Entity('tx')
+@Index('index_tx_datetime', ['datetime'], { unique: true })
 export class TxEntity {
   @CreateDateColumn()
   createdAt: Date
@@ -19,8 +22,8 @@ export class TxEntity {
   @Column()
   txHash: string
 
-  @Column()
-  type: string
+  @Column({ type: 'enum', enum: TxType })
+  type: TxType
 
   @Column({ nullable: true })
   symbol?: string
@@ -31,7 +34,7 @@ export class TxEntity {
   @Column()
   datetime: Date
 
-  @ManyToOne(() => GovEntity, { onDelete: 'CASCADE' })
+  @OneToOne((type) => GovEntity, { onDelete: 'CASCADE' })
   @JoinColumn()
   gov: GovEntity
 }

@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import * as Bluebird from 'bluebird'
+import * as bluebird from 'bluebird'
 import { Container } from 'typedi'
 import { initORM } from 'orm'
 import { init as initErrorHandler, errorHandler } from 'error'
@@ -8,8 +8,8 @@ import * as logger from 'lib/logger'
 import { validateConfig } from 'config'
 import { collectBlock } from './block'
 
-Bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
-global.Promise = Bluebird as any // eslint-disable-line
+bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
+global.Promise = bluebird as any // eslint-disable-line
 
 async function loop(): Promise<void> {
   for (;;) {
@@ -17,7 +17,7 @@ async function loop(): Promise<void> {
 
     await collectBlock(now).catch(errorHandler)
 
-    await Bluebird.delay(100)
+    await bluebird.delay(100)
   }
 }
 

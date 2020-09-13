@@ -1,42 +1,34 @@
 import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
 import { EntityManager } from 'typeorm'
-import { Parser } from './Parser'
-import { TxEntity } from 'orm'
+import { MirrorParser } from './MirrorParser'
+import { TxEntity, ContractEntity } from 'orm'
 import { TxType } from 'types'
 
-export class MarketParser extends Parser {
-  public async parse(
-    entityManager: EntityManager,
+export class MarketParser extends MirrorParser {
+  async parse(
+    manager: EntityManager,
     txInfo: TxInfo,
     msg: MsgExecuteContract,
-    log: TxLog
-  ): Promise<boolean> {
-    if (msg.contract !== this.contractService.getContract().market) {
-      return false
-    }
-
+    log: TxLog,
+    contract: ContractEntity
+  ): Promise<void> {
     if (msg.execute_msg['buy'] || msg.execute_msg['sell']) {
-      await this.parseBuyOrSell(entityManager, txInfo, msg, log)
+      await this.parseBuyOrSell(manager, txInfo, msg, log, contract)
     }
-
-    return true
   }
 
   private async parseBuyOrSell(
-    entityManager: EntityManager,
+    manager: EntityManager,
     txInfo: TxInfo,
     msg: MsgExecuteContract,
-    log: TxLog
+    log: TxLog,
+    contract: ContractEntity
   ): Promise<void> {
-    const contract = this.contractService.getContract()
-    if (msg.contract !== contract.market) {
-      return
-    }
-
     const symbol = msg.execute_msg['buy']
       ? msg.execute_msg['buy'].symbol
       : msg.execute_msg['sell'].symbol
-    const transactionEntity = Object.assign(new TxEntity(), {
+
+    const tx = Object.assign(new TxEntity(), {
       txHash: txInfo.txhash,
       type: msg.execute_msg['buy'] ? TxType.BUY : TxType.SELL,
       symbol,
@@ -47,8 +39,8 @@ export class MarketParser extends Parser {
         fee: log.events[1].attributes[5].value,
       },
       datetime: new Date(txInfo.timestamp),
-      contract,
+      gov: contract.gov,
     })
-    await entityManager.getRepository(TxEntity).save(transactionEntity)
+    await manager.getRepository(TxEntity).save(tx)
   }
 }

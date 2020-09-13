@@ -4,11 +4,10 @@ import {
   CreateDateColumn,
   Column,
   OneToOne,
-  ManyToOne,
   JoinColumn,
   Index,
 } from 'typeorm'
-import { GovEntity, AssetEntity } from 'orm'
+import { GovEntity } from 'orm'
 import { ContractType } from 'types'
 
 @Entity('contract')
@@ -26,11 +25,7 @@ export class ContractEntity {
   @Column({ type: 'enum', enum: ContractType })
   type: ContractType
 
-  @OneToOne((type) => ContractEntity, { cascade: ['remove'] })
-  @JoinColumn()
-  asset: AssetEntity
-
-  @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE' })
+  @OneToOne((type) => GovEntity, { onDelete: 'CASCADE' })
   @JoinColumn()
   gov: GovEntity
 }

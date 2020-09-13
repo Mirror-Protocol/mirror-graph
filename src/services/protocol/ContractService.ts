@@ -5,6 +5,7 @@ import initMsgs from 'contracts/initMsgs'
 import { TxWallet } from 'lib/terra'
 import { ContractEntity, GovEntity } from 'orm'
 import { ContractType } from 'types'
+import config from 'config'
 
 @Service()
 export class ContractService {
@@ -100,7 +101,7 @@ export class ContractService {
     const lpToken = await this.create(wallet, gov, ContractType.LPTOKEN, gov.codeIds.token, {
       ...initMsgs.token,
       symbol: `${symbol}-LP`,
-      name: `${symbol}-UST LP`,
+      name: `${symbol}-${config.COLLATERAL_SYMBOL} LP`,
       mint: { cap: '100000000000', minter: market.address },
     })
 
