@@ -33,8 +33,8 @@ async function parseMsg(
   }
 }
 
-async function parseTransaction(manager: EntityManager, txInfo: TxInfo): Promise<void> {
-  await bluebird.mapSeries(txInfo.tx.msg, (msg, index) =>
+async function parseTransaction(manager: EntityManager, txInfo: TxInfo): Promise<void[]> {
+  return bluebird.mapSeries(txInfo.tx.msg, (msg, index) =>
     parseMsg(manager, txInfo, msg, txInfo.logs[index])
   )
 }

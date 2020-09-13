@@ -24,5 +24,5 @@ export async function parseMirrorMsg(
     return
   }
 
-  await parser[contract.type].parse(manager, txInfo, msg, log, contract)
+  return parser[contract.type].parse(manager, txInfo, msg, log, contract)
 }

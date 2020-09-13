@@ -12,7 +12,9 @@ let lastBlockHeight
 
 async function getNewBlockHeight(): Promise<number> {
   if (!lastBlockHeight) {
-    // return 219000
+    return undefined
+    // return (await lcd.tendermint.blockInfo(await getNewBlockHeight())).block.header.height
+
     const latestBlockFromDB = await getRepository(BlockEntity).findOne({ order: { id: 'DESC' } })
     lastBlockHeight = latestBlockFromDB?.height || 0
   }
@@ -48,16 +50,17 @@ export async function updateBlock(): Promise<boolean> {
       lastBlockHeight = +blockInfo.block.header.height
 
       const { chain_id: chainId, time } = blockInfo.block.header
-      const txs = blockInfo.block.data.txs.length
+      const txs = blockInfo.block.data.txs?.length || 0
       logger.info(
         `collected: ${chainId}, ${lastBlockHeight},`,
-        `${format(new Date(time), 'YYYY-MM-DD HH:mm:ss')}, ${txs} txs`
+        `${format(new Date(time), 'yyyy-MM-dd HH:mm:ss')}, ${txs} txs`
       )
       return true
     })
     .catch((error) => {
       sentry.captureException(error)
       logger.error(error)
+      throw new Error(error)
       return false
     })
 }

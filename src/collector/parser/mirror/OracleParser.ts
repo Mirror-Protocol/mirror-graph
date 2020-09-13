@@ -30,7 +30,8 @@ export class OracleParser extends MirrorParser {
     log: TxLog,
     contract: ContractEntity
   ): Promise<void> {
-    const asset = await this.assetService.get({ oracle: contract })
+    // const asset = await this.assetService.get({ oracle: contract })
+    const asset = contract.asset
     if (!asset) {
       return
     }

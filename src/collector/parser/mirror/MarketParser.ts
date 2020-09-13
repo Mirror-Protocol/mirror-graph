@@ -3,6 +3,7 @@ import { EntityManager } from 'typeorm'
 import { MirrorParser } from './MirrorParser'
 import { TxEntity, ContractEntity } from 'orm'
 import { TxType } from 'types'
+import * as logger from 'lib/logger'
 
 export class MarketParser extends MirrorParser {
   async parse(
@@ -12,25 +13,23 @@ export class MarketParser extends MirrorParser {
     log: TxLog,
     contract: ContractEntity
   ): Promise<void> {
-    if (msg.execute_msg['buy'] || msg.execute_msg['sell']) {
-      await this.parseBuyOrSell(manager, txInfo, msg, log, contract)
+    if (msg.execute_msg['buy']) {
+      await this.parseBuy(manager, txInfo, msg, log, contract)
     }
   }
 
-  private async parseBuyOrSell(
+  private async parseBuy(
     manager: EntityManager,
     txInfo: TxInfo,
     msg: MsgExecuteContract,
     log: TxLog,
     contract: ContractEntity
   ): Promise<void> {
-    const symbol = msg.execute_msg['buy']
-      ? msg.execute_msg['buy'].symbol
-      : msg.execute_msg['sell'].symbol
+    const { symbol } = msg.execute_msg['buy']
 
     const tx = Object.assign(new TxEntity(), {
       txHash: txInfo.txhash,
-      type: msg.execute_msg['buy'] ? TxType.BUY : TxType.SELL,
+      type: TxType.BUY,
       symbol,
       data: {
         offer: log.events[1].attributes[2].value,
@@ -41,6 +40,10 @@ export class MarketParser extends MirrorParser {
       datetime: new Date(txInfo.timestamp),
       gov: contract.gov,
     })
+
+    logger.info('contract', contract)
+    logger.info('buy', tx)
+
     await manager.getRepository(TxEntity).save(tx)
   }
 }
