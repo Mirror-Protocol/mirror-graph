@@ -44,7 +44,9 @@ export async function updateBlock(): Promise<boolean> {
   return getManager()
     .transaction(async (manager: EntityManager) => {
       await saveBlock(manager, blockInfo)
-      await parseBlock(manager, blockInfo)
+
+      const entities = await parseBlock(blockInfo)
+      await manager.save(entities)
     })
     .then(() => {
       lastBlockHeight = +blockInfo.block.header.height

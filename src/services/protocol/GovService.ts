@@ -37,107 +37,139 @@ export class GovService {
   }
 
   async create(wallet: TxWallet, codeIds: CodeIds): Promise<GovEntity> {
-    const gov = new GovEntity({
-      codeIds,
-      owner: wallet.key.accAddress,
-      chainId: config.TERRA_CHAIN_ID,
-      contracts: [],
-    })
-
-    // create factory contract
-    const factory = await this.contractService.createFactory(wallet, gov)
-    gov.contracts.push(factory)
-
-    // create mirror token contract
-    const mirrorToken = await this.contractService.createToken(
-      wallet,
-      gov,
-      ContractType.MIRROR_TOKEN,
-      config.MIRROR_TOKEN_SYMBOL,
-      config.MIRROR_TOKEN_NAME,
-      factory
-    )
-    gov.contracts.push(mirrorToken)
-
-    // create gov contract
-    gov.contracts.push(await this.contractService.createGov(wallet, gov))
-
-    // create collector contract
-    gov.contracts.push(await this.contractService.createCollector(wallet, gov))
-
-    // create market/lpToken/staking
-    const { market, lpToken, staking } = await this.contractService.createMarket(
-      wallet,
-      gov,
-      config.MIRROR_TOKEN_SYMBOL,
-      mirrorToken
-    )
-    gov.contracts.push(market, lpToken, staking)
-
-    // set mirror token to factory
-    await wallet.execute(factory.address, {
-      PostInitialize: { mirrorToken: mirrorToken.address },
-    })
-
     return getManager().transaction(async (manager: EntityManager) => {
-      // save gov entity
-      this.gov = await manager.save(gov)
+      const gov = new GovEntity({
+        codeIds,
+        owner: wallet.key.accAddress,
+        chainId: config.TERRA_CHAIN_ID,
+      })
 
-      // save asset entity of mirror token
-      await manager.save(
-        new AssetEntity({
-          symbol: config.MIRROR_TOKEN_SYMBOL,
-          name: config.MIRROR_TOKEN_NAME,
-          gov,
-          contracts: [mirrorToken, lpToken, market, staking],
-        })
+      const asset = new AssetEntity({
+        symbol: config.MIRROR_TOKEN_SYMBOL,
+        name: config.MIRROR_TOKEN_NAME,
+        gov,
+      })
+
+      // create factory contract
+      const factory = await this.contractService.createFactory(wallet, gov)
+
+      // create mirror token contract
+      const mirrorToken = await this.contractService.createToken(
+        wallet,
+        gov,
+        asset,
+        ContractType.MIRROR_TOKEN,
+        config.MIRROR_TOKEN_SYMBOL,
+        config.MIRROR_TOKEN_NAME,
+        factory.address
       )
+
+      // create gov contract
+      const govContract = await this.contractService.createGov(wallet, gov, mirrorToken.address)
+
+      // create collector contract
+      const collector = await this.contractService.createCollector(
+        wallet,
+        gov,
+        govContract.address,
+        factory.address,
+        mirrorToken.address
+      )
+
+      // create market/lpToken/staking
+      const { market, lpToken, staking } = await this.contractService.createMarket(
+        wallet,
+        gov,
+        asset,
+        config.MIRROR_TOKEN_SYMBOL,
+        mirrorToken.address,
+        mirrorToken.address,
+        collector.address
+      )
+
+      // set mirror token to factory
+      await wallet.execute(factory.address, {
+        PostInitialize: { mirrorToken: mirrorToken.address },
+      })
+
+      // save to db
+      await manager.save([
+        gov,
+        asset,
+        factory,
+        mirrorToken,
+        govContract,
+        collector,
+        market,
+        lpToken,
+        staking,
+      ])
 
       logger.info(`whitelisted asset ${config.MIRROR_TOKEN_SYMBOL}`)
 
-      return this.gov
+      return gov
     })
   }
 
   async whitelisting(symbol: string, name: string, wallet: TxWallet): Promise<AssetEntity> {
-    const gov = this.get()
+    return getManager().transaction(async (manager: EntityManager) => {
+      const gov = this.get()
 
-    logger.info('whitelisting', symbol, name)
+      logger.info('whitelisting', symbol, name)
 
-    if (await this.assetRepo.findOne({ symbol, gov })) {
-      throw new Error('already registered symbol asset')
-    }
+      if (await manager.getRepository(AssetEntity).findOne({ symbol, gov })) {
+        throw new Error('already registered symbol asset')
+      }
 
-    const contract = this.contractService
+      // save asset entity of mirror token
+      const asset = new AssetEntity({ symbol, name, gov })
 
-    const mint = await contract.createMint(wallet, gov)
-    const token = await contract.createToken(wallet, gov, ContractType.TOKEN, symbol, name, mint)
-    const oracle = await contract.createOracle(wallet, gov, token, symbol, config.COLLATERAL_SYMBOL)
-    const { market, lpToken, staking } = await contract.createMarket(
-      wallet,
-      gov,
-      symbol,
-      token,
-      oracle
-    )
+      const contract = this.contractService
 
-    // set asset infomation to mint contract
-    await wallet.execute(mint.address, {
-      PostInitialize: {
-        assetToken: token.address,
-        assetOracle: oracle.address,
-        assetSymbol: symbol,
-      },
-    })
+      const mint = await contract.createMint(wallet, gov, asset)
+      const token = await contract.createToken(
+        wallet,
+        gov,
+        asset,
+        ContractType.TOKEN,
+        symbol,
+        name,
+        mint.address
+      )
+      const mirrorToken = await contract.get({ gov, type: ContractType.MIRROR_TOKEN })
+      const oracle = await contract.createOracle(
+        wallet,
+        gov,
+        asset,
+        token.address,
+        symbol,
+        config.COLLATERAL_SYMBOL
+      )
+      const { market, lpToken, staking } = await contract.createMarket(
+        wallet,
+        gov,
+        asset,
+        symbol,
+        token.address,
+        mirrorToken.address,
+        oracle.address
+      )
 
-    logger.info(`whitelisted asset ${symbol}`)
+      // set asset infomation to mint contract
+      await wallet.execute(mint.address, {
+        PostInitialize: {
+          assetToken: token.address,
+          assetOracle: oracle.address,
+          assetSymbol: symbol,
+        },
+      })
 
-    // create asset entity
-    return this.assetRepo.save({
-      symbol,
-      name,
-      gov,
-      contracts: [mint, token, lpToken, oracle, market, staking],
+      logger.info(`whitelisted asset ${symbol}`)
+
+      // save to db
+      await manager.save([asset, mint, token, oracle, market, lpToken, staking])
+
+      return asset
     })
   }
 

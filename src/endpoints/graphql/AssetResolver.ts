@@ -19,7 +19,7 @@ export class AssetResolver {
     })
     range: HistoryRanges
   ): Promise<AssetHistory> {
-    return this.assetService.getHistory(symbol, range)
+    return this.assetService.getHistory(await this.assetService.get({ symbol }), range)
   }
 
   @Query((returns) => AssetOHLC, { description: 'Get asset Open/High/Low/Close' })
@@ -28,6 +28,6 @@ export class AssetResolver {
     @Arg('from', { description: 'timestamp' }) from: number,
     @Arg('to', { description: 'timestamp' }) to: number
   ): Promise<AssetOHLC> {
-    return this.assetService.getOHLC(symbol, from, to)
+    return this.assetService.getOHLC(await this.assetService.get({ symbol }), from, to)
   }
 }

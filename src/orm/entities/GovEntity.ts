@@ -1,14 +1,5 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Column,
-  JoinColumn,
-  OneToMany,
-} from 'typeorm'
-import { CodeIds, ContractType } from 'types'
-import { ContractEntity } from 'orm'
+import { Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Column } from 'typeorm'
+import { CodeIds } from 'types'
 
 @Entity('gov')
 export class GovEntity {
@@ -33,16 +24,4 @@ export class GovEntity {
 
   @Column()
   owner: string
-
-  @OneToMany((type) => ContractEntity, (contracts) => contracts.gov, { cascade: true, eager: true })
-  @JoinColumn()
-  contracts: ContractEntity[]
-
-  // @OneToMany((type) => AssetEntity, (assets) => assets.gov, { cascade: true, eager: true })
-  // @JoinColumn()
-  // assets: AssetEntity[]
-
-  getContract(type: ContractType): ContractEntity {
-    return this.contracts.find((contract) => contract.type === type)
-  }
 }

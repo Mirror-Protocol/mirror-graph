@@ -1,26 +1,10 @@
-import * as fs from 'fs'
 import { Container } from 'typedi'
 import { program } from 'commander'
 import { getKey } from 'lib/keystore'
-import * as logger from 'lib/logger'
 import { TxWallet } from 'lib/terra'
-import { ContractType } from 'types'
-import { GovService, AssetService } from 'services'
+import { GovService } from 'services'
 import config from 'config'
-
-async function writeOracleAddresses(): Promise<void> {
-  const assetService = Container.get(AssetService)
-  const assets = await assetService.getAll()
-  const address = {}
-  for (const asset of assets) {
-    if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
-      continue
-    }
-    address[asset.symbol.substring(1)] = asset.getContract(ContractType.ORACLE).address
-  }
-  fs.writeFileSync('./address.json', JSON.stringify(address))
-  logger.info(address)
-}
+import { writeOracleAddresses } from './utils'
 
 export function whitelisting(): void {
   const govService = Container.get(GovService)

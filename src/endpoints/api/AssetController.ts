@@ -32,6 +32,6 @@ export default class AssetController extends KoaController {
     const { symbol } = ctx.params
     const { range } = ctx.request.query
 
-    success(ctx, await this.assetService.getHistory(symbol, range))
+    success(ctx, await this.assetService.getHistory(await this.assetService.get({ symbol }), range))
   }
 }

@@ -1,33 +1,31 @@
 import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
-import { EntityManager } from 'typeorm'
 import { MirrorParser } from './MirrorParser'
 import { TxEntity, ContractEntity } from 'orm'
 import { TxType } from 'types'
-import * as logger from 'lib/logger'
 
 export class MarketParser extends MirrorParser {
   async parse(
-    manager: EntityManager,
     txInfo: TxInfo,
     msg: MsgExecuteContract,
     log: TxLog,
     contract: ContractEntity
-  ): Promise<void> {
+  ): Promise<unknown[]> {
     if (msg.execute_msg['buy']) {
-      await this.parseBuy(manager, txInfo, msg, log, contract)
+      return this.parseBuy(txInfo, msg, log, contract)
     }
+
+    return []
   }
 
   private async parseBuy(
-    manager: EntityManager,
     txInfo: TxInfo,
     msg: MsgExecuteContract,
     log: TxLog,
     contract: ContractEntity
-  ): Promise<void> {
+  ): Promise<unknown[]> {
     const { symbol } = msg.execute_msg['buy']
 
-    const tx = Object.assign(new TxEntity(), {
+    const tx = new TxEntity({
       txHash: txInfo.txhash,
       type: TxType.BUY,
       symbol,
@@ -41,9 +39,7 @@ export class MarketParser extends MirrorParser {
       gov: contract.gov,
     })
 
-    logger.info('contract', contract)
-    logger.info('buy', tx)
-
-    await manager.getRepository(TxEntity).save(tx)
+    return [tx]
+    // await manager.getRepository(TxEntity).save(tx)
   }
 }

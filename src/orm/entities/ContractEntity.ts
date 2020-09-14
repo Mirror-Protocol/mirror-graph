@@ -29,11 +29,11 @@ export class ContractEntity {
   @Column({ type: 'enum', enum: ContractType })
   type: ContractType
 
-  @ManyToOne((type) => GovEntity, (gov) => gov.contracts)
+  @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE', eager: true })
   @JoinColumn()
   gov: GovEntity
 
-  @ManyToOne((type) => AssetEntity, (asset) => asset.contracts)
+  @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE', eager: true })
   @JoinColumn()
   asset: AssetEntity
 }

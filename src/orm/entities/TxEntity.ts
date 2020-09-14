@@ -13,6 +13,10 @@ import { TxType } from 'types'
 @Entity('tx')
 @Index('index_tx_datetime', ['datetime'], { unique: true })
 export class TxEntity {
+  constructor(options: Partial<TxEntity>) {
+    Object.assign(this, options)
+  }
+
   @CreateDateColumn()
   createdAt: Date
 

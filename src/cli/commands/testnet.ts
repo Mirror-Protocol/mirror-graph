@@ -1,5 +1,4 @@
 import { Coin, Coins } from '@terra-money/terra.js'
-import * as fs from 'fs'
 import { Container } from 'typedi'
 import { program } from 'commander'
 import { getKey } from 'lib/keystore'
@@ -9,28 +8,15 @@ import { num } from 'lib/num'
 import { GovService, AssetService, MintService, MarketService, AccountService } from 'services'
 import { ContractType } from 'types'
 import config from 'config'
-
-async function writeOracleAddresses(): Promise<void> {
-  const assetService = Container.get(AssetService)
-  const assets = await assetService.getAll()
-  const address = {}
-  for (const asset of assets) {
-    if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
-      continue
-    }
-    address[asset.symbol.substring(1)] = asset.getContract(ContractType.ORACLE).address
-  }
-  fs.writeFileSync('./address.json', JSON.stringify(address))
-  logger.info(address)
-}
+import { writeOracleAddresses } from './utils'
 
 async function prices(): Promise<void> {
   const assetService = Container.get(AssetService)
   const assets = await assetService.getAll()
 
   for (const asset of assets) {
-    const pool = await assetService.getPool(asset.symbol)
-    const price = await assetService.getPrice(asset.symbol)
+    const pool = await assetService.getPool(asset)
+    const price = await assetService.getPrice(asset)
 
     logger.info(
       `${asset.symbol} - price: ${price}, assetPool: ${pool.assetPool}, collateral: ${pool.collateralPool}, total: ${pool.totalShare}`
@@ -50,17 +36,17 @@ export function testnet(): void {
     .requiredOption('--owner <owner-password>', 'owner key password')
     .action(async ({ owner }) => {
       const assets = {
-        // mAAPL: 'Apple',
+        mAAPL: 'Apple',
         mGOOGL: 'Google',
         mTSLA: 'Tesla',
-        mNFLX: 'Netflix',
-        mQQQ: 'Invesco QQQ Trust',
-        mTWTR: 'Twitter',
-        mBABA: 'Alibaba Group Holdings Ltd ADR',
-        mIAU: 'iShares Gold Trust',
-        mSLV: 'iShares Silver Trust',
-        mUSO: 'United States Oil Fund, LP',
-        mVIXY: 'ProShares VIX',
+        // mNFLX: 'Netflix',
+        // mQQQ: 'Invesco QQQ Trust',
+        // mTWTR: 'Twitter',
+        // mBABA: 'Alibaba Group Holdings Ltd ADR',
+        // mIAU: 'iShares Gold Trust',
+        // mSLV: 'iShares Silver Trust',
+        // mUSO: 'United States Oil Fund, LP',
+        // mVIXY: 'ProShares VIX',
       }
       for (const symbol of Object.keys(assets)) {
         await govService.whitelisting(
@@ -86,7 +72,7 @@ export function testnet(): void {
         await mintService.mint(asset.symbol, Coin.fromString('10000000000uusd'), wallet)
 
         const { balance } = await accountService.getBalance(wallet.key.accAddress, asset.symbol)
-        const oraclePrice = await assetService.getOraclePrice(asset.symbol)
+        const oraclePrice = await assetService.getOraclePrice(asset)
 
         console.log(
           `${asset.symbol} provide liquidity -`,
@@ -110,9 +96,22 @@ export function testnet(): void {
   program.command('buy-simul <symbol> <coin>').action(async (symbol, coinString) => {
     const coin = Coin.fromString(coinString)
     const asset = await assetService.get({ symbol })
+    const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
 
-    const simulated = await contractQuery(asset.getContract(ContractType.MARKET).address, {
+    const simulated = await contractQuery(marketContract.address, {
       simulation: { offerAmount: coin.amount.toString(), operation: 'buy', symbol },
+    })
+
+    logger.info(simulated)
+  })
+
+  program.command('buy-simul-reverse <coin>').action(async (symbol, coinString) => {
+    const coin = Coin.fromString(coinString)
+    const asset = await assetService.get({ symbol })
+    const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
+
+    const simulated = await contractQuery(marketContract.address, {
+      reverseSimulation: { askAmount: coin.amount.toString(), operation: 'buy' },
     })
 
     logger.info(simulated)
@@ -121,8 +120,9 @@ export function testnet(): void {
   program.command('sell-simul <coin>').action(async (coinString) => {
     const coin = Coin.fromString(coinString)
     const asset = await assetService.get({ symbol: coin.denom })
+    const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
 
-    const simulated = await contractQuery(asset.getContract(ContractType.MARKET).address, {
+    const simulated = await contractQuery(marketContract.address, {
       simulation: { offerAmount: coin.amount.toString(), operation: 'sell', symbol: coin.denom },
     })
 
@@ -135,14 +135,11 @@ export function testnet(): void {
     .action(async (symbol, coin, { owner }) => {
       const asset = await assetService.get({ symbol })
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
+      const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
 
       logger.info(`buy ${symbol}, ${coin}`)
       const tx = await wallet
-        .execute(
-          asset.getContract(ContractType.MARKET).address,
-          { buy: { symbol } },
-          new Coins(coin)
-        )
+        .execute(marketContract.address, { buy: { symbol } }, new Coins(coin))
         .catch((error) => {
           throw new Error(error)
         })
@@ -163,14 +160,16 @@ export function testnet(): void {
       const sellCoin = Coin.fromString(coin)
       const asset = await assetService.get({ symbol: sellCoin.denom })
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
+      const tokenContract = await this.contractService.get({ asset, type: ContractType.TOKEN })
+      const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
 
       // execute sell
       console.log(`sell ${sellCoin.amount.toString()}${sellCoin.denom}`)
       console.log(await accountService.getBalances(wallet.key.accAddress))
-      const tx = await wallet.execute(asset.getContract(ContractType.TOKEN).address, {
+      const tx = await wallet.execute(tokenContract.address, {
         send: {
           amount: sellCoin.amount.toString(),
-          contract: asset.getContract(ContractType.MARKET).address,
+          contract: marketContract.address,
           msg: Buffer.from('{"sell": {"max_spread": "0.1"}}').toString('base64'),
         },
       })

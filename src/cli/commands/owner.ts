@@ -1,26 +1,20 @@
 import * as fs from 'fs'
+import * as bluebird from 'bluebird'
 import { Msg, MsgMigrateContract } from '@terra-money/terra.js'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { GovService, AssetService } from 'services'
+import { GovService, AssetService, ContractService } from 'services'
 import { CodeIds, ContractType } from 'types'
 import * as logger from 'lib/logger'
 import { TxWallet } from 'lib/terra'
 import { getKey } from 'lib/keystore'
 import config from 'config'
-
-function loadCodeIds(): CodeIds {
-  try {
-    return JSON.parse(fs.readFileSync('./codeIds.json', 'utf8') || '{}')
-  } catch (error) {
-    logger.error('not provided codeIds.json')
-    return undefined
-  }
-}
+import { loadCodeIds } from './utils'
 
 export function ownerCommands(): void {
   const govService = Container.get(GovService)
   const assetService = Container.get(AssetService)
+  const contractService = Container.get(ContractService)
 
   program
     .command('store-code')
@@ -104,7 +98,9 @@ export function ownerCommands(): void {
           msgs.push(
             new MsgMigrateContract(
               owner,
-              gov.getContract(ContractType[contract.toUpperCase()]).address,
+              (
+                await contractService.get({ gov, type: ContractType[contract.toUpperCase()] })
+              ).address,
               codeIds[contract],
               {}
             )
@@ -113,33 +109,22 @@ export function ownerCommands(): void {
           break
 
         case 'token': {
-          const assets = await assetService.getAll()
-          assets.map((asset) => {
-            msgs.push(
-              new MsgMigrateContract(
-                owner,
-                asset.getContract(ContractType.TOKEN).address,
-                codeIds.token,
-                {}
-              )
-            )
-            msgs.push(
-              new MsgMigrateContract(
-                owner,
-                asset.getContract(ContractType.LP_TOKEN).address,
-                codeIds.token,
-                {}
-              )
-            )
+          await bluebird.map(assetService.getAll(), async (asset) => {
+            const tokenContract = await contractService.get({ asset, type: ContractType.TOKEN })
+            const lpTokenContract = await contractService.get({
+              asset,
+              type: ContractType.LP_TOKEN,
+            })
+
+            msgs.push(new MsgMigrateContract(owner, tokenContract.address, codeIds.token, {}))
+            msgs.push(new MsgMigrateContract(owner, lpTokenContract.address, codeIds.token, {}))
           })
-          msgs.push(
-            new MsgMigrateContract(
-              owner,
-              gov.getContract(ContractType.MIRROR_TOKEN).address,
-              codeIds.token,
-              {}
-            )
-          )
+
+          const mirrorTokenContract = await contractService.get({
+            gov,
+            type: ContractType.MIRROR_TOKEN,
+          })
+          msgs.push(new MsgMigrateContract(owner, mirrorTokenContract.address, codeIds.token, {}))
 
           gov.codeIds.token = codeIds.token
           break
@@ -148,18 +133,20 @@ export function ownerCommands(): void {
         case 'mint':
         case 'market':
         case 'staking':
-        case 'oracle': {
-          const assets = await assetService.getAll()
-          assets.map((asset) => {
-            asset[contract] &&
+        case 'oracle':
+          await bluebird.map(assetService.getAll(), async (asset) => {
+            const contractEntity = await contractService.get({
+              asset,
+              type: ContractType[contract.toUpperCase()],
+            })
+            contractEntity &&
               msgs.push(
-                new MsgMigrateContract(owner, asset[contract].address, codeIds[contract], {})
+                new MsgMigrateContract(owner, contractEntity.address, codeIds[contract], {})
               )
           })
 
           gov.codeIds[contract] = codeIds[contract]
           break
-        }
 
         default:
           logger.error(`invalid contract`)

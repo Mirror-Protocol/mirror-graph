@@ -1,7 +1,6 @@
 import { TxInfo, MsgExecuteContract, TxLog } from '@terra-money/terra.js'
-import { EntityManager } from 'typeorm'
 import { Container } from 'typedi'
-import { ContractService } from 'services'
+import { GovService, ContractService } from 'services'
 import { ContractType } from 'types'
 import { MirrorParser } from './MirrorParser'
 import { OracleParser } from './OracleParser'
@@ -13,16 +12,16 @@ const parser: { [type: string]: MirrorParser } = {
 }
 
 export async function parseMirrorMsg(
-  manager: EntityManager,
   txInfo: TxInfo,
   msg: MsgExecuteContract,
   log: TxLog
-): Promise<void> {
+): Promise<unknown[]> {
+  const govService = Container.get(GovService)
   const contractService = Container.get(ContractService)
-  const contract = await contractService.get({ address: msg.contract })
+  const contract = await contractService.get({ gov: govService.get(), address: msg.contract })
   if (!contract || !parser[contract.type]) {
-    return
+    return []
   }
 
-  return parser[contract.type].parse(manager, txInfo, msg, log, contract)
+  return parser[contract.type].parse(txInfo, msg, log, contract)
 }
