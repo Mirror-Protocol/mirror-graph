@@ -5,10 +5,12 @@ import { ContractType } from 'types'
 import { MirrorParser } from './MirrorParser'
 import { OracleParser } from './OracleParser'
 import { MarketParser } from './MarketParser'
+import { TokenParser } from './TokenParser'
 
 const parser: { [type: string]: MirrorParser } = {
   [ContractType.ORACLE]: new OracleParser(),
   [ContractType.MARKET]: new MarketParser(),
+  [ContractType.TOKEN]: new TokenParser(),
 }
 
 export async function parseMirrorMsg(
@@ -18,7 +20,10 @@ export async function parseMirrorMsg(
 ): Promise<unknown[]> {
   const govService = Container.get(GovService)
   const contractService = Container.get(ContractService)
-  const contract = await contractService.get({ gov: govService.get(), address: msg.contract })
+  const contract = await contractService.get({
+    gov: govService.get(),
+    address: msg.contract,
+  })
   if (!contract || !parser[contract.type]) {
     return []
   }

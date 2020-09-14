@@ -39,7 +39,12 @@ export class MarketParser extends MirrorParser {
       gov: contract.gov,
     })
 
-    return [tx]
-    // await manager.getRepository(TxEntity).save(tx)
+    const price = await this.priceService.setOHLC(
+      contract.asset,
+      new Date(txInfo.timestamp).getTime(),
+      await this.assetService.getPrice(contract.asset)
+    )
+
+    return [tx, price]
   }
 }

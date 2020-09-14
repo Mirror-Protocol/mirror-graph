@@ -5,7 +5,14 @@ import { getKey } from 'lib/keystore'
 import * as logger from 'lib/logger'
 import { TxWallet, contractQuery } from 'lib/terra'
 import { num } from 'lib/num'
-import { GovService, AssetService, MintService, MarketService, AccountService } from 'services'
+import {
+  GovService,
+  AssetService,
+  MintService,
+  MarketService,
+  AccountService,
+  ContractService,
+} from 'services'
 import { ContractType } from 'types'
 import config from 'config'
 import { writeOracleAddresses } from './utils'
@@ -30,6 +37,7 @@ export function testnet(): void {
   const marketService = Container.get(MarketService)
   const assetService = Container.get(AssetService)
   const accountService = Container.get(AccountService)
+  const contractService = Container.get(ContractService)
 
   program
     .command('whitelisting-testnet')
@@ -96,7 +104,7 @@ export function testnet(): void {
   program.command('buy-simul <symbol> <coin>').action(async (symbol, coinString) => {
     const coin = Coin.fromString(coinString)
     const asset = await assetService.get({ symbol })
-    const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
+    const marketContract = await contractService.get({ asset, type: ContractType.MARKET })
 
     const simulated = await contractQuery(marketContract.address, {
       simulation: { offerAmount: coin.amount.toString(), operation: 'buy', symbol },
@@ -108,7 +116,7 @@ export function testnet(): void {
   program.command('buy-simul-reverse <coin>').action(async (symbol, coinString) => {
     const coin = Coin.fromString(coinString)
     const asset = await assetService.get({ symbol })
-    const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
+    const marketContract = await contractService.get({ asset, type: ContractType.MARKET })
 
     const simulated = await contractQuery(marketContract.address, {
       reverseSimulation: { askAmount: coin.amount.toString(), operation: 'buy' },
@@ -120,7 +128,7 @@ export function testnet(): void {
   program.command('sell-simul <coin>').action(async (coinString) => {
     const coin = Coin.fromString(coinString)
     const asset = await assetService.get({ symbol: coin.denom })
-    const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
+    const marketContract = await contractService.get({ asset, type: ContractType.MARKET })
 
     const simulated = await contractQuery(marketContract.address, {
       simulation: { offerAmount: coin.amount.toString(), operation: 'sell', symbol: coin.denom },
@@ -135,7 +143,7 @@ export function testnet(): void {
     .action(async (symbol, coin, { owner }) => {
       const asset = await assetService.get({ symbol })
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
-      const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
+      const marketContract = await contractService.get({ asset, type: ContractType.MARKET })
 
       logger.info(`buy ${symbol}, ${coin}`)
       const tx = await wallet
@@ -160,12 +168,12 @@ export function testnet(): void {
       const sellCoin = Coin.fromString(coin)
       const asset = await assetService.get({ symbol: sellCoin.denom })
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
-      const tokenContract = await this.contractService.get({ asset, type: ContractType.TOKEN })
-      const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
+      const tokenContract = await contractService.get({ asset, type: ContractType.TOKEN })
+      const marketContract = await contractService.get({ asset, type: ContractType.MARKET })
 
       // execute sell
-      console.log(`sell ${sellCoin.amount.toString()}${sellCoin.denom}`)
-      console.log(await accountService.getBalances(wallet.key.accAddress))
+      logger.info(`sell ${sellCoin.amount.toString()}${sellCoin.denom}`)
+      logger.info(await accountService.getBalances(wallet.key.accAddress))
       const tx = await wallet.execute(tokenContract.address, {
         send: {
           amount: sellCoin.amount.toString(),
@@ -173,6 +181,7 @@ export function testnet(): void {
           msg: Buffer.from('{"sell": {"max_spread": "0.1"}}').toString('base64'),
         },
       })
+      logger.info(tx)
 
       const offer = tx.logs[0].events[1].attributes[7].value
       const receive = tx.logs[0].events[1].attributes[8].value
@@ -190,4 +199,9 @@ export function testnet(): void {
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
       logger.info(await accountService.getBalances(wallet.key.accAddress))
     })
+
+  program.command('mint-config <symbol>').action(async (symbol) => {
+    const asset = await assetService.get({ symbol })
+    logger.info(await mintService.getConfigGeneral(asset))
+  })
 }
