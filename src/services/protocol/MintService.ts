@@ -1,6 +1,7 @@
 import { Service, Inject } from 'typedi'
-import { Coin, Coins, TxInfo } from '@terra-money/terra.js'
+import { Coin, Coins, TxInfo, MsgExecuteContract } from '@terra-money/terra.js'
 import { contractQuery, TxWallet } from 'lib/terra'
+import { toSnakeCase } from 'lib/caseStyles'
 import { AssetEntity } from 'orm'
 import { MintPosition, MintConfigGeneral, MintConfigAsset, ContractType } from 'types'
 import { ContractService } from 'services'
@@ -19,8 +20,15 @@ export class MintService {
 
   async burn(asset: AssetEntity, amount: string, wallet: TxWallet): Promise<TxInfo> {
     const mintContract = await this.contractService.get({ asset, type: ContractType.MINT })
+    const tokenContract = await this.contractService.get({ asset, type: ContractType.TOKEN })
 
-    return wallet.execute(mintContract.address, { burn: { symbol: asset.symbol, amount } })
+    const allowMsg = toSnakeCase({ increaseAllowance: { amount, spender: mintContract.address } })
+    const burnMsg = toSnakeCase({ burn: { amount } })
+
+    return wallet.executeMsgs([
+      new MsgExecuteContract(wallet.key.accAddress, tokenContract.address, allowMsg, new Coins([])),
+      new MsgExecuteContract(wallet.key.accAddress, mintContract.address, burnMsg, new Coins([])),
+    ])
   }
 
   // owner: minter

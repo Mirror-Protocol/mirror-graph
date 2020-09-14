@@ -23,12 +23,10 @@ export class MarketParser extends MirrorParser {
     log: TxLog,
     contract: ContractEntity
   ): Promise<unknown[]> {
-    const { symbol } = msg.execute_msg['buy']
-
     const tx = new TxEntity({
       txHash: txInfo.txhash,
       type: TxType.BUY,
-      symbol,
+      symbol: contract.asset.symbol,
       data: {
         offer: log.events[1].attributes[2].value,
         receive: log.events[1].attributes[3].value,

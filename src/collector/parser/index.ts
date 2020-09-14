@@ -11,6 +11,7 @@ import {
 } from '@terra-money/terra.js'
 import * as bluebird from 'bluebird'
 import { concat } from 'lodash'
+import { errorHandler } from 'lib/error'
 import { getTxInfos } from '../block/blockInfo'
 import { parseTerraMsg } from './terra'
 import { parseMirrorMsg } from './mirror'
@@ -34,6 +35,10 @@ async function parseTransaction(txInfo: TxInfo): Promise<unknown[]> {
     entities,
     ...(await bluebird.mapSeries(txInfo.tx.msg, (msg, index) =>
       parseMsg(txInfo, msg, txInfo.logs[index])
+        .catch((error) => {
+          errorHandler(error)
+          return []
+        })
     ))
   )
 }

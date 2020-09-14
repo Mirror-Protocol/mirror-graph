@@ -1,5 +1,4 @@
 import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
-import { errorHandler } from 'lib/error'
 import { TxEntity, ContractEntity } from 'orm'
 import { TxType, ContractType } from 'types'
 import { MirrorParser } from './MirrorParser'
@@ -64,15 +63,10 @@ export class TokenParser extends MirrorParser {
       })
 
       if (calledContract.type === ContractType.MARKET) {
-        try {
-          const marketMsg = JSON.parse(Buffer.from(calledMsg, 'base64').toString())
+        const marketMsg = JSON.parse(Buffer.from(calledMsg, 'base64').toString())
 
-          if (marketMsg['sell']) {
-            return this.parseSell(txInfo, msg, log, contract, marketMsg['sell'])
-          }
-        } catch (error) {
-          errorHandler(error)
-          return []
+        if (marketMsg['sell']) {
+          return this.parseSell(txInfo, msg, log, contract, marketMsg['sell'])
         }
       }
     }

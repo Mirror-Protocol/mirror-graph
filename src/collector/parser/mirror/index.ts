@@ -6,11 +6,13 @@ import { MirrorParser } from './MirrorParser'
 import { OracleParser } from './OracleParser'
 import { MarketParser } from './MarketParser'
 import { TokenParser } from './TokenParser'
+import { MintParser } from './MintParser'
 
 const parser: { [type: string]: MirrorParser } = {
   [ContractType.ORACLE]: new OracleParser(),
   [ContractType.MARKET]: new MarketParser(),
   [ContractType.TOKEN]: new TokenParser(),
+  [ContractType.MINT]: new MintParser(),
 }
 
 export async function parseMirrorMsg(

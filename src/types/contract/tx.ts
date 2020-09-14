@@ -1,14 +1,11 @@
 export enum TxType {
-  BUY = 'buy',
-  SELL = 'sell',
-  SEND = 'send',
-  RECEIVE = 'receive',
-  SWAP = 'swap',
-}
-
-export interface BuyTx {
-  offer: string
-  receive: string
-  spread: string
-  fee: string
+  BUY = 'BUY',
+  SELL = 'SELL',
+  SEND = 'SEND',
+  RECEIVE = 'RECEIVE',
+  SWAP = 'SWAP',
+  MINT = 'MINT',
+  BURN = 'BURN',
+  PROVIDE_LIQUIDITY = 'PROVIDE_LIQUIDITY',
+  WITHDRAW_LIQUIDITY = 'WITHDRAW_LIQUIDITY',
 }
