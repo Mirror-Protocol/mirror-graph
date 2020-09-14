@@ -26,5 +26,4 @@ export enum ContractType {
   STAKING = 'STAKING',
   TOKEN = 'TOKEN',
   LP_TOKEN = 'LP_TOKEN',
-  MIRROR_TOKEN = 'MIRROR_TOKEN',
 }

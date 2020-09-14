@@ -19,8 +19,9 @@ export class AccountService {
       const coin = (await lcd.bank.balance(address)).get(symbol)
       return { symbol, balance: coin.amount.toString() }
     }
+    const asset = await this.assetService.get({ symbol })
     const tokenContract = await this.contractService.get({
-      gov: this.govService.get(),
+      asset,
       type: ContractType.TOKEN,
     })
     const { balance } = await contractQuery(tokenContract.address, {

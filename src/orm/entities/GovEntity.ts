@@ -24,4 +24,7 @@ export class GovEntity {
 
   @Column()
   owner: string
+
+  @Column()
+  mirrorToken: string // mirror token contract address
 }

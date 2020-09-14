@@ -88,7 +88,6 @@ export class ContractService {
     wallet: TxWallet,
     gov: GovEntity,
     asset: AssetEntity,
-    type: ContractType,
     symbol: string,
     name: string,
     minter: string
@@ -99,7 +98,7 @@ export class ContractService {
       name,
       mint: { cap: '100000000000', minter },
     }
-    return this.create(wallet, gov, type, gov.codeIds.token, initMsg, asset)
+    return this.create(wallet, gov, ContractType.TOKEN, gov.codeIds.token, initMsg, asset)
   }
 
   async createMarket(

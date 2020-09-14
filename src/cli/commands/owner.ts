@@ -108,7 +108,7 @@ export function ownerCommands(): void {
           gov.codeIds[contract] = codeIds[contract]
           break
 
-        case 'token': {
+        case 'token':
           await bluebird.map(assetService.getAll(), async (asset) => {
             const tokenContract = await contractService.get({ asset, type: ContractType.TOKEN })
             const lpTokenContract = await contractService.get({
@@ -120,15 +120,8 @@ export function ownerCommands(): void {
             msgs.push(new MsgMigrateContract(owner, lpTokenContract.address, codeIds.token, {}))
           })
 
-          const mirrorTokenContract = await contractService.get({
-            gov,
-            type: ContractType.MIRROR_TOKEN,
-          })
-          msgs.push(new MsgMigrateContract(owner, mirrorTokenContract.address, codeIds.token, {}))
-
           gov.codeIds.token = codeIds.token
           break
-        }
 
         case 'mint':
         case 'market':

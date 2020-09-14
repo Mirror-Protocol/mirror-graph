@@ -3,7 +3,7 @@ import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Service, Inject } from 'typedi'
 import { ContractService } from 'services'
 import { GovEntity, AssetEntity } from 'orm'
-import { CodeIds, ContractType } from 'types'
+import { CodeIds } from 'types'
 import { TxWallet } from 'lib/terra'
 import * as logger from 'lib/logger'
 import config from 'config'
@@ -58,11 +58,11 @@ export class GovService {
         wallet,
         gov,
         asset,
-        ContractType.MIRROR_TOKEN,
         config.MIRROR_TOKEN_SYMBOL,
         config.MIRROR_TOKEN_NAME,
         factory.address
       )
+      gov.mirrorToken = mirrorToken.address
 
       // create gov contract
       const govContract = await this.contractService.createGov(wallet, gov, mirrorToken.address)
@@ -95,9 +95,9 @@ export class GovService {
       // save to db
       await manager.save([
         gov,
+        mirrorToken,
         asset,
         factory,
-        mirrorToken,
         govContract,
         collector,
         market,
@@ -127,16 +127,7 @@ export class GovService {
       const contract = this.contractService
 
       const mint = await contract.createMint(wallet, gov, asset)
-      const token = await contract.createToken(
-        wallet,
-        gov,
-        asset,
-        ContractType.TOKEN,
-        symbol,
-        name,
-        mint.address
-      )
-      const mirrorToken = await contract.get({ gov, type: ContractType.MIRROR_TOKEN })
+      const token = await contract.createToken(wallet, gov, asset, symbol, name, mint.address)
       const oracle = await contract.createOracle(
         wallet,
         gov,
@@ -145,6 +136,7 @@ export class GovService {
         symbol,
         config.COLLATERAL_SYMBOL
       )
+      const mirrorToken = await contract.get({ gov, address: gov.mirrorToken })
       const { market, lpToken, staking } = await contract.createMarket(
         wallet,
         gov,
