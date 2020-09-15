@@ -1,22 +1,76 @@
-import { Resolver, Query, Arg, Args } from 'type-graphql'
-import { ListedAsset, HistoryRanges, AssetOHLC, AssetHistory, QueryAssetArgs } from 'types'
-import { AssetService } from 'services'
+import { Resolver, Query, Arg, Root, FieldResolver } from 'type-graphql'
+import { HistoryRanges, Asset, AssetOHLC, AssetHistory, ContractType } from 'types'
+import { AssetService, ContractService, AccountService } from 'services'
+import { AssetEntity } from 'orm'
 
-@Resolver()
+@Resolver((of) => Asset)
 export class AssetResolver {
-  constructor(private readonly assetService: AssetService) {}
+  constructor(
+    private readonly assetService: AssetService,
+    private readonly contractService: ContractService,
+    private readonly accountService: AccountService,
+  ) {}
 
-  @Query((returns) => ListedAsset, { description: 'Get asset' })
-  async asset(
-    @Arg('symbol') symbol: string, @Args() args: QueryAssetArgs
-  ): Promise<ListedAsset> {
-    const asset = await this.assetService.get({ symbol })
-    return this.assetService.getListedAsset(asset, args)
+  async getContractAddress(asset: AssetEntity, type: ContractType): Promise<string> {
+    return (await this.contractService.get({ asset, type }))?.address
   }
 
-  @Query((returns) => [ListedAsset], { description: 'Get all listed assets' })
-  async assets(@Args() args: QueryAssetArgs): Promise<ListedAsset[]> {
-    return this.assetService.getListedAssets(args)
+  @FieldResolver()
+  async token(@Root() asset: AssetEntity): Promise<string> {
+    return this.getContractAddress(asset, ContractType.TOKEN)
+  }
+
+  @FieldResolver()
+  async mint(@Root() asset: AssetEntity): Promise<string> {
+    return this.getContractAddress(asset, ContractType.MINT)
+  }
+
+  @FieldResolver()
+  async market(@Root() asset: AssetEntity): Promise<string> {
+    return this.getContractAddress(asset, ContractType.MARKET)
+  }
+
+  @FieldResolver()
+  async lpToken(@Root() asset: AssetEntity): Promise<string> {
+    return this.getContractAddress(asset, ContractType.LP_TOKEN)
+  }
+
+  @FieldResolver()
+  async staking(@Root() asset: AssetEntity): Promise<string> {
+    return this.getContractAddress(asset, ContractType.STAKING)
+  }
+
+  @FieldResolver()
+  async price(@Root() asset: AssetEntity): Promise<string> {
+    return this.assetService.getPrice(asset)
+  }
+
+  @FieldResolver()
+  async oraclePrice(@Root() asset: AssetEntity): Promise<string> {
+    return (await this.assetService.getOraclePrice(asset))?.price
+  }
+
+  @FieldResolver()
+  async balance(@Root() asset: AssetEntity, @Arg('address') address: string): Promise<string> {
+    return (await this.accountService.getAssetBalance(address, asset)).balance
+  }
+}
+
+@Resolver()
+export class AssetDataResolver {
+  constructor(
+    private readonly assetService: AssetService,
+    private readonly accountService: AccountService,
+  ) {}
+
+  @Query((returns) => Asset, { description: 'Get asset' })
+  async asset(@Arg('symbol') symbol: string): Promise<Asset> {
+    return this.assetService.get({ symbol })
+  }
+
+  @Query((returns) => [Asset], { description: 'Get all listed assets' })
+  async assets(): Promise<Asset[]> {
+    return this.assetService.getAll()
   }
 
   @Query((returns) => AssetHistory, { description: 'Get asset price history' })

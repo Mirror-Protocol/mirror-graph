@@ -1,22 +1,19 @@
-import * as bluebird from 'bluebird'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions } from 'typeorm'
-import Container, { Service, Inject } from 'typedi'
+import { Service, Inject } from 'typedi'
 import { contractQuery } from 'lib/terra'
 import { ErrorTypes, APIError } from 'lib/error'
 import { num } from 'lib/num'
 import { AssetEntity } from 'orm'
 import {
-  ListedAsset,
   AssetOHLC,
   AssetHistory,
   HistoryRanges,
   OraclePrice,
   MarketPool,
   ContractType,
-  QueryAsset,
 } from 'types'
-import { GovService, ContractService, OraclePriceService, AccountService } from 'services'
+import { GovService, ContractService, OraclePriceService } from 'services'
 
 @Service()
 export class AssetService {
@@ -42,28 +39,6 @@ export class AssetService {
 
   async getAll(): Promise<AssetEntity[]> {
     return this.assetRepo.find({ gov: this.govService.get() })
-  }
-
-  async getListedAsset(asset: AssetEntity, options: QueryAsset): Promise<ListedAsset> {
-    const { symbol, name } = asset
-
-    return new ListedAsset({
-      symbol,
-      name,
-      token: options.token && (await this.contractService.get({ asset, type: ContractType.TOKEN })).address,
-      mint: options.mint && (await this.contractService.get({ asset, type: ContractType.MINT }))?.address,
-      market: options.market && (await this.contractService.get({ asset, type: ContractType.MARKET })).address,
-      lpToken: options.lpToken && (await this.contractService.get({ asset, type: ContractType.LP_TOKEN })).address,
-      staking: options.staking && (await this.contractService.get({ asset, type: ContractType.STAKING })).address,
-      price: options.price && await this.getPrice(asset),
-      oraclePrice: options.oraclePrice && (await this.getOraclePrice(asset))?.price,
-      balance: (options.address && options.balance) &&
-        (await Container.get(AccountService).getAssetBalance(options.address, asset)).balance
-    })
-  }
-
-  async getListedAssets(options: QueryAsset): Promise<ListedAsset[]> {
-    return bluebird.map(this.getAll(), (asset) => this.getListedAsset(asset, options))
   }
 
   async getOHLC(asset: AssetEntity, from: number, to: number): Promise<AssetOHLC> {

@@ -1,11 +1,7 @@
 import { ObjectType, Field, Int } from 'type-graphql'
 
 @ObjectType()
-export class ListedAsset {
-  constructor(options: Partial<ListedAsset>) {
-    Object.assign(this, options)
-  }
-
+export class Asset {
   @Field()
   symbol: string
 
@@ -27,10 +23,10 @@ export class ListedAsset {
   @Field((type) => String, { nullable: true, description: 'lpToken contract address' })
   lpToken?: string
 
-  @Field({ nullable: true })
+  @Field({ nullable: true, description: 'swap price' })
   price?: string
 
-  @Field({ nullable: true })
+  @Field({ nullable: true, description: 'oracle price' })
   oraclePrice?: string
 
   @Field({ nullable: true })
