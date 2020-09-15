@@ -30,12 +30,17 @@ export class TxWallet extends Wallet {
       this.managedSequence = sequence
     }
 
-    return transaction(this, msgs, this.managedAccountNumber, this.managedSequence, timeout).then(
-      (txInfo) => {
+    return transaction(this, msgs, this.managedAccountNumber, this.managedSequence, timeout)
+      .then((txInfo) => {
         this.managedSequence += 1
         return txInfo
-      }
-    )
+      })
+      .catch((error) => {
+        if (error?.message?.indexOf('unauthorized: signature verification failed') > -1) {
+          delete this.managedSequence
+        }
+        throw error
+      })
   }
 
   async storeCode(path: string): Promise<number> {
