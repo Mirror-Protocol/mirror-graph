@@ -21,6 +21,7 @@
     "bignumber.js": "^9.0.0",
     "bluebird": "^3.7.2",
     "bn.js": "^5.1.2",
+    "class-validator": "^0.12.2",
     "commander": "^6",
     "crypto-js": "^4.0.0",
     "date-fns": "^2.16.0",

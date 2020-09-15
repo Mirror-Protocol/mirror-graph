@@ -21,6 +21,7 @@ export async function initGraphQL(app): Promise<void> {
     resolvers: [require('path').dirname(require.main.filename) + '/endpoints/graphql/*.ts'],
     container: Container,
     globalMiddlewares: [ErrorInterceptor],
+    validate: false,
   })
 
   server = new ApolloServer({

@@ -14,6 +14,7 @@ import {
   OraclePrice,
   MarketPool,
   ContractType,
+  QueryAsset,
 } from 'types'
 import { GovService, ContractService, OraclePriceService } from 'services'
 
@@ -43,17 +44,23 @@ export class AssetService {
     return this.assetRepo.find({ gov: this.govService.get() })
   }
 
-  async getListedAsset(asset: AssetEntity): Promise<ListedAsset> {
+  async getListedAsset(asset: AssetEntity, options: QueryAsset): Promise<ListedAsset> {
     const { symbol, name } = asset
-    const token = (await this.contractService.get({ asset, type: ContractType.TOKEN })).address
-    const market = (await this.contractService.get({ asset, type: ContractType.MARKET })).address
-    const price = await this.getPrice(asset)
 
-    return new ListedAsset({ symbol, name, token, market, price })
+    return new ListedAsset({
+      symbol,
+      name,
+      token: options.token && (await this.contractService.get({ asset, type: ContractType.TOKEN })).address,
+      market: options.market && (await this.contractService.get({ asset, type: ContractType.MARKET })).address,
+      lpToken: options.lpToken && (await this.contractService.get({ asset, type: ContractType.LP_TOKEN })).address,
+      staking: options.staking && (await this.contractService.get({ asset, type: ContractType.STAKING })).address,
+      price: options.price && await this.getPrice(asset),
+      oraclePrice: options.oraclePrice && (await this.getOraclePrice(asset))?.price,
+    })
   }
 
-  async getListedAssets(): Promise<ListedAsset[]> {
-    return bluebird.map(this.getAll(), (asset) => this.getListedAsset(asset))
+  async getListedAssets(options: QueryAsset): Promise<ListedAsset[]> {
+    return bluebird.map(this.getAll(), (asset) => this.getListedAsset(asset, options))
   }
 
   async getOHLC(asset: AssetEntity, from: number, to: number): Promise<AssetOHLC> {
@@ -66,6 +73,9 @@ export class AssetService {
 
   async getOraclePrice(asset: AssetEntity): Promise<OraclePrice> {
     const oracleContract = await this.contractService.get({ asset, type: ContractType.ORACLE })
+    if (!oracleContract) {
+      return { price: '0', priceMultiplier: '1', lastUpdateTime: 0 }
+    }
     return contractQuery<OraclePrice>(oracleContract.address, { price: {} })
   }
 

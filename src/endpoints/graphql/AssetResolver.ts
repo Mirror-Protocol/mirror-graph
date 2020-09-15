@@ -1,14 +1,22 @@
-import { Resolver, Query, Arg } from 'type-graphql'
-import { ListedAsset, HistoryRanges, AssetOHLC, AssetHistory } from 'types'
+import { Resolver, Query, Arg, Args } from 'type-graphql'
+import { ListedAsset, HistoryRanges, AssetOHLC, AssetHistory, QueryAssetArgs } from 'types'
 import { AssetService } from 'services'
 
 @Resolver()
 export class AssetResolver {
   constructor(private readonly assetService: AssetService) {}
 
+  @Query((returns) => ListedAsset, { description: 'Get asset' })
+  async asset(
+    @Arg('symbol') symbol: string, @Args() args: QueryAssetArgs
+  ): Promise<ListedAsset> {
+    const asset = await this.assetService.get({ symbol })
+    return this.assetService.getListedAsset(asset, args)
+  }
+
   @Query((returns) => [ListedAsset], { description: 'Get all listed assets' })
-  async assets(): Promise<ListedAsset[]> {
-    return this.assetService.getListedAssets()
+  async assets(@Args() args: QueryAssetArgs): Promise<ListedAsset[]> {
+    return this.assetService.getListedAssets(args)
   }
 
   @Query((returns) => AssetHistory, { description: 'Get asset price history' })

@@ -15,7 +15,8 @@ export default class AssetController extends KoaController {
 
   @Get('/')
   async getAssets(ctx): Promise<void> {
-    success(ctx, await this.assetService.getListedAssets())
+    const { options } = ctx.request.query
+    success(ctx, await this.assetService.getListedAssets(options))
   }
 
   @Get('/:symbol/history')

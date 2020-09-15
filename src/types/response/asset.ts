@@ -12,14 +12,26 @@ export class ListedAsset {
   @Field()
   name: string
 
-  @Field((type) => String, { description: 'token contract address' })
-  token: string
+  @Field((type) => String, { nullable: true, description: 'token contract address' })
+  token?: string
 
-  @Field((type) => String, { description: 'market contract address' })
-  market: string
+  @Field((type) => String, { nullable: true, description: 'mint contract address' })
+  mint?: string
+
+  @Field((type) => String, { nullable: true, description: 'market contract address' })
+  market?: string
+
+  @Field((type) => String, { nullable: true, description: 'staking contract address' })
+  staking?: string
+
+  @Field((type) => String, { nullable: true, description: 'lpToken contract address' })
+  lpToken?: string
 
   @Field({ nullable: true })
   price?: string
+
+  @Field({ nullable: true })
+  oraclePrice?: string
 }
 
 @ObjectType()
