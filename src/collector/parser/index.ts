@@ -47,6 +47,6 @@ export async function parseBlock(blockInfo: BlockInfo): Promise<unknown[]> {
   const entities = []
   return concat(
     entities,
-    ...(await bluebird.mapSeries(getTxInfos(blockInfo), (txInfo) => parseTransaction(txInfo)))
+    ...(await bluebird.map(getTxInfos(blockInfo), (txInfo) => parseTransaction(txInfo)))
   )
 }

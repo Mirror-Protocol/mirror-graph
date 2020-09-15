@@ -1,6 +1,7 @@
 import { Service, Inject } from 'typedi'
-import { Coin, Coins, TxInfo } from '@terra-money/terra.js'
+import { Coin, Coins, TxInfo, MsgExecuteContract } from '@terra-money/terra.js'
 import { contractInfo, TxWallet } from 'lib/terra'
+import { toSnakeCase } from 'lib/caseStyles'
 import { AssetEntity } from 'orm'
 import { MarketContractInfo, ContractType } from 'types'
 import { AssetService, ContractService } from 'services'
@@ -14,29 +15,45 @@ export class MarketService {
 
   async provideLiquidity(assetCoin: Coin, collateralCoin: Coin, wallet: TxWallet): Promise<TxInfo> {
     const asset = await this.assetService.get({ symbol: assetCoin.denom })
-    const tokenContract = await this.contractService.get({ asset, type: ContractType.TOKEN })
     const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
+    const tokenContract = await this.contractService.get({ asset, type: ContractType.TOKEN })
 
-    // approve token transfer to market contract
-    await wallet.execute(tokenContract.address, {
-      increaseAllowance: {
-        amount: assetCoin.amount.toString(),
-        spender: marketContract.address,
-      },
+    const allowMsg = toSnakeCase({ increaseAllowance: {
+      amount: assetCoin.amount.toString(), spender: marketContract.address,
+    } })
+    const provideMsg = toSnakeCase({
+      provideLiquidity: { coins: [assetCoin.toData(), collateralCoin.toData()] }
     })
 
-    return wallet.execute(
-      marketContract.address,
-      { provideLiquidity: { coins: [assetCoin.toData(), collateralCoin.toData()] } },
-      new Coins([collateralCoin])
-    )
+    return wallet.executeMsgs([
+      new MsgExecuteContract(
+        wallet.key.accAddress, tokenContract.address, allowMsg, new Coins([])
+      ),
+      new MsgExecuteContract(
+        wallet.key.accAddress, marketContract.address, provideMsg, new Coins([collateralCoin])
+      ),
+    ])
   }
 
   async withdrawLiquidity(symbol: string, amount: string, wallet: TxWallet): Promise<TxInfo> {
     const asset = await this.assetService.get({ symbol })
     const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
+    const lpTokenContract = await this.contractService.get({ asset, type: ContractType.LP_TOKEN })
 
-    return wallet.execute(marketContract.address, { withdrawLiquidity: { amount } })
+    const allowMsg = toSnakeCase(
+      { increaseAllowance: { amount, spender: marketContract.address } }
+    )
+    const withdrawMsg = toSnakeCase({ withdrawLiquidity: { amount } })
+
+    return wallet.executeMsgs([
+      new MsgExecuteContract(
+        wallet.key.accAddress, lpTokenContract.address, allowMsg, new Coins([])
+      ),
+      new MsgExecuteContract(
+        wallet.key.accAddress, marketContract.address, withdrawMsg, new Coins([])
+      ),
+    ])
+    // return wallet.execute(marketContract.address, { withdrawLiquidity: { amount } })
   }
 
   async getMarketContractInfo(asset: AssetEntity): Promise<MarketContractInfo> {

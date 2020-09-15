@@ -16,9 +16,7 @@ const parser: { [type: string]: MirrorParser } = {
 }
 
 export async function parseMirrorMsg(
-  txInfo: TxInfo,
-  msg: MsgExecuteContract,
-  log: TxLog
+  txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog
 ): Promise<unknown[]> {
   const govService = Container.get(GovService)
   const contractService = Container.get(ContractService)

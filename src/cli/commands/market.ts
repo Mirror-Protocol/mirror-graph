@@ -27,12 +27,13 @@ export function market(): void {
     })
 
   program
-    .command('withdraw-liquidity <symbol> <amount>')
-    .description('withdraw liquidity. eg) withdraw-liquidity mAAPL 10')
+    .command('withdraw-liquidity <coin-amount>')
+    .description('withdraw liquidity. eg) withdraw-liquidity 1000000mAAPL')
     .requiredOption('-p, --password <lp-password>', 'lp key password')
-    .action(async (symbol, amount, { password }) => {
+    .action(async (coinAmount, { password }) => {
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.LP_KEY, password))
+      const coin = Coin.fromString(coinAmount)
 
-      await marketService.withdrawLiquidity(symbol, amount, wallet)
+      logger.info(await marketService.withdrawLiquidity(coin.denom, coin.amount.toString(), wallet))
     })
 }

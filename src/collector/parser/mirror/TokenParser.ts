@@ -5,10 +5,7 @@ import { MirrorParser } from './MirrorParser'
 
 export class TokenParser extends MirrorParser {
   async parse(
-    txInfo: TxInfo,
-    msg: MsgExecuteContract,
-    log: TxLog,
-    contract: ContractEntity
+    txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity
   ): Promise<unknown[]> {
     if (msg.execute_msg['send']) {
       return this.parseSend(txInfo, msg, log, contract)
@@ -18,48 +15,33 @@ export class TokenParser extends MirrorParser {
   }
 
   private async parseSell(
-    txInfo: TxInfo,
-    msg: MsgExecuteContract,
-    log: TxLog,
-    contract: ContractEntity,
-    marketMsg: object
+    txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity, marketMsg: object
   ): Promise<unknown[]> {
-    const tx = new TxEntity({
-      txHash: txInfo.txhash,
-      type: TxType.SELL,
-      symbol: contract.asset.symbol,
-      data: {
-        offer: log.events[1].attributes[7].value,
-        receive: log.events[1].attributes[8].value,
-        spread: log.events[1].attributes[9].value,
-        fee: log.events[1].attributes[10].value,
-        ...marketMsg,
-      },
-      datetime: new Date(txInfo.timestamp),
-      gov: contract.gov,
-    })
+    const type = TxType.SELL
+    const values = log.events[1].attributes.map((attr) => attr.value)
+    const data = {
+      ...marketMsg, offer: values[7], receive: values[8], spread: values[9], fee: values[10],
+    }
 
-    const price = await this.priceService.setOHLC(
-      contract.asset,
-      new Date(txInfo.timestamp).getTime(),
-      await this.assetService.getPrice(contract.asset)
-    )
+    const { asset, gov } = contract
+    const { txhash: txHash, timestamp } = txInfo
+    const price = await this.assetService.getPrice(asset)
+    const datetime = new Date(timestamp)
 
-    return [tx, price]
+    const tx = new TxEntity({ txHash, type, symbol: asset.symbol, data, datetime, gov })
+    const ohlc = await this.priceService.setOHLC(asset, datetime.getTime(), price)
+
+    return [tx, ohlc]
   }
 
   private async parseSend(
-    txInfo: TxInfo,
-    msg: MsgExecuteContract,
-    log: TxLog,
-    contract: ContractEntity
+    txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity
   ): Promise<unknown[]> {
     const { contract: calledContractAddress, msg: calledMsg } = msg.execute_msg['send']
 
     if (calledContractAddress) {
       const calledContract = await this.contractService.get({
-        gov: contract.gov,
-        address: calledContractAddress,
+        gov: contract.gov, address: calledContractAddress,
       })
 
       if (calledContract.type === ContractType.MARKET) {
@@ -67,9 +49,13 @@ export class TokenParser extends MirrorParser {
 
         if (marketMsg['sell']) {
           return this.parseSell(txInfo, msg, log, contract, marketMsg['sell'])
+        } else {
+          return []
         }
       }
     }
+
+    // todo: parse send
 
     return []
   }
