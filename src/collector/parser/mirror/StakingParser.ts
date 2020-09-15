@@ -17,7 +17,10 @@ export class StakingParser extends MirrorParser {
       type = TxType.UNSTAKE
       data = { amount: values[2] }
     } else if (executeMsg['withdraw']) {
-      // todo: parse withdraw rewards
+      const values = log.events[1].attributes.map((attr) => attr.value)
+
+      type = TxType.WITHDRAW_REWARDS
+      data = { amount: values[2], token: values[3] }
       return []
     } else {
       return []

@@ -30,4 +30,10 @@ export class FarmService {
 
     return wallet.execute(stakingContract.address, { unbond: { amount } })
   }
+
+  async withdrawRewards(asset: AssetEntity, wallet: TxWallet): Promise<TxInfo> {
+    const stakingContract = await this.contractService.get({ asset, type: ContractType.STAKING })
+
+    return wallet.execute(stakingContract.address, { withdraw: {} })
+  }
 }
