@@ -47,6 +47,7 @@ export class AccountService {
     const balances = await bluebird.map(
       this.assetService.getAll(), (asset) => this.getAssetBalance(address, asset)
     )
+    balances.push(await this.getTerraBalance(address, 'uusd'))
 
     return balances.filter((balance) => num(balance.balance).isGreaterThan(0))
   }
