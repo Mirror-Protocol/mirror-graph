@@ -44,17 +44,10 @@ export class AccountService {
   }
 
   async getBalances(address: string): Promise<AssetBalance[]> {
-    const terraBalances = (await lcd.bank.balance(address))
-      .toArray()
-      .map((coin) => ({ symbol: coin.denom, balance: coin.amount.toString() }))
-    const mirrorBalances = await bluebird.map(
+    const balances = await bluebird.map(
       this.assetService.getAll(), (asset) => this.getAssetBalance(address, asset)
     )
-    // const lpBalances = await bluebird.map(
-    //   this.assetService.getAll(), (asset) => this.getBalance(address, asset.symbol)
-    // )
-    return [...terraBalances, ...mirrorBalances].filter((balance) =>
-      num(balance.balance).isGreaterThan(0)
-    )
+
+    return balances.filter((balance) => num(balance.balance).isGreaterThan(0))
   }
 }

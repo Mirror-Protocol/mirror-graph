@@ -54,7 +54,7 @@ export class MintService {
     return wallet.execute(mintContract.address, { updateConfig: { amount, owner } })
   }
 
-  async getPosition(asset: AssetEntity, address: string): Promise<MintPosition> {
+  async getPosition(address: string, asset: AssetEntity): Promise<MintPosition> {
     const mintContract = await this.contractService.get({ asset, type: ContractType.MINT })
 
     return contractQuery<MintPosition>(mintContract.address, { position: { address } })

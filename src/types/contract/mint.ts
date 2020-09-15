@@ -11,8 +11,3 @@ export interface MintConfigAsset {
   token: string
   symbol: string
 }
-
-export interface MintPosition {
-  collateralAmount: string
-  assetAmount: string
-}
