@@ -51,7 +51,7 @@ export class AssetService {
       symbol,
       name,
       token: options.token && (await this.contractService.get({ asset, type: ContractType.TOKEN })).address,
-      mint: options.mint && (await this.contractService.get({ asset, type: ContractType.MINT })).address,
+      mint: options.mint && (await this.contractService.get({ asset, type: ContractType.MINT }))?.address,
       market: options.market && (await this.contractService.get({ asset, type: ContractType.MARKET })).address,
       lpToken: options.lpToken && (await this.contractService.get({ asset, type: ContractType.LP_TOKEN })).address,
       staking: options.staking && (await this.contractService.get({ asset, type: ContractType.STAKING })).address,
