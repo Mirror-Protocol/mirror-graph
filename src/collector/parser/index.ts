@@ -16,17 +16,19 @@ import { getTxInfos } from '../block/blockInfo'
 import { parseTerraMsg } from './terra'
 import { parseMirrorMsg } from './mirror'
 
-async function parseMsg(txInfo: TxInfo, msg: Msg, log: TxLog): Promise<unknown[]> {
+async function parseMsg(txInfo: TxInfo, msg: Msg, msgIndex: number, log: TxLog): Promise<unknown[]> {
   if (
     msg instanceof MsgSend ||
     msg instanceof MsgMultiSend ||
     msg instanceof MsgSwap ||
     msg instanceof MsgSwapSend
   ) {
-    return parseTerraMsg(txInfo, msg, log)
+    return parseTerraMsg(txInfo, msg, msgIndex, log)
   } else if (msg instanceof MsgExecuteContract) {
-    return parseMirrorMsg(txInfo, msg, log)
+    return parseMirrorMsg(txInfo, msg, msgIndex, log)
   }
+
+  return []
 }
 
 async function parseTransaction(txInfo: TxInfo): Promise<unknown[]> {
@@ -34,7 +36,7 @@ async function parseTransaction(txInfo: TxInfo): Promise<unknown[]> {
   return concat(
     entities,
     ...(await bluebird.mapSeries(txInfo.tx.msg, (msg, index) =>
-      parseMsg(txInfo, msg, txInfo.logs[index])
+      parseMsg(txInfo, msg, index, txInfo.logs[index])
         .catch((error) => {
           errorHandler(error)
           return []

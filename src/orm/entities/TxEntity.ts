@@ -11,7 +11,7 @@ import { GovEntity } from 'orm'
 import { TxType } from 'types'
 
 @Entity('tx')
-@Index('index_tx_datetime', ['datetime'], { unique: true })
+@Index('index_tx_datetime_and_msgindex_and_gov', ['datetime', 'msgIndex', 'gov'], { unique: true })
 export class TxEntity {
   constructor(options: Partial<TxEntity>) {
     Object.assign(this, options)
@@ -25,6 +25,9 @@ export class TxEntity {
 
   @Column()
   txHash: string
+
+  @Column()
+  msgIndex: number
 
   @Column({ type: 'enum', enum: TxType })
   type: TxType

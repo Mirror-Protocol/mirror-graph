@@ -12,7 +12,7 @@ import {
 export class MirrorParser {
   // return: entities to save
   public async parse(
-    txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity
+    txInfo: TxInfo, msg: MsgExecuteContract, msgIndex: number, log: TxLog, contract: ContractEntity
   ): Promise<unknown[]> {
     throw new Error('must implement parse function')
   }

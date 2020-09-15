@@ -5,25 +5,30 @@ import { TxType } from 'types'
 
 export class MarketParser extends MirrorParser {
   async parse(
-    txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity
+    txInfo: TxInfo, msg: MsgExecuteContract, msgIndex: number, log: TxLog, contract: ContractEntity
   ): Promise<unknown[]> {
+    const { execute_msg: executeMsg } = msg
     let type
     let data
 
-    if (msg.execute_msg['buy']) {
+    if (executeMsg['buy']) {
+      const values = log.events[1].attributes.map((attr) => attr.value)
+
       type = TxType.BUY
-
+      data = {
+        offer: values[2], receive: values[3], spread: values[4], fee: values[5]
+      }
+    } else if (executeMsg['provide_liquidity']) {
       const values = log.events[1].attributes.map((attr) => attr.value)
-      data = { offer: values[2], receive: values[3], spread: values[4], fee: values[5] }
-    } else if (msg.execute_msg['provide_liquidity']) {
+
       type = TxType.PROVIDE_LIQUIDITY
-
+      data = {
+        coins: values[2], share: values[3]
+      }
+    } else if (executeMsg['withdraw_liquidity']) {
       const values = log.events[1].attributes.map((attr) => attr.value)
-      data = { coins: values[2], share: values[3] }
-    } else if (msg.execute_msg['withdraw_liquidity']) {
+
       type = TxType.WITHDRAW_LIQUIDITY
-
-      const values = log.events[1].attributes.map((attr) => attr.value)
       data = {
         withdrawnShare: values[2], refundAssetAmount: values[3], refundCollateralAmount: values[4]
       }
@@ -36,7 +41,9 @@ export class MarketParser extends MirrorParser {
     const price = await this.assetService.getPrice(asset)
     const datetime = new Date(timestamp)
 
-    const tx = new TxEntity({ txHash, type, symbol: asset.symbol, data, datetime, gov })
+    const tx = new TxEntity({
+      txHash, msgIndex, type, symbol: asset.symbol, data, datetime, gov
+    })
     const ohlc = await this.priceService.setOHLC(asset, datetime.getTime(), price)
 
     return [tx, ohlc]

@@ -3,7 +3,7 @@ import { MirrorParser } from './MirrorParser'
 import { TxEntity, ContractEntity } from 'orm'
 import { TxType } from 'types'
 
-export class MintParser extends MirrorParser {
+export class StakingParser extends MirrorParser {
   async parse(
     txInfo: TxInfo, msg: MsgExecuteContract, msgIndex: number, log: TxLog, contract: ContractEntity
   ): Promise<unknown[]> {
@@ -11,22 +11,13 @@ export class MintParser extends MirrorParser {
     let type
     let data
 
-    if (executeMsg['mint']) {
+    if (executeMsg['unbond']) {
       const values = log.events[1].attributes.map((attr) => attr.value)
 
-      type = TxType.MINT
-      data = {
-        collateralAmount: values[2], mintAmount: values[3]
-      }
-    } else if (executeMsg['burn']) {
-      const values = log.events[1].attributes.map((attr) => attr.value)
-
-      type = TxType.BURN
-      data = {
-        refundAmount: values[2], burnAmount: values[3]
-      }
-    } else if (executeMsg['auction']) {
-      // todo: parse auction msg
+      type = TxType.UNSTAKE
+      data = { amount: values[2] }
+    } else if (executeMsg['withdraw']) {
+      // todo: parse withdraw rewards
       return []
     } else {
       return []
@@ -37,7 +28,7 @@ export class MintParser extends MirrorParser {
     const datetime = new Date(timestamp)
 
     const tx = new TxEntity({
-      txHash, msgIndex, type, symbol: asset.symbol, data, datetime, gov
+      txHash, msgIndex, type, symbol: asset.lpTokenSymbol, data, datetime, gov
     })
 
     return [tx]

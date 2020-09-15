@@ -7,7 +7,7 @@ import { getKey } from 'lib/keystore'
 import { TxWallet } from 'lib/terra'
 import config from 'config'
 
-export function market(): void {
+export function pool(): void {
   const marketService = Container.get(MarketService)
 
   program

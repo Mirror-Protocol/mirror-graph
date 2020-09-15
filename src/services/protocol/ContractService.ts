@@ -14,7 +14,7 @@ export class ContractService {
   ) {}
 
   async get(conditions: FindConditions<ContractEntity>): Promise<ContractEntity> {
-    if (!conditions.gov && !conditions.asset) {
+    if (!conditions.gov && !conditions.asset && !conditions.address) {
       throw new Error('conditions must have gov or asset')
     }
     return this.contractRepo.findOne(conditions)
@@ -133,8 +133,8 @@ export class ContractService {
       gov.codeIds.token,
       {
         ...initMsgs.token,
-        symbol: `${symbol}-LP`,
-        name: `${symbol}-${config.COLLATERAL_SYMBOL} LP`,
+        symbol: asset.lpTokenSymbol,
+        name: `${symbol}-${config.COLLATERAL_SYMBOL} LP Token`,
         mint: { cap: '100000000000', minter: market.address },
       },
       asset

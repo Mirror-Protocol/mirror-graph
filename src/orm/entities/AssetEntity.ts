@@ -29,6 +29,9 @@ export class AssetEntity {
   @Column()
   symbol: string
 
+  @Column({ default: '' })
+  lpTokenSymbol: string
+
   @Column()
   name: string
 

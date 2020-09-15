@@ -3,7 +3,7 @@ import { TxInfo, TxLog, MsgSend, MsgMultiSend, MsgSwap, MsgSwapSend } from '@ter
 type AllowMsgs = MsgSend | MsgMultiSend | MsgSwap | MsgSwapSend
 
 export async function parseTerraMsg(
-  txInfo: TxInfo, msg: AllowMsgs, log: TxLog
+  txInfo: TxInfo, msg: AllowMsgs, msgIndex: number, log: TxLog
 ): Promise<unknown[]> {
   return []
 }
