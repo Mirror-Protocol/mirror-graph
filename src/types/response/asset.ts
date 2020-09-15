@@ -32,6 +32,9 @@ export class ListedAsset {
 
   @Field({ nullable: true })
   oraclePrice?: string
+
+  @Field({ nullable: true })
+  balance?: string
 }
 
 @ObjectType()

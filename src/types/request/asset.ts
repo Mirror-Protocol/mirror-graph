@@ -1,6 +1,8 @@
 import { ArgsType, Field } from 'type-graphql'
 
 export interface QueryAsset {
+  address?: string
+  balance?: boolean
   price?: boolean
   oraclePrice?: boolean
   token?: boolean
@@ -12,6 +14,12 @@ export interface QueryAsset {
 
 @ArgsType()
 export class QueryAssetArgs implements QueryAsset {
+  @Field({ nullable: true })
+  address?: string
+
+  @Field({ nullable: true })
+  balance?: boolean
+
   @Field({ nullable: true })
   price?: boolean
 

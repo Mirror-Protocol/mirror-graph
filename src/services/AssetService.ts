@@ -1,7 +1,7 @@
 import * as bluebird from 'bluebird'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions } from 'typeorm'
-import { Service, Inject } from 'typedi'
+import Container, { Service, Inject } from 'typedi'
 import { contractQuery } from 'lib/terra'
 import { ErrorTypes, APIError } from 'lib/error'
 import { num } from 'lib/num'
@@ -16,7 +16,7 @@ import {
   ContractType,
   QueryAsset,
 } from 'types'
-import { GovService, ContractService, OraclePriceService } from 'services'
+import { GovService, ContractService, OraclePriceService, AccountService } from 'services'
 
 @Service()
 export class AssetService {
@@ -51,11 +51,14 @@ export class AssetService {
       symbol,
       name,
       token: options.token && (await this.contractService.get({ asset, type: ContractType.TOKEN })).address,
+      mint: options.mint && (await this.contractService.get({ asset, type: ContractType.MINT })).address,
       market: options.market && (await this.contractService.get({ asset, type: ContractType.MARKET })).address,
       lpToken: options.lpToken && (await this.contractService.get({ asset, type: ContractType.LP_TOKEN })).address,
       staking: options.staking && (await this.contractService.get({ asset, type: ContractType.STAKING })).address,
       price: options.price && await this.getPrice(asset),
       oraclePrice: options.oraclePrice && (await this.getOraclePrice(asset))?.price,
+      balance: (options.address && options.balance) &&
+        (await Container.get(AccountService).getAssetBalance(options.address, asset)).balance
     })
   }
 
