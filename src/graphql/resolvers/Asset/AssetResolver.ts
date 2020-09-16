@@ -28,7 +28,9 @@ export class AssetResolver {
 
   @FieldResolver()
   async contracts(@Root() asset: AssetEntity): Promise<AssetContracts> {
-    const entities = await this.contractService.find({ asset })
+    const entities = await this.contractService.find({
+      select: ['type', 'address'], where: { asset }
+    })
     return {
       token: entities.find((entity) => entity.type === ContractType.TOKEN)?.address,
       lpToken: entities.find((entity) => entity.type === ContractType.LP_TOKEN)?.address,

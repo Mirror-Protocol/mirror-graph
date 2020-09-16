@@ -9,7 +9,7 @@ export class AssetPositionsResolver {
 
   @FieldResolver()
   async token(@Root('asset') asset: AssetEntity, @Root('address') address: string): Promise<string> {
-    return (await this.accountService.getAssetBalance(address, asset)).balance
+    return (await this.accountService.getAssetBalance(address, asset))?.balance
   }
 
   @FieldResolver()

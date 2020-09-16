@@ -1,5 +1,6 @@
 import 'reflect-metadata'
 import * as TypeGraphQL from 'type-graphql'
+import * as path from 'path'
 import { Container } from 'typedi'
 import { ApolloServer } from 'apollo-server-koa'
 import { errorHandler } from 'lib/error'
@@ -18,7 +19,7 @@ export const ErrorInterceptor: TypeGraphQL.MiddlewareFn<any> = async ({ context,
 
 export async function initGraphQL(app): Promise<void> {
   const schema = await TypeGraphQL.buildSchema({
-    resolvers: [require('path').dirname(require.main.filename) + '/graphql/resolvers/*/*.ts'],
+    resolvers: [path.dirname(require.main.filename) + '/graphql/resolvers/**/*.ts'],
     container: Container,
     globalMiddlewares: [ErrorInterceptor],
     validate: false,

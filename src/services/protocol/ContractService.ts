@@ -1,4 +1,4 @@
-import { Repository, FindConditions } from 'typeorm'
+import { Repository, FindConditions, FindManyOptions } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Service } from 'typedi'
 import initMsgs from 'contracts/initMsgs'
@@ -20,11 +20,8 @@ export class ContractService {
     return this.contractRepo.findOne(conditions)
   }
 
-  async find(conditions: FindConditions<ContractEntity>): Promise<ContractEntity[]> {
-    if (!conditions.gov && !conditions.asset && !conditions.address) {
-      throw new Error('conditions must have gov or asset')
-    }
-    return this.contractRepo.find(conditions)
+  async find(options?: FindManyOptions<ContractEntity>): Promise<ContractEntity[]> {
+    return this.contractRepo.find(options)
   }
 
   async create(
