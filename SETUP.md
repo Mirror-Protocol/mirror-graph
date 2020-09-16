@@ -11,7 +11,7 @@
 Create User and database and edit ormconfig.js accordingly.
 
 ## Setup mirror-oracle
-### Add .envrc to mirror-feeder
+### Add .envrc to mirror-feeder and copy voter.json
 ```
 $ cd mirror-feeder
 $ cat > .envrc
@@ -20,13 +20,14 @@ export TERRA_CHAIN_ID='localterra'
 export PRICE_SERVER_URL='http://localhost:8531/latest'
 <CTRL-C>
 $ direnv allow
+$ cp voter.json .
 ```
-### Copy voter.json
-```
-$ cp voter.json mirro-feeder
-```
+## Send UST to owner and oracle account
+Send 1000000000 UST to owner (terra18tamrs6p3auq0ldz0h9nylptp7a2v9njpzkfc4)
+Send 10000 UST to oracle (terra14xnr2483w29u22kqkappwr3ey2pa0fj2a98z5w)
 
-## Steps
+## Setup mirror-api-server
+
 ### Create .envrc, keystore.json, ormconfig.js files
 ```
 $ cd mirror-api-server
@@ -41,10 +42,6 @@ $ direnv allow
 $ cp keystore.json .
 $ cp ormconfig.js .
 ```
-
-### Send UST to owner and oracle account
-Send 1000000000 UST to owner (terra18tamrs6p3auq0ldz0h9nylptp7a2v9njpzkfc4)
-Send 10000 UST to oracle (terra14xnr2483w29u22kqkappwr3ey2pa0fj2a98z5w)
 
 ### store-code
 wasm 컨트랙트들을 체인에 올리고 코드 아이디들은 codeIds.json 에 저장
