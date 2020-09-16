@@ -1,10 +1,11 @@
 import { Service } from 'typedi'
 import { Repository, FindConditions } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { OraclePriceEntity, AssetEntity } from 'orm'
-import { AssetHistory, AssetOHLC, HistoryRanges, HistoryPrice } from 'types'
 import { num } from 'lib/num'
 import { getHistoryRangeValues } from 'lib/time'
+import { OraclePriceEntity, AssetEntity } from 'orm'
+import { HistoryRanges } from 'types'
+import { AssetHistory, AssetOHLC, HistoryPrice } from 'graphql/schema'
 
 @Service()
 export class OraclePriceService {

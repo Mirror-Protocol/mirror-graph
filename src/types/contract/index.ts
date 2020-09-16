@@ -1,6 +1,4 @@
 export * from './contract'
 export * from './mint'
 export * from './market'
-export * from './msgExecute'
-export * from './tx'
 export * from './oracle'

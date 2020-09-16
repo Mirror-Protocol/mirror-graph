@@ -1,5 +1,6 @@
 import { Resolver, Query, Arg } from 'type-graphql'
-import { HistoryRanges, AssetOHLC, AssetHistory } from 'types'
+import { HistoryRanges } from 'types'
+import { AssetOHLC, AssetHistory } from 'graphql/schema'
 import { AssetService } from 'services'
 
 @Resolver()

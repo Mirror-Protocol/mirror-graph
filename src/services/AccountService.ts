@@ -4,7 +4,8 @@ import { contractQuery } from 'lib/terra'
 import { lcd } from 'lib/terra'
 import { num } from 'lib/num'
 import { AssetEntity } from 'orm'
-import { AssetBalance, ContractType, MintPosition } from 'types'
+import { ContractType } from 'types'
+import { AssetBalance, MintPosition } from 'graphql/schema'
 import { AssetService, ContractService } from 'services'
 
 @Service()

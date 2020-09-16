@@ -1,5 +1,5 @@
 import { ObjectType, Field, Int } from 'type-graphql'
-import { MintPosition } from 'types'
+import { MintPosition } from '.'
 
 @ObjectType()
 export class Asset {

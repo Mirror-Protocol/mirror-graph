@@ -1,6 +1,6 @@
 import { Resolver, Query, Arg } from 'type-graphql'
 import { AccountService, MintService, AssetService } from 'services'
-import { AssetBalance } from 'types'
+import { AssetBalance } from 'graphql/schema'
 
 @Resolver()
 export class AccountResolver {

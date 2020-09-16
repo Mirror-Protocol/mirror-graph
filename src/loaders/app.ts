@@ -3,13 +3,9 @@ import * as bodyParser from 'koa-body'
 import * as Router from 'koa-router'
 import * as helmet from 'koa-helmet'
 import * as cors from '@koa/cors'
-import * as path from 'path'
-import * as glob from 'glob'
-import { configureRoutes } from 'koa-joi-controllers'
 import { apiErrorHandler, APIError, ErrorTypes } from 'lib/error'
 import { error } from 'lib/response'
 
-const API_VERSION_PREFIX = '/v1'
 const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}mirrorprotocol\.com(?::\d{4,5})?(?:\/|$)/
 
 export async function initApp(): Promise<Koa> {
@@ -56,26 +52,6 @@ export async function initApp(): Promise<Koa> {
     ctx.status = 200
     ctx.body = 'OK'
   })
-
-  const paths = glob.sync(path.dirname(require.main.filename) + '/endpoints/api/*.ts')
-  configureRoutes(
-    app,
-    paths.map((fileName) => new (require(fileName).default)()),
-    API_VERSION_PREFIX
-  )
-
-  // routes && init
-  // router.all(
-  //   '(.*)',
-  //   proxy({
-  //     host: config.BYPASS_URI,
-  //     changeOrigin: true,
-  //     requestOptions: {
-  //       strictSSL: false,
-  //       timeout: 20000
-  //     }
-  //   })
-  // )
 
   app.use(router.routes())
   app.use(router.allowedMethods())

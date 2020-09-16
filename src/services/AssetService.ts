@@ -5,14 +5,8 @@ import { contractQuery } from 'lib/terra'
 import { ErrorTypes, APIError } from 'lib/error'
 import { num } from 'lib/num'
 import { AssetEntity, GovEntity } from 'orm'
-import {
-  AssetOHLC,
-  AssetHistory,
-  HistoryRanges,
-  OraclePrice,
-  MarketPool,
-  ContractType,
-} from 'types'
+import { HistoryRanges, OraclePrice, MarketPool, ContractType } from 'types'
+import { AssetOHLC, AssetHistory } from 'graphql/schema'
 import { GovService, ContractService, OraclePriceService } from 'services'
 
 @Service()

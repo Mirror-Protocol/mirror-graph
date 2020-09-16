@@ -1,6 +1,7 @@
 import { Resolver, Query, Arg, Root, FieldResolver } from 'type-graphql'
 import { AssetEntity } from 'orm'
-import { Asset, ContractType, MintPosition } from 'types'
+import { ContractType } from 'types'
+import { Asset, MintPosition } from 'graphql/schema'
 import { AssetService, ContractService, AccountService } from 'services'
 
 @Resolver((of) => Asset)
