@@ -11,6 +11,16 @@ export class AssetResolver {
     private readonly accountService: AccountService,
   ) {}
 
+  @Query((returns) => Asset, { description: 'Get asset' })
+  async asset(@Arg('symbol') symbol: string): Promise<Asset> {
+    return this.assetService.get({ symbol })
+  }
+
+  @Query((returns) => [Asset], { description: 'Get all listed assets' })
+  async assets(): Promise<Asset[]> {
+    return this.assetService.getAll()
+  }
+
   async getContractAddress(asset: AssetEntity, type: ContractType): Promise<string> {
     return (await this.contractService.get({ asset, type }))?.address
   }
@@ -57,21 +67,10 @@ export class AssetResolver {
 }
 
 @Resolver()
-export class AssetDataResolver {
+export class AssetPriceResolver {
   constructor(
     private readonly assetService: AssetService,
-    private readonly accountService: AccountService,
   ) {}
-
-  @Query((returns) => Asset, { description: 'Get asset' })
-  async asset(@Arg('symbol') symbol: string): Promise<Asset> {
-    return this.assetService.get({ symbol })
-  }
-
-  @Query((returns) => [Asset], { description: 'Get all listed assets' })
-  async assets(): Promise<Asset[]> {
-    return this.assetService.getAll()
-  }
 
   @Query((returns) => AssetHistory, { description: 'Get asset price history' })
   async assetHistory(
@@ -87,9 +86,9 @@ export class AssetDataResolver {
   @Query((returns) => AssetOHLC, { description: 'Get asset Open/High/Low/Close' })
   async assetOHLC(
     @Arg('symbol') symbol: string,
-    @Arg('from', { description: 'timestamp' }) from: number,
-    @Arg('to', { description: 'timestamp' }) to: number
+    @Arg('from', { description: 'datetime' }) from: Date,
+    @Arg('to', { description: 'datetime' }) to: Date
   ): Promise<AssetOHLC> {
-    return this.assetService.getOHLC(await this.assetService.get({ symbol }), from, to)
+    return this.assetService.getOHLC(await this.assetService.get({ symbol }), from.getTime(), to.getTime())
   }
 }
