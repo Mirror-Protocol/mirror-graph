@@ -31,6 +31,10 @@ export class AccountService {
 
   async getAssetBalance(address: string, asset: AssetEntity): Promise<AssetBalance> {
     const tokenContract = await this.contractService.get({ asset, type: ContractType.TOKEN })
+    if (!tokenContract) {
+      return undefined
+    }
+
     const { balance } = await contractQuery(tokenContract.address, { balance: { address } })
 
     return { symbol: asset.symbol, balance }
@@ -38,6 +42,10 @@ export class AccountService {
 
   async getLiquidityBalance(address: string, asset: AssetEntity): Promise<AssetBalance> {
     const tokenContract = await this.contractService.get({ asset, type: ContractType.LP_TOKEN })
+    if (!tokenContract) {
+      return undefined
+    }
+
     const { balance } = await contractQuery(tokenContract.address, { balance: { address } })
 
     return { symbol: asset.lpTokenSymbol, balance }
@@ -45,6 +53,9 @@ export class AccountService {
 
   async getMintPosition(address: string, asset: AssetEntity): Promise<MintPosition> {
     const mintContract = await this.contractService.get({ asset, type: ContractType.MINT })
+    if (!mintContract) {
+      return undefined
+    }
 
     return contractQuery<MintPosition>(mintContract.address, { position: { address } })
   }

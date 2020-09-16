@@ -4,7 +4,7 @@ import { Service, Inject } from 'typedi'
 import { contractQuery } from 'lib/terra'
 import { ErrorTypes, APIError } from 'lib/error'
 import { num } from 'lib/num'
-import { AssetEntity } from 'orm'
+import { AssetEntity, GovEntity } from 'orm'
 import {
   AssetOHLC,
   AssetHistory,
@@ -24,10 +24,13 @@ export class AssetService {
     @Inject((type) => OraclePriceService) private readonly oraclePriceService: OraclePriceService
   ) {}
 
+  get gov(): GovEntity {
+    return this.govService.get()
+  }
+
   async get(conditions: FindConditions<AssetEntity>): Promise<AssetEntity> {
     const asset = await this.assetRepo.findOne({
-      ...conditions,
-      gov: conditions.gov || this.govService.get(),
+      ...conditions, gov: conditions.gov || this.gov,
     })
 
     if (!asset) {
@@ -38,7 +41,11 @@ export class AssetService {
   }
 
   async getAll(): Promise<AssetEntity[]> {
-    return this.assetRepo.find({ gov: this.govService.get() })
+    return this.assetRepo.find({ gov: this.gov })
+  }
+
+  async search(text?: string): Promise<AssetEntity[]> {
+    return this.assetRepo.find({ gov: this.gov })
   }
 
   async getOHLC(asset: AssetEntity, from: number, to: number): Promise<AssetOHLC> {
@@ -52,13 +59,16 @@ export class AssetService {
   async getOraclePrice(asset: AssetEntity): Promise<OraclePrice> {
     const oracleContract = await this.contractService.get({ asset, type: ContractType.ORACLE })
     if (!oracleContract) {
-      return { price: '0', priceMultiplier: '1', lastUpdateTime: 0 }
+      return undefined
     }
     return contractQuery<OraclePrice>(oracleContract.address, { price: {} })
   }
 
   async getPool(asset: AssetEntity): Promise<MarketPool> {
     const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
+    if (!marketContract) {
+      return undefined
+    }
     return contractQuery<MarketPool>(marketContract.address, { pool: {} })
   }
 
