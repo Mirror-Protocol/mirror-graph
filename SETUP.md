@@ -17,7 +17,7 @@ $ cd mirror-feeder
 $ cat > .envrc
 export TERRA_LCD='http://localhost:1317/'
 export TERRA_CHAIN_ID='localterra'
-export PRICE_SERVER_URL='http://localhost:8531/latest'
+export PRICE_SERVER_URL='http://tequila-lcd.terra.dev:8531/latest'
 <CTRL-C>
 $ direnv allow
 $ cp voter.json .
