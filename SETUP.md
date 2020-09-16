@@ -23,8 +23,8 @@ $ direnv allow
 $ cp voter.json .
 ```
 ## Send UST to owner and oracle account
-Send 1000000000 UST to owner (terra18tamrs6p3auq0ldz0h9nylptp7a2v9njpzkfc4)
-Send 10000 UST to oracle (terra14xnr2483w29u22kqkappwr3ey2pa0fj2a98z5w)
+* Send 1000000000 UST to owner ```terra18tamrs6p3auq0ldz0h9nylptp7a2v9njpzkfc4```
+* Send 10000 UST to oracle ```terra14xnr2483w29u22kqkappwr3ey2pa0fj2a98z5w```
 
 ## Setup mirror-api-server
 
