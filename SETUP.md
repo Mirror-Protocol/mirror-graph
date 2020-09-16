@@ -7,6 +7,9 @@
 * keystore.json and ormconfig for mirror-api-server
 * voter.json for mirror-oracle/mirror-feeder
 
+## Setup PostgreSQL database
+Create User and database and edit ormconfig.js accordingly.
+
 ## Setup mirror-oracle
 ### Add .envrc to mirror-feeder
 ```
