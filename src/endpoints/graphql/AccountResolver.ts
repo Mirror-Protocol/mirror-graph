@@ -1,6 +1,6 @@
 import { Resolver, Query, Arg } from 'type-graphql'
 import { AccountService, MintService, AssetService } from 'services'
-import { AssetBalance, MintPosition } from 'types'
+import { AssetBalance } from 'types'
 
 @Resolver()
 export class AccountResolver {
@@ -21,13 +21,5 @@ export class AccountResolver {
   @Query((returns) => [AssetBalance])
   async balances(@Arg('address') address: string): Promise<AssetBalance[]> {
     return this.accountService.getBalances(address)
-  }
-
-  @Query((returns) => MintPosition)
-  async mintPosition(
-    @Arg('address') address: string,
-    @Arg('symbol') symbol: string
-  ): Promise<MintPosition> {
-    return this.mintService.getPosition(address, await this.assetService.get({ symbol }))
   }
 }

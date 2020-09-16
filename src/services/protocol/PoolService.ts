@@ -53,7 +53,6 @@ export class MarketService {
         wallet.key.accAddress, marketContract.address, withdrawMsg, new Coins([])
       ),
     ])
-    // return wallet.execute(marketContract.address, { withdrawLiquidity: { amount } })
   }
 
   async getMarketContractInfo(asset: AssetEntity): Promise<MarketContractInfo> {

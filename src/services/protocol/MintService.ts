@@ -3,7 +3,7 @@ import { Coin, Coins, TxInfo, MsgExecuteContract } from '@terra-money/terra.js'
 import { contractQuery, TxWallet } from 'lib/terra'
 import { toSnakeCase } from 'lib/caseStyles'
 import { AssetEntity } from 'orm'
-import { MintPosition, MintConfigGeneral, MintConfigAsset, ContractType } from 'types'
+import { MintConfigGeneral, MintConfigAsset, ContractType } from 'types'
 import { ContractService } from 'services'
 
 @Service()
@@ -52,12 +52,6 @@ export class MintService {
     const mintContract = await this.contractService.get({ asset, type: ContractType.MINT })
 
     return wallet.execute(mintContract.address, { updateConfig: { amount, owner } })
-  }
-
-  async getPosition(address: string, asset: AssetEntity): Promise<MintPosition> {
-    const mintContract = await this.contractService.get({ asset, type: ContractType.MINT })
-
-    return contractQuery<MintPosition>(mintContract.address, { position: { address } })
   }
 
   async getConfigGeneral(asset: AssetEntity): Promise<MintConfigGeneral> {

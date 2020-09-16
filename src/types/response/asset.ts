@@ -1,4 +1,5 @@
 import { ObjectType, Field, Int } from 'type-graphql'
+import { MintPosition } from 'types'
 
 @ObjectType()
 export class Asset {
@@ -31,6 +32,12 @@ export class Asset {
 
   @Field({ nullable: true })
   balance?: string
+
+  @Field((type) => MintPosition, { nullable: true })
+  mintPosition?: MintPosition
+
+  @Field({ nullable: true })
+  liquidityBalance?: string
 }
 
 @ObjectType()

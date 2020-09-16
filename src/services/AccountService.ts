@@ -4,7 +4,7 @@ import { contractQuery } from 'lib/terra'
 import { lcd } from 'lib/terra'
 import { num } from 'lib/num'
 import { AssetEntity } from 'orm'
-import { AssetBalance, ContractType } from 'types'
+import { AssetBalance, ContractType, MintPosition } from 'types'
 import { AssetService, ContractService } from 'services'
 
 @Service()
@@ -18,7 +18,7 @@ export class AccountService {
     if (symbol === 'uusd') {
       return this.getTerraBalance(address, symbol)
     } else if (symbol.substr(-3, 3) === '-LP') {
-      return this.getLPBalance(address, await this.assetService.get({ lpTokenSymbol: symbol }))
+      return this.getLiquidityBalance(address, await this.assetService.get({ lpTokenSymbol: symbol }))
     }
 
     return this.getAssetBalance(address, await this.assetService.get({ symbol }))
@@ -36,11 +36,17 @@ export class AccountService {
     return { symbol: asset.symbol, balance }
   }
 
-  async getLPBalance(address: string, asset: AssetEntity): Promise<AssetBalance> {
+  async getLiquidityBalance(address: string, asset: AssetEntity): Promise<AssetBalance> {
     const tokenContract = await this.contractService.get({ asset, type: ContractType.LP_TOKEN })
     const { balance } = await contractQuery(tokenContract.address, { balance: { address } })
 
     return { symbol: asset.lpTokenSymbol, balance }
+  }
+
+  async getMintPosition(address: string, asset: AssetEntity): Promise<MintPosition> {
+    const mintContract = await this.contractService.get({ asset, type: ContractType.MINT })
+
+    return contractQuery<MintPosition>(mintContract.address, { position: { address } })
   }
 
   async getBalances(address: string): Promise<AssetBalance[]> {

@@ -1,7 +1,7 @@
 import { Resolver, Query, Arg, Root, FieldResolver } from 'type-graphql'
-import { HistoryRanges, Asset, AssetOHLC, AssetHistory, ContractType } from 'types'
-import { AssetService, ContractService, AccountService } from 'services'
 import { AssetEntity } from 'orm'
+import { Asset, ContractType, MintPosition } from 'types'
+import { AssetService, ContractService, AccountService } from 'services'
 
 @Resolver((of) => Asset)
 export class AssetResolver {
@@ -62,33 +62,18 @@ export class AssetResolver {
 
   @FieldResolver()
   async balance(@Root() asset: AssetEntity, @Arg('address') address: string): Promise<string> {
-    return (await this.accountService.getAssetBalance(address, asset)).balance
-  }
-}
-
-@Resolver()
-export class AssetPriceResolver {
-  constructor(
-    private readonly assetService: AssetService,
-  ) {}
-
-  @Query((returns) => AssetHistory, { description: 'Get asset price history' })
-  async assetHistory(
-    @Arg('symbol') symbol: string,
-    @Arg('range', (type) => HistoryRanges, {
-      description: `${Object.keys(HistoryRanges).map((key) => HistoryRanges[key])}`,
-    })
-    range: HistoryRanges
-  ): Promise<AssetHistory> {
-    return this.assetService.getHistory(await this.assetService.get({ symbol }), range)
+    const { balance } = await this.accountService.getAssetBalance(address, asset)
+    return balance
   }
 
-  @Query((returns) => AssetOHLC, { description: 'Get asset Open/High/Low/Close' })
-  async assetOHLC(
-    @Arg('symbol') symbol: string,
-    @Arg('from', { description: 'datetime' }) from: Date,
-    @Arg('to', { description: 'datetime' }) to: Date
-  ): Promise<AssetOHLC> {
-    return this.assetService.getOHLC(await this.assetService.get({ symbol }), from.getTime(), to.getTime())
+  @FieldResolver()
+  async mintPosition(@Root() asset: AssetEntity, @Arg('address') address: string): Promise<MintPosition> {
+    return this.accountService.getMintPosition(address, asset)
+  }
+
+  @FieldResolver()
+  async liquidityBalance(@Root() asset: AssetEntity, @Arg('address') address: string): Promise<string> {
+    const { balance } = await this.accountService.getLiquidityBalance(address, asset)
+    return balance
   }
 }
