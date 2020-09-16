@@ -20,6 +20,13 @@ export class ContractService {
     return this.contractRepo.findOne(conditions)
   }
 
+  async find(conditions: FindConditions<ContractEntity>): Promise<ContractEntity[]> {
+    if (!conditions.gov && !conditions.asset && !conditions.address) {
+      throw new Error('conditions must have gov or asset')
+    }
+    return this.contractRepo.find(conditions)
+  }
+
   async create(
     wallet: TxWallet,
     gov: GovEntity,
