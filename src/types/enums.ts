@@ -1,5 +1,11 @@
 import { registerEnumType } from 'type-graphql'
 
+export enum AssetCategoty {
+  STOCK = 'STOCK',
+  ETF = 'ETF',
+}
+registerEnumType(AssetCategoty, { name: 'AssetCategoty' })
+
 export enum HistoryRanges {
   ONE_HOUR = '1hour',
   ONE_DAY = '1day',
@@ -7,5 +13,4 @@ export enum HistoryRanges {
   ONE_MONTH = '1month',
   ALL = 'all',
 }
-
 registerEnumType(HistoryRanges, { name: 'HistoryRanges' })

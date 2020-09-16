@@ -9,6 +9,7 @@ import {
   Index,
 } from 'typeorm'
 import { GovEntity } from 'orm'
+import { AssetCategoty } from 'types'
 
 @Entity('asset')
 @Index('index_asset_symbol_and_gov', ['symbol', 'gov'], { unique: true })
@@ -29,11 +30,17 @@ export class AssetEntity {
   @Column()
   symbol: string
 
-  @Column({ default: '' })
+  @Column()
   lpTokenSymbol: string
 
   @Column()
   name: string
+
+  @Column({ type: 'enum', enum: AssetCategoty, default: AssetCategoty.STOCK })
+  categoty: AssetCategoty
+
+  @Column({ default: 'This is description' })
+  description: string
 
   @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE', eager: true })
   @JoinColumn()
