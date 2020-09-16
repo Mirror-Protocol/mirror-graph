@@ -43,7 +43,7 @@ report/*
 !report/.gitkeep
 
 # ormconfig
-ormconfig.json
+ormconfig.*
 
 # direnv
 .envrc
