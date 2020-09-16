@@ -75,7 +75,7 @@ export class AssetService {
   async getPrice(asset: AssetEntity): Promise<string> {
     const price = await this.getPool(asset)
       .then((pool) => num(pool.collateralPool).dividedBy(pool.assetPool).toFixed(6))
-      .catch((error) => '0')
-    return num(price).isNaN() ? '0' : price
+      .catch((error) => undefined)
+    return num(price).isNaN() ? undefined : price
   }
 }

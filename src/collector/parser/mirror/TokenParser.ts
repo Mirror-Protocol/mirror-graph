@@ -31,7 +31,7 @@ export class TokenParser extends MirrorParser {
     const tx = new TxEntity({
       txHash, msgIndex, type, symbol: asset.symbol, data, datetime, gov
     })
-    const ohlc = await this.priceService.setOHLC(asset, datetime.getTime(), price)
+    const ohlc = price && await this.priceService.setOHLC(asset, datetime.getTime(), price)
 
     return [tx, ohlc]
   }
