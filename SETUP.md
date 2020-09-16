@@ -44,29 +44,28 @@ $ cp ormconfig.js .
 ```
 
 ### store-code
-wasm 컨트랙트들을 체인에 올리고 코드 아이디들은 codeIds.json 에 저장
+wasm 컨트랙트들을 체인에 올리고 코드 아이디들을 codeIds.json 에 저장
 ```
 yarn cli store-code -p TerraLuna1@# --all
 ```
 
 ### create
-codeIds.json 에 생성된 코드번호들로 gov 관련된 컨트랙들 쫙 생성해주고 GovEntity, ContractEntity 에 저장
+codeIds.json 코드 번호를 통해 gov 관련된 컨트랙들을 생성해주고 GovEntity, ContractEntity SQL에 저장
 ```
 yarn cli create -p TerraLuna1@#
 ```
 
 ### whitelisting-testnet
-종목들 체인에 생성하면서 AssetEntity, ContractEntity 에 내용 저장되고 오라클 주소들은 address.json 에 저장됨
-
+종목들 체인에 생성하면서 AssetEntity, ContractEntity SQL에 저장되고 각 종목별 오라클 주소들을 address.json에 저장
 ```
 yarn cli whitelisting-testnet --owner TerraLuna1@#
 ```
 
 ### Start oracle voting
-mirror-feeder 에 3번에서 생성된 address.json 와 voter.json 을 복사하고 yarn start 로 오라클 투표 시작
+mirror-feeder 에 3번에서 생성된 address.json를 복사하고 yarn start 로 오라클 투표 시작
 ```
-cp <mirror-api-server dir>/address.json mirror-feeder
-cp voter.json mirror-feeder
+cd mirror-oracle/mirror-feeder
+cp <mirror-api-server dir>/address.json .
 yarn start
 ```
 
