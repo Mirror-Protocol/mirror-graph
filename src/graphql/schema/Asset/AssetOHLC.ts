@@ -1,9 +1,16 @@
-import { ObjectType, Field, Int } from 'type-graphql'
+import { ObjectType, Field } from 'type-graphql'
 
-@ObjectType()
+@ObjectType({ simpleResolvers: true })
 export class AssetOHLC {
+  constructor(options: Partial<AssetOHLC>) {
+    Object.assign(this, options)
+  }
+
   @Field()
-  symbol: string
+  from: number
+
+  @Field()
+  to: number
 
   @Field()
   open: string
@@ -16,10 +23,4 @@ export class AssetOHLC {
 
   @Field()
   close: string
-
-  @Field((type) => Int)
-  from: number
-
-  @Field((type) => Int)
-  to: number
 }

@@ -15,11 +15,7 @@ export async function getOHLC<T>(repo: Repository<T>, asset: AssetEntity, from: 
     .andWhere('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
     .getRawOne()
 
-  return Object.assign(new AssetOHLC(), {
-    from,
-    to,
-    ...ohlc,
-  })
+  return new AssetOHLC({ ...ohlc, from, to })
 }
 
 export async function getHistory<T>(repo: Repository<T>, asset: AssetEntity, range: HistoryRanges): Promise<PriceAt[]> {

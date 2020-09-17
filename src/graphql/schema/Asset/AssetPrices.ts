@@ -1,5 +1,5 @@
 import { ObjectType, Field } from 'type-graphql'
-import { PriceAt } from 'graphql/schema'
+import { PriceAt, AssetOHLC } from 'graphql/schema'
 
 @ObjectType({ simpleResolvers: true })
 export class AssetPrices {
@@ -8,6 +8,9 @@ export class AssetPrices {
 
   @Field((type) => [PriceAt], { nullable: true, description: 'price history' })
   history?: PriceAt[]
+
+  @Field((type) => AssetOHLC, { nullable: true, description: 'open/high/low/close price' })
+  ohlc?: AssetOHLC
 
   @Field({ nullable: true, description: 'oracle price' })
   oraclePrice?: string
