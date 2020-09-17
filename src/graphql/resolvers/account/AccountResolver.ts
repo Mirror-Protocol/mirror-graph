@@ -1,8 +1,8 @@
 import { Resolver, Query, Arg } from 'type-graphql'
 import { AccountService } from 'services'
-import { AssetBalance } from 'graphql/schema'
+import { Account, AssetBalance } from 'graphql/schema'
 
-@Resolver()
+@Resolver((of) => Account)
 export class AccountResolver {
   constructor(
     private readonly accountService: AccountService,
