@@ -22,7 +22,10 @@ export async function parseMirrorMsg(
   txInfo: TxInfo, msg: MsgExecuteContract, msgIndex: number, log: TxLog
 ): Promise<unknown[]> {
   const contractService = Container.get(ContractService)
-  const contract = await contractService.get({ address: msg.contract })
+  const contract = await contractService.get(
+    { address: msg.contract },
+    { relations: ['asset'] }
+  )
 
   if (!contract || !parser[contract.type]) {
     return []

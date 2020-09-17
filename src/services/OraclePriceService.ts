@@ -38,7 +38,6 @@ export class OraclePriceService {
     } else {
       priceEntity = Object.assign(new OraclePriceEntity(), {
         asset,
-        symbol: asset.symbol,
         open: price,
         high: price,
         low: price,
@@ -62,7 +61,6 @@ export class OraclePriceService {
       .getRawOne()
 
     return Object.assign(new AssetOHLC(), {
-      symbol: asset.symbol,
       from,
       to,
       ...ohlc,
@@ -82,7 +80,6 @@ export class OraclePriceService {
       .getRawMany()
 
     return Object.assign(new AssetHistory(), {
-      symbol: asset.symbol,
       history: prices.map((price) => ({
         timestamp: new Date(price.datetime).getTime(),
         price: price.close,

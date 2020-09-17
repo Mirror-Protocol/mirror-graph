@@ -7,15 +7,21 @@ import {
   JoinColumn,
   ManyToOne,
   Index,
+  BeforeInsert,
 } from 'typeorm'
 import { GovEntity } from 'orm'
 import { AssetCategoty } from 'types'
 
 @Entity('asset')
-@Index('index_asset_symbol_and_gov', ['symbol', 'gov'], { unique: true })
+@Index('idx_asset_symbol_and_gov', ['symbol', 'gov'], { unique: true })
 export class AssetEntity {
   constructor(options: Partial<AssetEntity>) {
     Object.assign(this, options)
+  }
+
+  @BeforeInsert()
+  beforeInsert(): void {
+    this.lpTokenSymbol = `${this.symbol}-LP`
   }
 
   @CreateDateColumn()
@@ -39,10 +45,10 @@ export class AssetEntity {
   @Column({ type: 'enum', enum: AssetCategoty, default: AssetCategoty.STOCK })
   categoty: AssetCategoty
 
-  @Column({ default: 'This is description' })
+  @Column({ default: '' })
   description: string
 
-  @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE', eager: true })
+  @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE' })
   @JoinColumn()
   gov: GovEntity
 }

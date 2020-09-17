@@ -23,13 +23,13 @@ export class TokenParser extends MirrorParser {
       ...marketMsg, offer: values[7], receive: values[8], spread: values[9], fee: values[10],
     }
 
-    const { asset, gov } = contract
+    const { asset, govId } = contract
     const { txhash: txHash, timestamp } = txInfo
     const price = await this.assetService.getPrice(asset)
     const datetime = new Date(timestamp)
 
     const tx = new TxEntity({
-      txHash, msgIndex, type, symbol: asset.symbol, data, datetime, gov
+      txHash, sender: msg.sender, msgIndex, type, symbol: asset.symbol, data, datetime, govId
     })
     const ohlc = price && await this.priceService.setOHLC(asset, datetime.getTime(), price)
 
@@ -43,12 +43,12 @@ export class TokenParser extends MirrorParser {
     const values = log.events[1].attributes.map((attr) => attr.value)
     const data = { amount: values[4] }
 
-    const { asset, gov } = contract
+    const { asset, govId } = contract
     const { txhash: txHash, timestamp } = txInfo
     const datetime = new Date(timestamp)
 
     const tx = new TxEntity({
-      txHash, msgIndex, type, symbol: asset.lpTokenSymbol, data, datetime, gov
+      txHash, sender: msg.sender, msgIndex, type, symbol: asset.lpTokenSymbol, data, datetime, govId
     })
 
     return [tx]

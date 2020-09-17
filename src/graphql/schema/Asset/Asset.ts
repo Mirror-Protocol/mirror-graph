@@ -7,7 +7,13 @@ export class Asset {
   symbol: string
 
   @Field()
+  lpTokenSymbol: string
+
+  @Field()
   name: string
+
+  @Field()
+  description: string
 
   @Field((type) => AssetContracts, { nullable: true })
   contracts?: AssetContracts

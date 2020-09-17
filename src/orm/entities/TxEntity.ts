@@ -11,7 +11,7 @@ import { GovEntity } from 'orm'
 import { TxType } from 'types'
 
 @Entity('tx')
-@Index('index_tx_datetime_and_msgindex_and_gov', ['datetime', 'msgIndex', 'gov'], { unique: true })
+@Index('idx_tx_sender_datetime_msgindex_gov', ['sender', 'datetime', 'msgIndex', 'gov'], { unique: true })
 export class TxEntity {
   constructor(options: Partial<TxEntity>) {
     Object.assign(this, options)
@@ -29,6 +29,9 @@ export class TxEntity {
   @Column()
   msgIndex: number
 
+  @Column()
+  sender: string
+
   @Column({ type: 'enum', enum: TxType })
   type: TxType
 
@@ -42,6 +45,9 @@ export class TxEntity {
   datetime: Date
 
   @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE' })
-  @JoinColumn()
+  @JoinColumn({ name: 'gov_id' })
   gov: GovEntity
+
+  @Column()
+  govId: number
 }

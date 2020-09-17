@@ -11,7 +11,7 @@ import { GovEntity, AssetEntity } from 'orm'
 import { ContractType } from 'types'
 
 @Entity('contract')
-@Index('index_contract_address_and_type_and_gov', ['address', 'type', 'gov'], { unique: true })
+@Index('idx_contract_address_type_gov', ['address', 'type', 'gov'], { unique: true })
 export class ContractEntity {
   constructor(options: Partial<ContractEntity>) {
     Object.assign(this, options)
@@ -29,11 +29,17 @@ export class ContractEntity {
   @Column({ type: 'enum', enum: ContractType })
   type: ContractType
 
-  @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE', eager: true })
-  @JoinColumn()
+  @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'gov_id' })
   gov: GovEntity
 
-  @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE', eager: true })
-  @JoinColumn()
-  asset: AssetEntity
+  @Column()
+  govId: number
+
+  @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE', nullable: true })
+  @JoinColumn({ name: 'asset_id' })
+  asset?: AssetEntity
+
+  @Column({ nullable: true })
+  assetId?: number
 }

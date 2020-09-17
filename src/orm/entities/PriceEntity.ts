@@ -11,7 +11,7 @@ import {
 import { AssetEntity } from 'orm'
 
 @Entity('price')
-@Index('index_price_symbol_and_datetime_and_asset', ['symbol', 'datetime', 'asset'], {
+@Index('idx_price_datetime_asset', ['datetime', 'asset'], {
   unique: true,
 })
 export class PriceEntity {
@@ -23,9 +23,6 @@ export class PriceEntity {
 
   @PrimaryGeneratedColumn()
   id: number
-
-  @Column()
-  symbol: string
 
   @Column()
   datetime: Date
@@ -42,7 +39,10 @@ export class PriceEntity {
   @Column('decimal', { precision: 40, scale: 6 })
   close: string
 
-  @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE', eager: true })
-  @JoinColumn()
+  @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'asset_id' })
   asset: AssetEntity
+
+  @Column()
+  assetId: number
 }

@@ -26,12 +26,12 @@ export class StakingParser extends MirrorParser {
       return []
     }
 
-    const { asset, gov } = contract
+    const { asset, govId } = contract
     const { txhash: txHash, timestamp } = txInfo
     const datetime = new Date(timestamp)
 
     const tx = new TxEntity({
-      txHash, msgIndex, type, symbol: asset.lpTokenSymbol, data, datetime, gov
+      txHash, sender: msg.sender, msgIndex, type, symbol: asset.lpTokenSymbol, data, datetime, govId
     })
 
     return [tx]

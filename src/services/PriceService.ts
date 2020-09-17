@@ -35,7 +35,6 @@ export class PriceService {
     } else {
       priceEntity = Object.assign(new PriceEntity(), {
         asset,
-        symbol: asset.symbol,
         open: price,
         high: price,
         low: price,
@@ -59,7 +58,6 @@ export class PriceService {
       .getRawOne()
 
     return Object.assign(new AssetOHLC(), {
-      symbol: asset.symbol,
       from,
       to,
       ...ohlc,
@@ -79,7 +77,6 @@ export class PriceService {
       .getRawMany()
 
     return Object.assign(new AssetHistory(), {
-      symbol: asset.symbol,
       history: prices.map((price) => ({
         timestamp: new Date(price.datetime).getTime(),
         price: price.close,

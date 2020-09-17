@@ -36,13 +36,13 @@ export class MarketParser extends MirrorParser {
       return []
     }
 
-    const { asset, gov } = contract
+    const { asset, govId } = contract
     const { txhash: txHash, timestamp } = txInfo
     const price = await this.assetService.getPrice(asset)
     const datetime = new Date(timestamp)
 
     const tx = new TxEntity({
-      txHash, msgIndex, type, symbol: asset.symbol, data, datetime, gov
+      txHash, sender: msg.sender, msgIndex, type, symbol: asset.symbol, data, datetime, govId
     })
     const ohlc = price && await this.priceService.setOHLC(asset, datetime.getTime(), price)
 

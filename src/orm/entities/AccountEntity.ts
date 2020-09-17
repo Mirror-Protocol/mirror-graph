@@ -1,4 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Column } from 'typeorm'
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Column,
+  Index,
+  ManyToOne,
+  JoinColumn
+} from 'typeorm'
+import { GovEntity } from 'orm'
 
 @Entity('account')
 export class AccountEntity {
@@ -12,5 +22,13 @@ export class AccountEntity {
   id: number
 
   @Column()
+  @Index()
   address: string
+
+  @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'gov_id' })
+  gov: GovEntity
+
+  @Column()
+  govId: number
 }

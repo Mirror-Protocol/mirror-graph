@@ -60,7 +60,7 @@ export async function updateBlock(): Promise<boolean> {
     .catch((error) => {
       sentry.captureException(error)
       logger.error(error)
-      throw new Error(error)
+      throw error
       return false
     })
 }
