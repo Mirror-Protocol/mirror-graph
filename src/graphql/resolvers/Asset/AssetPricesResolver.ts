@@ -17,6 +17,13 @@ export class AssetPricesResolver {
   }
 
   @FieldResolver()
+  async priceAt(
+    @Root() asset: AssetEntity, @Arg('datetime', { description: 'datetime' }) datetime: Date
+  ): Promise<string> {
+    return this.priceService.getPrice(asset, datetime.getTime())
+  }
+
+  @FieldResolver()
   async history(
     @Root() asset: AssetEntity, @Arg('range', (type) => HistoryRanges) range: HistoryRanges
   ): Promise<PriceAt[]> {
@@ -35,6 +42,13 @@ export class AssetPricesResolver {
   @FieldResolver()
   async oraclePrice(@Root() asset: AssetEntity): Promise<string> {
     return this.oracleService.getPrice(asset)
+  }
+
+  @FieldResolver()
+  async oraclePriceAt(
+    @Root() asset: AssetEntity, @Arg('datetime', { description: 'datetime' }) datetime: Date
+  ): Promise<string> {
+    return this.oracleService.getPrice(asset, datetime.getTime())
   }
 
   @FieldResolver()

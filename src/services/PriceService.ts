@@ -1,5 +1,5 @@
 import { Service, Inject } from 'typedi'
-import { Repository, FindConditions } from 'typeorm'
+import { Repository, FindConditions, LessThanOrEqual } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
 import { getOHLC, getHistory } from 'lib/price'
@@ -19,8 +19,14 @@ export class PriceService {
     return this.priceRepo.findOne(conditions)
   }
 
-  async getPrice(asset: AssetEntity): Promise<string> {
-    const price = await this.priceRepo.findOne({ asset }, { order: { datetime: 'DESC' } })
+  async getPrice(asset: AssetEntity, timestamp: number = Date.now()): Promise<string> {
+    const price = await this.priceRepo.findOne(
+      { asset, datetime: LessThanOrEqual(new Date(timestamp)) },
+      {
+        select: ['close', 'datetime'],
+        order: { datetime: 'DESC' }
+      }
+    )
     return price?.close
   }
 
