@@ -1,6 +1,6 @@
 import { ObjectType, Field } from 'type-graphql'
 
-@ObjectType()
+@ObjectType({ simpleResolvers: true })
 export class AssetPositions {
   @Field({ nullable: true, description: 'token balance' })
   token?: string

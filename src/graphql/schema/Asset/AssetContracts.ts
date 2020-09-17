@@ -1,6 +1,6 @@
 import { ObjectType, Field } from 'type-graphql'
 
-@ObjectType()
+@ObjectType({ simpleResolvers: true })
 export class AssetContracts {
   @Field((type) => String, { nullable: true, description: 'token contract address' })
   token?: string

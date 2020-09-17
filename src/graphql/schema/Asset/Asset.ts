@@ -1,7 +1,7 @@
 import { ObjectType, Field, Int } from 'type-graphql'
 import { AssetContracts, AssetPositions } from './'
 
-@ObjectType()
+@ObjectType({ simpleResolvers: true })
 export class Asset {
   @Field()
   symbol: string

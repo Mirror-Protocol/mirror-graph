@@ -29,6 +29,7 @@ export async function initGraphQL(app): Promise<void> {
     schema,
     context: ({ req }): object => req,
     debug: process.env.NODE_ENV !== 'production',
+    playground: true,
   })
 
   server.applyMiddleware({ app, path: '/graphql' })
