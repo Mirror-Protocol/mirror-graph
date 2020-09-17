@@ -3373,6 +3373,11 @@ graceful-fs@^4.1.2, graceful-fs@^4.2.4:
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.2.4.tgz#2256bde14d3632958c465ebc96dc467ca07a29fb"
   integrity sha512-WjKPNJF79dtJAVniUlGGWHYGz2jWxT6VhN/4m1NdkbZ2nOsEF+cI1Edgql5zCRhs/VsQYRvrXctxktVXZUkixw==
 
+graphql-bigint@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/graphql-bigint/-/graphql-bigint-1.0.0.tgz#b2909be9c9970a9a7697273c27d0ea47a146a19c"
+  integrity sha512-eLDf9GinU0ioui1ipXCl7pMFa3Am8pxciS0D0LR68SXfY7EzLk5P58LKyk+7CgLD5f66kiFGa5OIqt6iRLE2cQ==
+
 graphql-extensions@^0.12.4:
   version "0.12.4"
   resolved "https://registry.yarnpkg.com/graphql-extensions/-/graphql-extensions-0.12.4.tgz#c0aa49a20f983a2da641526d1e505996bd2b4188"
@@ -3388,6 +3393,11 @@ graphql-query-complexity@^0.7.0:
   integrity sha512-nl/aOzRdQ1Opj/sND9Wx+/FHnsU4SFA0wePWJzyZajyht43nP9/1edP6YaoupXfNeUocHFXsmAOOFVTwTLu/6A==
   dependencies:
     lodash.get "^4.4.2"
+
+graphql-scalars@^1.2.7:
+  version "1.2.7"
+  resolved "https://registry.yarnpkg.com/graphql-scalars/-/graphql-scalars-1.2.7.tgz#dad338ffa5f415615770b01281c83d710d9b314d"
+  integrity sha512-bkB/OEsfiYm/hMwSnZfg91SZ3ChOM6Dnw5LZkUN68IXtBGKrBxjw8kXbD3bBXhWpjaKshvNVG7ZK3vFtfBmwrQ==
 
 graphql-subscriptions@^1.0.0, graphql-subscriptions@^1.1.0:
   version "1.1.0"

@@ -17,6 +17,6 @@ export class OracleParser extends MirrorParser {
     const { price } = msg.execute_msg['feed_price']
     const timestamp = new Date(txInfo.timestamp).getTime()
 
-    return [await this.oraclePriceService.setOHLC(contract.asset, timestamp, price, false)]
+    return [await this.oracleService.setOHLC(contract.asset, timestamp, price, false)]
   }
 }

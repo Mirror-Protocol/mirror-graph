@@ -1,14 +1,14 @@
 import { Coin } from '@terra-money/terra.js'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { MarketService } from 'services'
+import { PoolService } from 'services'
 import * as logger from 'lib/logger'
 import { getKey } from 'lib/keystore'
 import { TxWallet } from 'lib/terra'
 import config from 'config'
 
 export function pool(): void {
-  const marketService = Container.get(MarketService)
+  const marketService = Container.get(PoolService)
 
   program
     .command('provide-liquidity <asset-amount> <uusd-amount>')

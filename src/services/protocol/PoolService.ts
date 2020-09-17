@@ -1,13 +1,13 @@
 import { Service, Inject } from 'typedi'
 import { Coin, Coins, TxInfo, MsgExecuteContract } from '@terra-money/terra.js'
-import { contractInfo, TxWallet } from 'lib/terra'
+import { contractInfo, contractQuery, TxWallet } from 'lib/terra'
 import { toSnakeCase } from 'lib/caseStyles'
 import { AssetEntity } from 'orm'
-import { MarketContractInfo, ContractType } from 'types'
+import { MarketContractInfo, ContractType, MarketPool } from 'types'
 import { AssetService, ContractService } from 'services'
 
 @Service()
-export class MarketService {
+export class PoolService {
   constructor(
     @Inject((type) => AssetService) private readonly assetService: AssetService,
     @Inject((type) => ContractService) private readonly contractService: ContractService
@@ -53,6 +53,14 @@ export class MarketService {
         wallet.key.accAddress, marketContract.address, withdrawMsg, new Coins([])
       ),
     ])
+  }
+
+  async getPool(asset: AssetEntity): Promise<MarketPool> {
+    const marketContract = await this.contractService.get({ asset, type: ContractType.MARKET })
+    if (!marketContract) {
+      return undefined
+    }
+    return contractQuery<MarketPool>(marketContract.address, { pool: {} })
   }
 
   async getMarketContractInfo(asset: AssetEntity): Promise<MarketContractInfo> {

@@ -1,25 +1,44 @@
-import { Service } from 'typedi'
+import { Service, Inject } from 'typedi'
 import { Repository, FindConditions } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
 import { getHistoryRangeValues } from 'lib/time'
+import { contractQuery } from 'lib/terra'
 import { OraclePriceEntity, AssetEntity } from 'orm'
-import { HistoryRanges } from 'types'
-import { AssetHistory, AssetOHLC, HistoryPrice } from 'graphql/schema'
+import { HistoryRanges, ContractType, OraclePrice } from 'types'
+import { AssetOHLC, PriceAt } from 'graphql/schema'
+import { ContractService } from 'services'
 
 @Service()
-export class OraclePriceService {
+export class OracleService {
   constructor(
     @InjectRepository(OraclePriceEntity)
-    private readonly oraclePriceRepo: Repository<OraclePriceEntity>
+    private readonly oracleRepo: Repository<OraclePriceEntity>,
+    @Inject((type) => ContractService) private readonly contractService: ContractService,
   ) {}
 
   async get(conditions: FindConditions<OraclePriceEntity>): Promise<OraclePriceEntity> {
-    return this.oraclePriceRepo.findOne(conditions)
+    return this.oracleRepo.findOne(conditions)
   }
 
-  async getLatestPrice(asset: AssetEntity): Promise<OraclePriceEntity> {
-    return this.oraclePriceRepo.findOne({ asset }, { order: { datetime: 'DESC' } })
+  async getPrice(asset: AssetEntity): Promise<string> {
+    const price = await this.oracleRepo.findOne({ asset }, { order: { datetime: 'DESC' } })
+    if (!price) {
+      return undefined
+    }
+    return num(price.close).multipliedBy(price.priceMultiplier).toFixed(6)
+  }
+
+  async getContractPrice(asset: AssetEntity): Promise<string> {
+    const oracleContract = await this.contractService.get({ asset, type: ContractType.ORACLE })
+    if (!oracleContract) {
+      return undefined
+    }
+    const oraclePrice = await contractQuery<OraclePrice>(oracleContract.address, { price: {} })
+    if (!oraclePrice) {
+      return undefined
+    }
+    return num(oraclePrice.price).multipliedBy(oraclePrice.priceMultiplier).toFixed(6)
   }
 
   async setOHLC(
@@ -46,11 +65,11 @@ export class OraclePriceService {
       })
     }
 
-    return needSave ? this.oraclePriceRepo.save(priceEntity) : priceEntity
+    return needSave ? this.oracleRepo.save(priceEntity) : priceEntity
   }
 
   async getOHLC(asset: AssetEntity, from: number, to: number): Promise<AssetOHLC> {
-    const ohlc = await this.oraclePriceRepo
+    const ohlc = await this.oracleRepo
       .createQueryBuilder()
       .select('(array_agg(open ORDER BY datetime ASC))[1]', 'open')
       .addSelect('MAX(high)', 'high')
@@ -67,11 +86,11 @@ export class OraclePriceService {
     })
   }
 
-  async getHistory(asset: AssetEntity, range: HistoryRanges): Promise<AssetHistory> {
+  async getHistory(asset: AssetEntity, range: HistoryRanges): Promise<PriceAt[]> {
     const to = Date.now()
     const { from, interval } = getHistoryRangeValues(to, range)
 
-    const prices = await this.oraclePriceRepo
+    const prices = await this.oracleRepo
       .createQueryBuilder()
       .select(['datetime', 'close'])
       .where('asset_id = :assetId', { assetId: asset.id })
@@ -79,11 +98,8 @@ export class OraclePriceService {
       .andWhere("int4(date_part('minute', datetime)) % :interval = 0", { interval })
       .getRawMany()
 
-    return Object.assign(new AssetHistory(), {
-      history: prices.map((price) => ({
-        timestamp: new Date(price.datetime).getTime(),
-        price: price.close,
-      })) as HistoryPrice[],
-    })
+    return prices.map((price) => ({
+      timestamp: new Date(price.datetime).getTime(), price: price.close
+    }))
   }
 }

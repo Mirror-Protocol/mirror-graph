@@ -1,5 +1,5 @@
-import { ObjectType, Field, Int } from 'type-graphql'
-import { AssetContracts, AssetPositions } from './'
+import { ObjectType, Field } from 'type-graphql'
+import { AssetContracts, AssetPositions, AssetPrices } from 'graphql/schema'
 
 @ObjectType({ simpleResolvers: true })
 export class Asset {
@@ -15,66 +15,12 @@ export class Asset {
   @Field()
   description: string
 
-  @Field((type) => AssetContracts, { nullable: true })
+  @Field((type) => AssetContracts, { nullable: true, description: 'contract address' })
   contracts?: AssetContracts
-
-  @Field({ nullable: true, description: 'swap price' })
-  price?: string
-
-  @Field({ nullable: true, description: 'oracle price' })
-  oraclePrice?: string
 
   @Field((type) => AssetPositions, { nullable: true })
   positions?: AssetPositions
-}
 
-@ObjectType()
-export class AssetOHLC {
-  @Field()
-  symbol: string
-
-  @Field()
-  open: string
-
-  @Field()
-  high: string
-
-  @Field()
-  low: string
-
-  @Field()
-  close: string
-
-  @Field((type) => Int)
-  from: number
-
-  @Field((type) => Int)
-  to: number
-}
-
-@ObjectType()
-export class HistoryPrice {
-  @Field((type) => Int)
-  timestamp: number
-
-  @Field()
-  price: string
-}
-
-@ObjectType()
-export class AssetHistory {
-  @Field()
-  symbol: string
-
-  @Field((type) => [HistoryPrice])
-  history: HistoryPrice[]
-}
-
-@ObjectType()
-export class AssetBalance {
-  @Field()
-  symbol: string
-
-  @Field()
-  balance: string
+  @Field((type) => AssetPrices, { nullable: true })
+  prices?: AssetPrices
 }

@@ -5,7 +5,7 @@ import {
   GovService,
   ContractService,
   AssetService,
-  OraclePriceService,
+  OracleService,
   PriceService,
 } from 'services'
 
@@ -29,8 +29,8 @@ export class MirrorParser {
     return Container.get(AssetService)
   }
 
-  get oraclePriceService(): OraclePriceService {
-    return Container.get(OraclePriceService)
+  get oracleService(): OracleService {
+    return Container.get(OracleService)
   }
 
   get priceService(): PriceService {

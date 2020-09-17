@@ -9,9 +9,11 @@ import {
   GovService,
   AssetService,
   MintService,
-  MarketService,
+  PoolService,
+  PriceService,
   AccountService,
   ContractService,
+  OracleService,
 } from 'services'
 import { ContractType } from 'types'
 import config from 'config'
@@ -19,11 +21,13 @@ import { writeOracleAddresses } from './utils'
 
 async function prices(): Promise<void> {
   const assetService = Container.get(AssetService)
+  const priceService = Container.get(PriceService)
+  const poolService = Container.get(PoolService)
   const assets = await assetService.getAll()
 
   for (const asset of assets) {
-    const pool = await assetService.getPool(asset)
-    const price = await assetService.getPrice(asset)
+    const pool = await poolService.getPool(asset)
+    const price = await priceService.getPrice(asset)
 
     logger.info(
       `${asset.symbol} - price: ${price}, assetPool: ${pool.assetPool}, collateral: ${pool.collateralPool}, total: ${pool.totalShare}`
@@ -34,10 +38,11 @@ async function prices(): Promise<void> {
 export function testnet(): void {
   const govService = Container.get(GovService)
   const mintService = Container.get(MintService)
-  const marketService = Container.get(MarketService)
+  const marketService = Container.get(PoolService)
   const assetService = Container.get(AssetService)
   const accountService = Container.get(AccountService)
   const contractService = Container.get(ContractService)
+  const oracleService = Container.get(OracleService)
 
   program
     .command('whitelisting-testnet')
@@ -80,17 +85,17 @@ export function testnet(): void {
         await mintService.mint(asset, Coin.fromString('10000000000uusd'), wallet)
 
         const { balance } = await accountService.getAssetBalance(wallet.key.accAddress, asset)
-        const oraclePrice = await assetService.getOraclePrice(asset)
+        const oraclePrice = await oracleService.getPrice(asset)
 
         console.log(
           `${asset.symbol} provide liquidity -`,
-          `price: ${oraclePrice.price},`,
+          `price: ${oraclePrice},`,
           `balance: ${balance},`,
-          `uusd: ${num(oraclePrice.price).multipliedBy(balance)}`
+          `uusd: ${num(oraclePrice).multipliedBy(balance)}`
         )
         await marketService.provideLiquidity(
           new Coin(asset.symbol, balance),
-          new Coin('uusd', num(oraclePrice.price).multipliedBy(balance).toFixed(0)),
+          new Coin('uusd', num(oraclePrice).multipliedBy(balance).toFixed(0)),
           wallet
         )
       }

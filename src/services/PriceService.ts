@@ -1,22 +1,34 @@
-import { Service } from 'typedi'
+import { Service, Inject } from 'typedi'
 import { Repository, FindConditions } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
 import { getHistoryRangeValues } from 'lib/time'
 import { PriceEntity, AssetEntity } from 'orm'
 import { HistoryRanges } from 'types'
-import { AssetHistory, AssetOHLC, HistoryPrice } from 'graphql/schema'
+import { AssetOHLC, PriceAt } from 'graphql/schema'
+import { PoolService } from 'services'
 
 @Service()
 export class PriceService {
-  constructor(@InjectRepository(PriceEntity) private readonly priceRepo: Repository<PriceEntity>) {}
+  constructor(
+    @InjectRepository(PriceEntity) private readonly priceRepo: Repository<PriceEntity>,
+    @Inject((type) => PoolService) private readonly poolService: PoolService,
+  ) {}
 
   async get(conditions: FindConditions<PriceEntity>): Promise<PriceEntity> {
     return this.priceRepo.findOne(conditions)
   }
 
-  async getLatestPrice(asset: AssetEntity): Promise<PriceEntity> {
-    return this.priceRepo.findOne({ asset }, { order: { datetime: 'DESC' } })
+  async getPrice(asset: AssetEntity): Promise<string> {
+    const price = await this.priceRepo.findOne({ asset }, { order: { datetime: 'DESC' } })
+    return price?.close
+  }
+
+  async getContractPrice(asset: AssetEntity): Promise<string> {
+    const price = await this.poolService.getPool(asset)
+      .then((pool) => num(pool.collateralPool).dividedBy(pool.assetPool).toFixed(6))
+      .catch((error) => undefined)
+    return num(price).isNaN() ? undefined : price
   }
 
   async setOHLC(
@@ -64,7 +76,7 @@ export class PriceService {
     })
   }
 
-  async getHistory(asset: AssetEntity, range: HistoryRanges): Promise<AssetHistory> {
+  async getHistory(asset: AssetEntity, range: HistoryRanges): Promise<PriceAt[]> {
     const to = Date.now()
     const { from, interval } = getHistoryRangeValues(to, range)
 
@@ -76,11 +88,8 @@ export class PriceService {
       .andWhere("int4(date_part('minute', datetime)) % :interval = 0", { interval })
       .getRawMany()
 
-    return Object.assign(new AssetHistory(), {
-      history: prices.map((price) => ({
-        timestamp: new Date(price.datetime).getTime(),
-        price: price.close,
-      })) as HistoryPrice[],
-    })
+    return prices.map((price) => ({
+      timestamp: new Date(price.datetime).getTime(), price: price.close
+    }))
   }
 }

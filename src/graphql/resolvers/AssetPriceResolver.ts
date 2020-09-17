@@ -1,6 +1,7 @@
+/*
 import { Resolver, Query, Arg } from 'type-graphql'
 import { HistoryRanges } from 'types'
-import { AssetOHLC, AssetHistory } from 'graphql/schema'
+import { AssetOHLC, PriceAt } from 'graphql/schema'
 import { AssetService } from 'services'
 
 @Resolver()
@@ -12,10 +13,7 @@ export class AssetPriceResolver {
   @Query((returns) => AssetHistory, { description: 'Get asset price history' })
   async assetHistory(
     @Arg('symbol') symbol: string,
-    @Arg('range', (type) => HistoryRanges, {
-      description: `${Object.keys(HistoryRanges).map((key) => HistoryRanges[key])}`,
-    })
-    range: HistoryRanges
+    @Arg('range', (type) => HistoryRanges) range: HistoryRanges
   ): Promise<AssetHistory> {
     return this.assetService.getHistory(await this.assetService.get({ symbol }), range)
   }
@@ -29,3 +27,4 @@ export class AssetPriceResolver {
     return this.assetService.getOHLC(await this.assetService.get({ symbol }), from.getTime(), to.getTime())
   }
 }
+*/

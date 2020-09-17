@@ -12,10 +12,6 @@ export class AssetResolver {
   ) {
   }
 
-  async getContractAddress(asset: AssetEntity, type: ContractType): Promise<string> {
-    return (await this.contractService.get({ asset, type }))?.address
-  }
-
   @Query((returns) => Asset, { description: 'Get asset' })
   async asset(@Arg('symbol') symbol: string): Promise<Asset> {
     return this.assetService.get({ symbol })
@@ -42,19 +38,14 @@ export class AssetResolver {
   }
 
   @FieldResolver()
-  async price(@Root() asset: AssetEntity): Promise<string> {
-    return this.assetService.getPrice(asset)
-  }
-
-  @FieldResolver()
-  async oraclePrice(@Root() asset: AssetEntity): Promise<string> {
-    return (await this.assetService.getOraclePrice(asset))?.price
-  }
-
-  @FieldResolver()
   async positions(
     @Root() asset: AssetEntity, @Arg('address') address: string
   ): Promise<{ asset: AssetEntity; address: string }> {
     return { asset, address }
+  }
+
+  @FieldResolver()
+  async prices(@Root() asset: AssetEntity): Promise<AssetEntity> {
+    return asset
   }
 }

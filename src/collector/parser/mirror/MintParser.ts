@@ -34,12 +34,14 @@ export class MintParser extends MirrorParser {
 
     const { asset, govId } = contract
     const { txhash: txHash, timestamp } = txInfo
+    const price = await this.priceService.getPrice(asset)
     const datetime = new Date(timestamp)
 
     const tx = new TxEntity({
       txHash, sender: msg.sender, msgIndex, type, symbol: asset.symbol, data, datetime, govId
     })
+    const ohlc = price && await this.priceService.setOHLC(asset, datetime.getTime(), price)
 
-    return [tx]
+    return [tx, ohlc]
   }
 }

@@ -25,7 +25,7 @@ export class TokenParser extends MirrorParser {
 
     const { asset, govId } = contract
     const { txhash: txHash, timestamp } = txInfo
-    const price = await this.assetService.getPrice(asset)
+    const price = await this.priceService.getPrice(asset)
     const datetime = new Date(timestamp)
 
     const tx = new TxEntity({
