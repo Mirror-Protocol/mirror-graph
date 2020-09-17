@@ -15,6 +15,10 @@ import { AssetEntity } from 'orm'
   unique: true,
 })
 export class PriceEntity {
+  constructor(options: Partial<PriceEntity>) {
+    Object.assign(this, options)
+  }
+
   @CreateDateColumn()
   createdAt: Date
 
