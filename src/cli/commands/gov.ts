@@ -13,9 +13,11 @@ export function whitelisting(): void {
     .command('whitelisting <symbol> <name>')
     .description('whitelisting new asset')
     .requiredOption('--owner <owner-password>', 'owner key password')
-    .action(async (symbol, name, { owner }) => {
+    .requiredOption('--oracle <oracle-password>', 'oracle key password')
+    .action(async (symbol, name, { owner, oracle }) => {
       await govService.whitelisting(
         new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner)),
+          new TxWallet(getKey(config.KEYSTORE_PATH, config.ORACLE_KEY, oracle)),
         symbol,
         name,
       )

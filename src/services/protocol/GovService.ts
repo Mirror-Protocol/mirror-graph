@@ -119,16 +119,15 @@ export class GovService {
     })
   }
 
-  async whitelisting(wallet: TxWallet, symbol: string, name: string): Promise<TxInfo> {
+  async whitelisting(wallet: TxWallet, oracleWallet: TxWallet, symbol: string, name: string): Promise<TxInfo> {
     const gov = this.gov
-    const oracle = await this.contractService.get({ gov, type: ContractType.ORACLE })
     const factory = await this.contractService.get({ gov, type: ContractType.FACTORY })
-    if (!gov || !oracle || !factory) {
+    if (!gov || !factory) {
       throw new Error('whitelisting is not ready')
     }
 
     return wallet.execute(factory.address, {
-      whitelist: { ...initMsgs.whitelist, symbol, name, oracleFeeder: oracle.address }
+      whitelist: { ...initMsgs.whitelist, symbol, name, oracleFeeder: oracleWallet.key.accAddress }
     })
   }
 

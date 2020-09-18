@@ -46,7 +46,8 @@ export function testnet(): void {
   program
     .command('whitelisting-testnet')
     .requiredOption('--owner <owner-password>', 'owner key password')
-    .action(async ({ owner }) => {
+    .requiredOption('--oracle <oracle-password>', 'oracle key password')
+    .action(async ({ owner, oracle }) => {
       const assets = {
         mAAPL: 'Apple',
         mGOOGL: 'Google',
@@ -63,6 +64,7 @@ export function testnet(): void {
       for (const symbol of Object.keys(assets)) {
         await govService.whitelisting(
           new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner)),
+          new TxWallet(getKey(config.KEYSTORE_PATH, config.ORACLE_KEY, oracle)),
           symbol,
           assets[symbol],
         )

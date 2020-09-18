@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import { Container } from 'typedi'
 import * as logger from 'lib/logger'
 import { CodeIds, ContractType } from 'types'
-import { AssetService, ContractService } from 'services'
+import { AssetService, ContractService, GovService } from 'services'
 import config from 'config'
 
 export function loadCodeIds(): CodeIds {
@@ -17,16 +17,22 @@ export function loadCodeIds(): CodeIds {
 export async function writeOracleAddresses(): Promise<void> {
   const assetService = Container.get(AssetService)
   const contractService = Container.get(ContractService)
+  const gov = Container.get(GovService).get()
   const assets = await assetService.getAll()
-  const address = {}
+
+  const oracleContract = await contractService.get({ gov, type: ContractType.ORACLE })
+  const oracleInfo = {
+    oracle: oracleContract.address,
+    assets: {}
+  }
 
   for (const asset of assets) {
     if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
       continue
     }
-    const oracleContract = await contractService.get({ asset, type: ContractType.ORACLE })
-    address[asset.symbol.substring(1)] = oracleContract.address
+    const tokenContract = await contractService.get({ asset, type: ContractType.TOKEN })
+    oracleInfo.assets[asset.symbol.substring(1)] = tokenContract.address
   }
-  fs.writeFileSync('./address.json', JSON.stringify(address))
-  logger.info(address)
+  fs.writeFileSync('./address.json', JSON.stringify(oracleInfo))
+  logger.info(oracleInfo)
 }
