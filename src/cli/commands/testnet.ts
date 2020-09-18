@@ -17,7 +17,6 @@ import {
 } from 'services'
 import { ContractType } from 'types'
 import config from 'config'
-import { writeOracleAddresses } from './utils'
 
 async function prices(): Promise<void> {
   const assetService = Container.get(AssetService)
@@ -63,12 +62,12 @@ export function testnet(): void {
       }
       for (const symbol of Object.keys(assets)) {
         await govService.whitelisting(
+          new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner)),
           symbol,
           assets[symbol],
-          new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
         )
+        logger.info(`${symbol} whitelisted`)
       }
-      await writeOracleAddresses()
     })
 
   program

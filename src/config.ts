@@ -14,14 +14,19 @@ const config = {
   PORT: SERVER_PORT ? +SERVER_PORT : 3858,
   TERRA_LCD,
   TERRA_CHAIN_ID,
-  KEYSTORE_PATH: KEYSTORE_PATH || './keystore.json',
   CONTRACT_ID: CONTRACT_ID && +CONTRACT_ID,
+  // keys
+  KEYSTORE_PATH: KEYSTORE_PATH || './keystore.json',
   OWNER_KEY: 'owner',
   ORACLE_KEY: 'oracle',
   LP_KEY: 'lp',
+  // mirror config
+  DECIMALS: 6,
   MIRROR_TOKEN_SYMBOL: 'MIR',
   MIRROR_TOKEN_NAME: 'Mirror Token',
-  COLLATERAL_SYMBOL: 'uusd',
+  NATIVE_TOKEN_SYMBOL: 'uusd',
+  ACTIVE_COMMISSION: '0.0025',
+  PASSIVE_COMMISSION: '0.0005',
 }
 
 export default config

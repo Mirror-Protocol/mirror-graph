@@ -8,6 +8,8 @@ export function toSnakeCase(obj: any): any {
       converted[snakeCase(key)] = toSnakeCase(obj[key])
     })
     return converted
+  } else if (isArray(obj)) {
+    return obj.map((target) => toSnakeCase(target))
   }
 
   return obj
@@ -21,6 +23,8 @@ export function toCamelCase(obj: any): any {
       converted[camelCase(key)] = toCamelCase(obj[key])
     })
     return converted
+  } else if (isArray(obj)) {
+    return obj.map((target) => toCamelCase(target))
   }
 
   return obj

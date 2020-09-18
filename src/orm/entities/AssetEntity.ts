@@ -49,6 +49,9 @@ export class AssetEntity {
   description: string
 
   @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE' })
-  @JoinColumn()
+  @JoinColumn({ name: 'gov_id' })
   gov: GovEntity
+
+  @Column()
+  govId: number
 }

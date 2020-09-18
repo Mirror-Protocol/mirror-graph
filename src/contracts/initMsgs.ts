@@ -1,16 +1,18 @@
 import config from 'config'
 
+const { DECIMALS, NATIVE_TOKEN_SYMBOL, ACTIVE_COMMISSION, PASSIVE_COMMISSION } = config
+
 const initMsgs = {
   collector: {
-    collateralDenom: config.COLLATERAL_SYMBOL,
+    collateralDenom: NATIVE_TOKEN_SYMBOL,
     factoryContract: undefined,
     govContract: undefined,
-    mirrorSymbol: config.MIRROR_TOKEN_SYMBOL,
     mirrorToken: undefined,
   },
   factory: {
-    mintPerBlock: '100',
-    mirrorToken: undefined,
+    mintPerBlock: '10000000',
+    baseDenom: NATIVE_TOKEN_SYMBOL,
+    tokenCodeId: undefined,
   },
   gov: {
     mirrorToken: undefined,
@@ -18,25 +20,51 @@ const initMsgs = {
     threshold: '0.5',
     votingPeriod: 10000,
   },
+  mint: {
+    baseAssetInfo: { nativeToken: { denom: NATIVE_TOKEN_SYMBOL } },
+    oracle: undefined,
+    owner: undefined,
+    tokenCodeId: undefined
+  },
+  oracle: {
+    baseAssetInfo: { nativeToken: { denom: NATIVE_TOKEN_SYMBOL } },
+    owner: undefined,
+  },
+  staking: {
+    mirrorToken: undefined,
+    owner: undefined,
+  },
+  // uniswap contracts
+  tokenFactory: {
+    pairCodeId: undefined,
+    tokenCodeId: undefined,
+  },
+  pair: {
+    assetInfos: undefined,
+    activeCommission: '0.003',
+    passiveCommission: '0.001',
+    commissionCollector: undefined,
+    owner: undefined,
+    tokenCodeId: undefined,
+  },
   token: {
-    decimals: 6,
+    decimals: DECIMALS,
     initialBalances: [],
     name: undefined,
     symbol: undefined,
   },
-  mint: {
-    collateralDenom: config.COLLATERAL_SYMBOL,
-    auctionDiscount: '0.1',
-    auctionThresholdRate: '0.8',
-    mintCapacity: '0.7',
-  },
-  market: {
-    collateralDenom: config.COLLATERAL_SYMBOL,
-    activeCommission: '0.003',
-    inactiveCommission: '0.001',
-    assetSymbol: undefined,
-    assetToken: undefined,
-    commissionCollector: undefined,
+  whitelist: {
+    symbol: undefined,
+    name: undefined,
+    oracleFeeder: undefined,
+    params: {
+      weight: '1.0',
+      activeCommission: ACTIVE_COMMISSION,
+      passiveCommission: PASSIVE_COMMISSION,
+      auctionDiscount: '0.2',
+      auctionThresholdRatio: '1.3',
+      minCollateralRatio: '1.5'
+    }
   },
 }
 

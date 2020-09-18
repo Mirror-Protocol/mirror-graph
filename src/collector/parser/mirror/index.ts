@@ -8,6 +8,7 @@ import { MarketParser } from './MarketParser'
 import { TokenParser } from './TokenParser'
 import { MintParser } from './MintParser'
 import { StakingParser } from './StakingParser'
+import { FactoryParser } from './FactoryParser'
 
 const parser: { [type: string]: MirrorParser } = {
   [ContractType.MARKET]: new MarketParser(),
@@ -16,6 +17,7 @@ const parser: { [type: string]: MirrorParser } = {
   [ContractType.TOKEN]: new TokenParser(),
   [ContractType.LP_TOKEN]: new TokenParser(),
   [ContractType.STAKING]: new StakingParser(),
+  [ContractType.FACTORY]: new FactoryParser(),
 }
 
 export async function parseMirrorMsg(

@@ -15,11 +15,10 @@ export function whitelisting(): void {
     .requiredOption('--owner <owner-password>', 'owner key password')
     .action(async (symbol, name, { owner }) => {
       await govService.whitelisting(
+        new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner)),
         symbol,
         name,
-        new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
       )
-      await writeOracleAddresses()
     })
 
   program
