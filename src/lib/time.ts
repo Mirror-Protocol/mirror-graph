@@ -1,4 +1,4 @@
-import { addHours, addDays, addMonths } from 'date-fns'
+import { addHours, addDays, addMonths, addYears } from 'date-fns'
 import { HistoryRanges } from 'types'
 
 export function getHistoryRangeValues(
@@ -20,6 +20,9 @@ export function getHistoryRangeValues(
   } else if (range === HistoryRanges.ONE_MONTH) {
     from = addMonths(timestamp, -1).getTime()
     interval = 60 * 12 // 12hours * 60
+  } else if (range === HistoryRanges.ONE_YEAR) {
+    from = addYears(timestamp, -1).getTime()
+    interval = 60 * 24 * 10 // 10days * 36
   } else {
     throw new Error('wrong range')
   }

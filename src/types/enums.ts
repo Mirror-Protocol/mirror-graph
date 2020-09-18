@@ -7,10 +7,11 @@ export enum AssetCategoty {
 registerEnumType(AssetCategoty, { name: 'AssetCategoty' })
 
 export enum HistoryRanges {
-  ONE_HOUR = '1hour',
-  ONE_DAY = '1day',
-  ONE_WEEK = '1week',
-  ONE_MONTH = '1month',
+  ONE_HOUR = 'ONE_HOUR',
+  ONE_DAY = 'ONE_DAY',
+  ONE_WEEK = 'ONE_WEEK',
+  ONE_MONTH = 'ONE_MONTH',
+  ONE_YEAR = 'ONE_YEAR',
   ALL = 'all',
 }
 registerEnumType(HistoryRanges, { name: 'HistoryRanges' })

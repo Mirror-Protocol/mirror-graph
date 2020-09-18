@@ -3,12 +3,11 @@ import { TxInfo } from '@terra-money/terra.js'
 import { TxWallet } from 'lib/terra'
 import { AssetEntity } from 'orm'
 import { ContractType } from 'types'
-import { AssetService, ContractService } from 'services'
+import { ContractService } from 'services'
 
 @Service()
 export class FarmService {
   constructor(
-    @Inject((type) => AssetService) private readonly assetService: AssetService,
     @Inject((type) => ContractService) private readonly contractService: ContractService
   ) {}
 

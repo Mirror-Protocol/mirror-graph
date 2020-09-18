@@ -43,7 +43,7 @@ export class AssetEntity {
   name: string
 
   @Column({ type: 'enum', enum: AssetCategoty, default: AssetCategoty.STOCK })
-  categoty: AssetCategoty
+  category: AssetCategoty
 
   @Column({ default: '' })
   description: string

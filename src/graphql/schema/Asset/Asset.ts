@@ -1,5 +1,6 @@
 import { ObjectType, Field } from 'type-graphql'
 import { AssetContracts, AssetPositions, AssetPrices } from 'graphql/schema'
+import { AssetCategoty } from 'types'
 
 @ObjectType({ simpleResolvers: true })
 export class Asset {
@@ -14,6 +15,9 @@ export class Asset {
 
   @Field()
   description: string
+
+  @Field((type) => AssetCategoty)
+  category: AssetCategoty
 
   @Field((type) => AssetContracts, { nullable: true, description: 'contract address' })
   contracts?: AssetContracts
