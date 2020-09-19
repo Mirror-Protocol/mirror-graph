@@ -70,13 +70,13 @@ export class GovService {
       // create staking contract
       const staking = await service.createStaking(wallet, gov, factory.address, mirrorToken.address)
 
-      // create collector contract
-      const collector = await service.createCollector(
-        wallet, gov, govContract.address, factory.address, mirrorToken.address
-      )
-
       // create uniswap factory contract
       const tokenFactory = await service.createTokenFactory(wallet, gov)
+
+      // create collector contract
+      const collector = await service.createCollector(
+        wallet, gov, govContract.address, tokenFactory.address, mirrorToken.address
+      )
 
       // create mirror token pair
       const pairEntities = await service.createMirrorPair(

@@ -64,10 +64,10 @@ export class ContractService {
   }
 
   async createCollector(
-    wallet: TxWallet, gov: GovEntity, govContract: string, factoryContract: string, mirrorToken: string
+    wallet: TxWallet, gov: GovEntity, distributionContract: string, uniswapFactory: string, mirrorToken: string
   ): Promise<ContractEntity> {
     return this.create(wallet, gov, ContractType.COLLECTOR, gov.codeIds.collector, {
-      ...initMsgs.collector, govContract, factoryContract, mirrorToken
+      ...initMsgs.collector, distributionContract, uniswapFactory, mirrorToken
     })
   }
 
@@ -88,13 +88,13 @@ export class ContractService {
   async createMirrorPair(
     wallet: TxWallet, gov: GovEntity, asset: AssetEntity, govContract: string, collector: string, tokenFactory: string, mirrorToken: string
   ): Promise<ContractEntity[]> {
-    const { NATIVE_TOKEN_SYMBOL, ACTIVE_COMMISSION, PASSIVE_COMMISSION } = config
+    const { NATIVE_TOKEN_SYMBOL, LP_COMMISSION, OWNER_COMMISSION } = config
 
     const txInfo = await wallet.execute(tokenFactory, { createPair: {
       pairOwner: govContract,
       commissionCollector: collector,
-      activeCommission: ACTIVE_COMMISSION,
-      passiveCommission: PASSIVE_COMMISSION,
+      lpCommission: LP_COMMISSION,
+      ownerCommission: OWNER_COMMISSION,
       assetInfos: [
         { nativeToken: { denom: NATIVE_TOKEN_SYMBOL } },
         { token: { contractAddr: mirrorToken } }

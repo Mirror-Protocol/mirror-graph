@@ -25,8 +25,8 @@ const config = {
   MIRROR_TOKEN_SYMBOL: 'MIR',
   MIRROR_TOKEN_NAME: 'Mirror Token',
   NATIVE_TOKEN_SYMBOL: 'uusd',
-  ACTIVE_COMMISSION: '0.0025',
-  PASSIVE_COMMISSION: '0.0005',
+  LP_COMMISSION: '0.0025',
+  OWNER_COMMISSION: '0.0005',
 }
 
 export default config

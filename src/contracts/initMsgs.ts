@@ -1,12 +1,12 @@
 import config from 'config'
 
-const { DECIMALS, NATIVE_TOKEN_SYMBOL, ACTIVE_COMMISSION, PASSIVE_COMMISSION } = config
+const { DECIMALS, NATIVE_TOKEN_SYMBOL, LP_COMMISSION, OWNER_COMMISSION } = config
 
 const initMsgs = {
   collector: {
     collateralDenom: NATIVE_TOKEN_SYMBOL,
-    factoryContract: undefined,
-    govContract: undefined,
+    distributionContract: undefined,
+    uniswapFactory: undefined,
     mirrorToken: undefined,
   },
   factory: {
@@ -16,9 +16,9 @@ const initMsgs = {
   },
   gov: {
     mirrorToken: undefined,
-    quorum: '0.3',
+    quorum: '0.34',
     threshold: '0.5',
-    votingPeriod: 10000,
+    votingPeriod: 1000,
   },
   mint: {
     baseAssetInfo: { nativeToken: { denom: NATIVE_TOKEN_SYMBOL } },
@@ -59,10 +59,9 @@ const initMsgs = {
     oracleFeeder: undefined,
     params: {
       weight: '1.0',
-      activeCommission: ACTIVE_COMMISSION,
-      passiveCommission: PASSIVE_COMMISSION,
+      lpCommission: LP_COMMISSION,
+      ownerCommission: OWNER_COMMISSION,
       auctionDiscount: '0.2',
-      auctionThresholdRatio: '1.3',
       minCollateralRatio: '1.5'
     }
   },
