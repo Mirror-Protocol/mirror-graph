@@ -12,13 +12,18 @@ export class MintService {
     @Inject((type) => ContractService) private readonly contractService: ContractService
   ) {}
 
-  async mint(asset: AssetEntity, coin: Coin, wallet: TxWallet): Promise<TxInfo> {
-    const mintContract = await this.contractService.get({ asset, type: ContractType.MINT })
+  async mint(wallet: TxWallet, asset: AssetEntity, coin: Coin): Promise<TxInfo> {
+    const mintContract = await this.contractService.get({ gov: asset.gov, type: ContractType.MINT })
+    const tokenContract = await this.contractService.get({ gov: asset.gov, type: ContractType.TOKEN })
 
-    return wallet.execute(mintContract.address, { mint: {} }, new Coins([coin]))
+    return wallet.execute(mintContract.address, { openPosition: {
+      collateral: { info: { nativeToken: { denom: 'uusd' } }, amount: '10000000000' },
+      assetInfo: { token: { contractAddr: tokenContract.address } },
+      collateralRatio: '1.5'
+    } }, new Coins([coin]))
   }
 
-  async burn(asset: AssetEntity, amount: string, wallet: TxWallet): Promise<TxInfo> {
+  async burn(wallet: TxWallet, asset: AssetEntity, amount: string): Promise<TxInfo> {
     const mintContract = await this.contractService.get({ asset, type: ContractType.MINT })
     const tokenContract = await this.contractService.get({ asset, type: ContractType.TOKEN })
 
@@ -33,10 +38,7 @@ export class MintService {
 
   // owner: minter
   async auction(
-    asset: AssetEntity,
-    amount: string,
-    owner: string,
-    wallet: TxWallet
+    wallet: TxWallet, asset: AssetEntity, amount: string, owner: string
   ): Promise<TxInfo> {
     const mintContract = await this.contractService.get({ asset, type: ContractType.MINT })
 
@@ -44,10 +46,7 @@ export class MintService {
   }
 
   async config(
-    asset: AssetEntity,
-    amount: string,
-    owner: string,
-    wallet: TxWallet
+    wallet: TxWallet, asset: AssetEntity, amount: string, owner: string
   ): Promise<TxInfo> {
     const mintContract = await this.contractService.get({ asset, type: ContractType.MINT })
 

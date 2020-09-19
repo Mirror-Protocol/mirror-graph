@@ -4,18 +4,18 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Column,
-  JoinColumn,
-  ManyToOne,
   Index,
   BeforeInsert,
 } from 'typeorm'
-import { GovEntity } from 'orm'
 import { AssetCategoty } from 'types'
+import { HaveGov } from './base'
 
 @Entity('asset')
-@Index('idx_asset_symbol_and_gov', ['symbol', 'gov'], { unique: true })
-export class AssetEntity {
+@Index('idx_asset_symbol_and_address_and_gov', ['symbol', 'address', 'gov'], { unique: true })
+export class AssetEntity extends HaveGov {
   constructor(options: Partial<AssetEntity>) {
+    super()
+
     Object.assign(this, options)
   }
 
@@ -34,6 +34,9 @@ export class AssetEntity {
   id: number
 
   @Column()
+  address: string // token
+
+  @Column()
   symbol: string
 
   @Column()
@@ -48,10 +51,9 @@ export class AssetEntity {
   @Column({ default: '' })
   description: string
 
-  @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'gov_id' })
-  gov: GovEntity
+  @Column()
+  pair: string // pair token address
 
   @Column()
-  govId: number
+  lpToken: string // lpToken address
 }

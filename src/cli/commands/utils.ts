@@ -16,13 +16,11 @@ export function loadCodeIds(): CodeIds {
 
 export async function writeOracleAddresses(): Promise<void> {
   const assetService = Container.get(AssetService)
-  const contractService = Container.get(ContractService)
   const gov = Container.get(GovService).get()
   const assets = await assetService.getAll()
 
-  const oracleContract = await contractService.get({ gov, type: ContractType.ORACLE })
   const oracleInfo = {
-    oracle: oracleContract.address,
+    oracle: gov.oracle,
     assets: {}
   }
 
@@ -30,8 +28,7 @@ export async function writeOracleAddresses(): Promise<void> {
     if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
       continue
     }
-    const tokenContract = await contractService.get({ asset, type: ContractType.TOKEN })
-    oracleInfo.assets[asset.symbol.substring(1)] = tokenContract.address
+    oracleInfo.assets[asset.symbol.substring(1)] = asset.address
   }
   fs.writeFileSync('./address.json', JSON.stringify(oracleInfo))
   logger.info(oracleInfo)

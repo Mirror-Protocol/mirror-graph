@@ -1,21 +1,13 @@
 import {
-  Column,
-  Entity,
-  CreateDateColumn,
-  UpdateDateColumn,
-  PrimaryGeneratedColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
+  Column, Entity, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, Index
 } from 'typeorm'
-import { AssetEntity } from 'orm'
+import { HaveAsset } from './base'
 
 @Entity('price')
-@Index('idx_price_datetime_asset', ['datetime', 'asset'], {
-  unique: true,
-})
-export class PriceEntity {
+@Index('idx_price_datetime_asset', ['datetime', 'asset'], { unique: true })
+export class PriceEntity extends HaveAsset {
   constructor(options: Partial<PriceEntity>) {
+    super()
     Object.assign(this, options)
   }
 
@@ -43,10 +35,10 @@ export class PriceEntity {
   @Column('decimal', { precision: 40, scale: 6 })
   close: string
 
-  @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'asset_id' })
-  asset: AssetEntity
+  // @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
+  // @JoinColumn({ name: 'asset_id' })
+  // asset: AssetEntity
 
-  @Column()
-  assetId: number
+  // @Column()
+  // assetId: number
 }

@@ -31,23 +31,13 @@ export class AccountService {
   }
 
   async getAssetBalance(address: string, asset: AssetEntity): Promise<AssetBalance> {
-    const tokenContract = await this.contractService.get({ asset, type: ContractType.TOKEN })
-    if (!tokenContract) {
-      return undefined
-    }
-
-    const { balance } = await contractQuery(tokenContract.address, { balance: { address } })
+    const { balance } = await contractQuery(asset.address, { balance: { address } })
 
     return { symbol: asset.symbol, balance }
   }
 
   async getLiquidityBalance(address: string, asset: AssetEntity): Promise<AssetBalance> {
-    const tokenContract = await this.contractService.get({ asset, type: ContractType.LP_TOKEN })
-    if (!tokenContract) {
-      return undefined
-    }
-
-    const { balance } = await contractQuery(tokenContract.address, { balance: { address } })
+    const { balance } = await contractQuery(asset.lpToken, { balance: { address } })
 
     return { symbol: asset.lpTokenSymbol, balance }
   }

@@ -1,21 +1,15 @@
 import {
-  Column,
-  Entity,
-  CreateDateColumn,
-  UpdateDateColumn,
-  PrimaryGeneratedColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
+  Column, Entity, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, Index
 } from 'typeorm'
-import { AssetEntity } from 'orm'
+import { HaveAsset } from './base'
 
 @Entity('oracle_price')
 @Index('idx_oracle_price_datetime_asset', ['datetime', 'asset'], {
   unique: true,
 })
-export class OraclePriceEntity {
+export class OraclePriceEntity extends HaveAsset {
   constructor(options: Partial<OraclePriceEntity>) {
+    super()
     Object.assign(this, options)
   }
 
@@ -45,11 +39,4 @@ export class OraclePriceEntity {
 
   @Column('decimal', { precision: 40, scale: 6, default: '1' })
   priceMultiplier: string
-
-  @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'asset_id' })
-  asset: AssetEntity
-
-  @Column()
-  assetId: number
 }

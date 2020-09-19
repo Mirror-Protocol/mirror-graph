@@ -1,19 +1,14 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  Index,
+  Entity, PrimaryGeneratedColumn, CreateDateColumn, Column, Index
 } from 'typeorm'
-import { GovEntity } from 'orm'
 import { TxType } from 'types'
+import { HaveGovAndMaybeAsset } from './base'
 
 @Entity('tx')
 @Index('idx_tx_sender_datetime_msgindex_gov', ['sender', 'datetime', 'msgIndex', 'gov'], { unique: true })
-export class TxEntity {
+export class TxEntity extends HaveGovAndMaybeAsset {
   constructor(options: Partial<TxEntity>) {
+    super()
     Object.assign(this, options)
   }
 
@@ -43,11 +38,4 @@ export class TxEntity {
 
   @Column()
   datetime: Date
-
-  @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'gov_id' })
-  gov: GovEntity
-
-  @Column()
-  govId: number
 }

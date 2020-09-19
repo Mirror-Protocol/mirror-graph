@@ -37,43 +37,46 @@ export class ContractService {
     })
   }
 
-  async createGov(wallet: TxWallet, gov: GovEntity, mirrorToken: string): Promise<ContractEntity> {
+  async createGov(wallet: TxWallet, gov: GovEntity): Promise<ContractEntity> {
     return this.create(wallet, gov, ContractType.GOV, gov.codeIds.gov, {
-      ...initMsgs.gov, mirrorToken
+      ...initMsgs.gov, mirrorToken: gov.mirrorToken
     })
   }
 
-  async createOracle(
-    wallet: TxWallet, gov: GovEntity, owner: string
-  ): Promise<ContractEntity> {
-    return this.create(
-      wallet, gov, ContractType.ORACLE, gov.codeIds.oracle, { ...initMsgs.oracle, owner }
-    )
-  }
-
-  async createMint(wallet: TxWallet, gov: GovEntity, owner: string, oracle: string): Promise<ContractEntity> {
-    return this.create(wallet, gov, ContractType.MINT, gov.codeIds.mint, {
-      ...initMsgs.mint, owner, oracle, tokenCodeId: gov.codeIds.token
+  async createOracle(wallet: TxWallet, gov: GovEntity): Promise<ContractEntity> {
+    return this.create(wallet, gov, ContractType.ORACLE, gov.codeIds.oracle, {
+      ...initMsgs.oracle, owner: gov.factory
     })
   }
 
-  async createStaking(wallet: TxWallet, gov: GovEntity, owner: string, mirrorToken: string): Promise<ContractEntity> {
-    return this.create(wallet, gov, ContractType.STAKING, gov.codeIds.staking, {
+  async createMint(wallet: TxWallet, gov: GovEntity): Promise<ContractEntity> {
+    const { factory: owner, oracle, codeIds } = gov
+
+    return this.create(wallet, gov, ContractType.MINT, codeIds.mint, {
+      ...initMsgs.mint, owner, oracle, tokenCodeId: codeIds.token
+    })
+  }
+
+  async createStaking(wallet: TxWallet, gov: GovEntity): Promise<ContractEntity> {
+    const { factory: owner, mirrorToken, codeIds } = gov
+
+    return this.create(wallet, gov, ContractType.STAKING, codeIds.staking, {
       ...initMsgs.staking, owner, mirrorToken
     })
   }
 
-  async createCollector(
-    wallet: TxWallet, gov: GovEntity, distributionContract: string, uniswapFactory: string, mirrorToken: string
-  ): Promise<ContractEntity> {
-    return this.create(wallet, gov, ContractType.COLLECTOR, gov.codeIds.collector, {
+  async createCollector(wallet: TxWallet, gov: GovEntity): Promise<ContractEntity> {
+    const { tokenFactory: uniswapFactory, address: distributionContract, mirrorToken, codeIds } = gov
+
+    return this.create(wallet, gov, ContractType.COLLECTOR, codeIds.collector, {
       ...initMsgs.collector, distributionContract, uniswapFactory, mirrorToken
     })
   }
 
   async createTokenFactory(wallet: TxWallet, gov: GovEntity): Promise<ContractEntity> {
-    return this.create(wallet, gov, ContractType.TOKEN_FACTORY, gov.codeIds.tokenFactory, {
-      ...initMsgs.tokenFactory, pairCodeId: gov.codeIds.pair, tokenCodeId: gov.codeIds.token
+    const { codeIds } = gov
+    return this.create(wallet, gov, ContractType.TOKEN_FACTORY, codeIds.tokenFactory, {
+      ...initMsgs.tokenFactory, pairCodeId: codeIds.pair, tokenCodeId: codeIds.token
     })
   }
 
@@ -85,14 +88,15 @@ export class ContractService {
     return this.create(wallet, gov, ContractType.TOKEN, gov.codeIds.token, initMsg, asset)
   }
 
-  async createMirrorPair(
-    wallet: TxWallet, gov: GovEntity, asset: AssetEntity, govContract: string, collector: string, tokenFactory: string, mirrorToken: string
-  ): Promise<ContractEntity[]> {
+  async createMirrorPair(wallet: TxWallet, gov: GovEntity, asset: AssetEntity): Promise<ContractEntity[]> {
     const { NATIVE_TOKEN_SYMBOL, LP_COMMISSION, OWNER_COMMISSION } = config
+    const {
+      address: pairOwner, collector: commissionCollector, tokenFactory, mirrorToken
+    } = gov
 
     const txInfo = await wallet.execute(tokenFactory, { createPair: {
-      pairOwner: govContract,
-      commissionCollector: collector,
+      pairOwner,
+      commissionCollector,
       lpCommission: LP_COMMISSION,
       ownerCommission: OWNER_COMMISSION,
       assetInfos: [
@@ -102,15 +106,17 @@ export class ContractService {
     } })
 
     const attributes = findAttributes(txInfo.logs[0].events, 'from_contract')
-    const pairContract = findAttribute(attributes, 'pair_contract_addr')
-    const lpTokenContract = findAttribute(attributes, 'liquidity_token_addr')
-    if (!pairContract || !lpTokenContract) {
-      throw new Error(`create pair failed. lpToken(${lpTokenContract}), pair(${pairContract})`)
+    const pair = findAttribute(attributes, 'pair_contract_addr')
+    const lpToken = findAttribute(attributes, 'liquidity_token_addr')
+    if (!pair || !lpToken) {
+      throw new Error(`create pair failed. lpToken(${lpToken}), pair(${pair})`)
     }
+    asset.pair = pair
+    asset.lpToken = lpToken
 
     return [
-      new ContractEntity({ address: pairContract, type: ContractType.PAIR, gov, asset }),
-      new ContractEntity({ address: lpTokenContract, type: ContractType.LP_TOKEN, gov, asset }),
+      new ContractEntity({ address: pair, type: ContractType.PAIR, gov, asset }),
+      new ContractEntity({ address: lpToken, type: ContractType.LP_TOKEN, gov, asset }),
     ]
   }
 }
