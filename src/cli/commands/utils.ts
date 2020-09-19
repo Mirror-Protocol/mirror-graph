@@ -1,8 +1,8 @@
 import * as fs from 'fs'
 import { Container } from 'typedi'
 import * as logger from 'lib/logger'
-import { CodeIds, ContractType } from 'types'
-import { AssetService, ContractService, GovService } from 'services'
+import { CodeIds } from 'types'
+import { AssetService, GovService } from 'services'
 import config from 'config'
 
 export function loadCodeIds(): CodeIds {
