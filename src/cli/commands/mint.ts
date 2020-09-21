@@ -1,7 +1,7 @@
 import { Coin } from '@terra-money/terra.js'
 import { Container } from 'typedi'
 import { program } from 'commander'
-import { MintService } from 'services'
+import { AssetService, MintService } from 'services'
 import * as logger from 'lib/logger'
 import { getKey } from 'lib/keystore'
 import { TxWallet } from 'lib/terra'
@@ -9,6 +9,7 @@ import config from 'config'
 
 export function mint(): void {
   const mintService = Container.get(MintService)
+  const assetService = Container.get(AssetService)
 
   program
     .command('open-position <symbol> <collateral-amount> <collateral-ratio>')
@@ -53,8 +54,22 @@ export function mint(): void {
     .action(async (positionIdx, assetAmount, { password }) => {
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.LP_KEY, password))
       const assetCoin = Coin.fromString(assetAmount)
+      const asset = await assetService.get({ symbol: assetCoin.denom })
 
-      const tx = await mintService.mint(wallet, +positionIdx, assetCoin)
+      const tx = await mintService.mint(wallet, asset, +positionIdx, assetCoin.amount.toString())
+      logger.info(tx)
+    })
+
+  program
+    .command('burn <position-idx> <asset-amount>')
+    .description('burn asset of cdp. eg) burn 1 1000000mAAPL')
+    .requiredOption('-p, --password <lp-password>', 'lp key password')
+    .action(async (positionIdx, assetAmount, { password }) => {
+      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.LP_KEY, password))
+      const assetCoin = Coin.fromString(assetAmount)
+      const asset = await assetService.get({ symbol: assetCoin.denom })
+
+      const tx = await mintService.burn(wallet, asset, +positionIdx, assetCoin.amount.toString())
       logger.info(tx)
     })
 

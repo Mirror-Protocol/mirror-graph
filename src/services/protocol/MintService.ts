@@ -1,7 +1,9 @@
 import { Service, Inject } from 'typedi'
 import { Coin, Coins, TxInfo } from '@terra-money/terra.js'
 import { TxWallet } from 'lib/terra'
+import { AssetEntity } from 'orm'
 import { GovService, AssetService } from 'services'
+import config from 'config'
 
 @Service()
 export class MintService {
@@ -11,7 +13,7 @@ export class MintService {
   ) {}
 
   async getCollateralInfo(coin: Coin): Promise<unknown> {
-    if (coin.denom === 'uusd') {
+    if (coin.denom === config.NATIVE_TOKEN_SYMBOL) {
       return {
         info: { nativeToken: { denom: coin.denom } },
         amount: coin.amount.toString()
@@ -32,7 +34,7 @@ export class MintService {
     const asset = await this.assetService.get({ symbol })
     const assetInfo = { token: { contractAddr: asset.address } }
     const collateral = await this.getCollateralInfo(collateralCoin)
-    const sendCoins = collateralCoin.denom === 'uusd' && new Coins([collateralCoin])
+    const sendCoins = collateralCoin.denom === config.NATIVE_TOKEN_SYMBOL && new Coins([collateralCoin])
 
     return wallet.execute(
       gov.mint, { openPosition: { assetInfo, collateral, collateralRatio } }, sendCoins
@@ -41,7 +43,7 @@ export class MintService {
 
   async deposit(wallet: TxWallet, positionIdx: number, collateralCoin: Coin): Promise<TxInfo> {
     const gov = this.govService.get()
-    const sendCoins = collateralCoin.denom === 'uusd' && new Coins([collateralCoin])
+    const sendCoins = collateralCoin.denom === config.NATIVE_TOKEN_SYMBOL && new Coins([collateralCoin])
     const collateral = await this.getCollateralInfo(collateralCoin)
 
     return wallet.execute(
@@ -58,14 +60,19 @@ export class MintService {
     )
   }
 
-  async mint(wallet: TxWallet, positionIdx: number, assetCoin: Coin): Promise<TxInfo> {
+  async mint(wallet: TxWallet, asset: AssetEntity, positionIdx: number, amount: string): Promise<TxInfo> {
     const gov = this.govService.get()
-    const assetEntity = await this.assetService.get({ symbol: assetCoin.denom })
-    const asset = {
-      info: { token: { contractAddr: assetEntity.address } },
-      amount: assetCoin.amount.toString()
-    }
+    const assetInfo = { info: { token: { contractAddr: asset.address } }, amount }
 
-    return wallet.execute(gov.mint, { mint: { positionIdx, asset } })
+    return wallet.execute(gov.mint, { mint: { positionIdx, asset: assetInfo } })
+  }
+
+  async burn(wallet: TxWallet, asset: AssetEntity, positionIdx: number, amount: string): Promise<TxInfo> {
+    const gov = this.govService.get()
+    const burnMsg = `{"burn":{"position_idx":${positionIdx}}}`
+
+    return wallet.execute(asset.address, {
+      send: { amount, contract: gov.mint, msg: Buffer.from(burnMsg).toString('base64') }
+    })
   }
 }
