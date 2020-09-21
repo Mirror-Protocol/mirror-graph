@@ -13,21 +13,6 @@ export class PoolService {
     @Inject((type) => AssetService) private readonly assetService: AssetService,
   ) {}
 
-  async getAssetInfo(coin: Coin): Promise<unknown> {
-    if (coin.denom === config.NATIVE_TOKEN_SYMBOL) {
-      return {
-        info: { nativeToken: { denom: coin.denom } },
-        amount: coin.amount.toString()
-      }
-    }
-
-    const asset = await this.assetService.get({ symbol: coin.denom })
-    return {
-      info: { token: { contractAddr: asset.address } },
-      amount: coin.amount.toString()
-    }
-  }
-
   async provideLiquidity(
     wallet: TxWallet, asset: AssetEntity, assetAmount: string, collateralAmount: string
   ): Promise<TxInfo> {
@@ -61,23 +46,6 @@ export class PoolService {
         amount,
         contract: asset.pair,
         msg: Buffer.from('{"withdraw_liquidity":{}}').toString('base64'),
-      },
-    })
-  }
-
-  async buy(wallet: TxWallet, asset: AssetEntity, offerCoin: Coin): Promise<TxInfo> {
-    const sendCoins = offerCoin.denom === config.NATIVE_TOKEN_SYMBOL && new Coins([offerCoin])
-    return wallet.execute(asset.pair, {
-      swap: { offerAsset: await this.getAssetInfo(offerCoin) }
-    }, sendCoins)
-  }
-
-  async sell(wallet: TxWallet, asset: AssetEntity, amount: string): Promise<TxInfo> {
-    return wallet.execute(asset.address, {
-      send: {
-        amount,
-        contract: asset.pair,
-        msg: Buffer.from('{"swap":{"max_spread":"0.1"}}').toString('base64'),
       },
     })
   }

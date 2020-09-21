@@ -4,7 +4,7 @@ import { program } from 'commander'
 import { getKey } from 'lib/keystore'
 import { num } from 'lib/num'
 import * as logger from 'lib/logger'
-import { TxWallet, contractQuery } from 'lib/terra'
+import { TxWallet } from 'lib/terra'
 import {
   GovService,
   AssetService,
@@ -12,10 +12,8 @@ import {
   PoolService,
   PriceService,
   AccountService,
-  ContractService,
   OracleService,
 } from 'services'
-import { ContractType } from 'types'
 import config from 'config'
 
 async function prices(): Promise<void> {
@@ -40,7 +38,6 @@ export function testnet(): void {
   const poolService = Container.get(PoolService)
   const assetService = Container.get(AssetService)
   const accountService = Container.get(AccountService)
-  const contractService = Container.get(ContractService)
   const oracleService = Container.get(OracleService)
 
   program
@@ -107,74 +104,4 @@ export function testnet(): void {
   program.command('price-testnet').action(async () => {
     await prices()
   })
-
-  program.command('buy-simul <symbol> <coin>').action(async (symbol, coinString) => {
-    const coin = Coin.fromString(coinString)
-    const asset = await assetService.get({ symbol })
-    const marketContract = await contractService.get({ asset, type: ContractType.MARKET })
-
-    const simulated = await contractQuery(marketContract.address, {
-      simulation: { offerAmount: coin.amount.toString(), operation: 'buy', symbol },
-    })
-
-    logger.info(simulated)
-  })
-
-  program.command('buy-simul-reverse <coin>').action(async (symbol, coinString) => {
-    const coin = Coin.fromString(coinString)
-    const asset = await assetService.get({ symbol })
-    const marketContract = await contractService.get({ asset, type: ContractType.MARKET })
-
-    const simulated = await contractQuery(marketContract.address, {
-      reverseSimulation: { askAmount: coin.amount.toString(), operation: 'buy' },
-    })
-
-    logger.info(simulated)
-  })
-
-  program.command('sell-simul <coin>').action(async (coinString) => {
-    const coin = Coin.fromString(coinString)
-    const asset = await assetService.get({ symbol: coin.denom })
-    const marketContract = await contractService.get({ asset, type: ContractType.MARKET })
-
-    const simulated = await contractQuery(marketContract.address, {
-      simulation: { offerAmount: coin.amount.toString(), operation: 'sell', symbol: coin.denom },
-    })
-
-    logger.info(simulated)
-  })
-
-  program
-    .command('buy <symbol> <offer-amount>')
-    .requiredOption('--owner <owner-password>', 'owner key password')
-    .action(async (symbol, offerAmount, { owner }) => {
-      const asset = await assetService.get({ symbol })
-      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
-      const offerCoin = Coin.fromString(offerAmount)
-
-      const tx = await poolService.buy(wallet, asset, offerCoin)
-      logger.info(tx)
-      logger.info(await accountService.getBalances(wallet.key.accAddress))
-    })
-
-  program
-    .command('sell <coin>')
-    .requiredOption('--owner <owner-password>', 'owner key password')
-    .action(async (coin, { owner }) => {
-      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
-      const sellCoin = Coin.fromString(coin)
-      const asset = await assetService.get({ symbol: sellCoin.denom })
-
-      const tx = await poolService.sell(wallet, asset, sellCoin.amount.toString())
-      logger.info(tx)
-      logger.info(await accountService.getBalances(wallet.key.accAddress))
-    })
-
-  program
-    .command('balance')
-    .requiredOption('--owner <owner-password>', 'owner key password')
-    .action(async ({ owner }) => {
-      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
-      logger.info(await accountService.getBalances(wallet.key.accAddress))
-    })
 }
