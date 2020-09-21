@@ -48,15 +48,15 @@ export function testnet(): void {
       const assets = {
         mAAPL: 'Apple',
         mGOOGL: 'Google',
-        mTSLA: 'Tesla',
-        mNFLX: 'Netflix',
-        mQQQ: 'Invesco QQQ Trust',
-        mTWTR: 'Twitter',
-        mBABA: 'Alibaba Group Holdings Ltd ADR',
-        mIAU: 'iShares Gold Trust',
-        mSLV: 'iShares Silver Trust',
-        mUSO: 'United States Oil Fund, LP',
-        mVIXY: 'ProShares VIX',
+        // mTSLA: 'Tesla',
+        // mNFLX: 'Netflix',
+        // mQQQ: 'Invesco QQQ Trust',
+        // mTWTR: 'Twitter',
+        // mBABA: 'Alibaba Group Holdings Ltd ADR',
+        // mIAU: 'iShares Gold Trust',
+        // mSLV: 'iShares Silver Trust',
+        // mUSO: 'United States Oil Fund, LP',
+        // mVIXY: 'ProShares VIX',
       }
       for (const symbol of Object.keys(assets)) {
         await govService.whitelisting(

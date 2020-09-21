@@ -43,4 +43,12 @@ export function pool(): void {
       const tx = await poolService.withdrawLiquidity(wallet, asset, coin.amount.toString())
       logger.info(tx)
     })
+
+  program
+    .command('pool-info <symbol>')
+    .action(async (symbol) => {
+      const asset = await assetService.get({ symbol })
+
+      logger.info(await poolService.getPool(asset))
+    })
 }
