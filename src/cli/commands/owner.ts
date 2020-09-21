@@ -9,7 +9,7 @@ import * as logger from 'lib/logger'
 import { TxWallet } from 'lib/terra'
 import { getKey } from 'lib/keystore'
 import config from 'config'
-import { loadCodeIds } from './utils'
+import { loadCodeIds, loadWhitelist } from './utils'
 
 export function ownerCommands(): void {
   const govService = Container.get(GovService)
@@ -54,7 +54,9 @@ export function ownerCommands(): void {
         if (token || all)
           codeIds.token = await wallet.storeCode('src/contracts/uniswap_token.wasm')
 
-        fs.writeFileSync('./codeIds.json', JSON.stringify(codeIds))
+        // save codeIds.json
+        fs.writeFileSync('./data/codeIds.json', JSON.stringify(codeIds))
+
         logger.info('stored', codeIds)
       }
     )
@@ -62,16 +64,21 @@ export function ownerCommands(): void {
   program
     .command('create')
     .description('create gov and instantiate needed contracts')
-    .requiredOption('-p, --password <owner-password>', 'owner key password')
-    .action(async ({ password }) => {
+    .requiredOption('--owner <owner-password>', 'owner key password')
+    .requiredOption('--oracle <oracle-password>', 'oracle key password')
+    .action(async ({ owner, oracle }) => {
       const codeIds = loadCodeIds()
-      if (!codeIds) {
-        logger.error('not provided codeIds.json')
+      const whitelist = loadWhitelist()
+      if (!codeIds || !whitelist) {
+        logger.error('data/codeIds.json and whitelist.json must be provided')
         return
       }
 
-      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
-      const gov = await govService.create(wallet, codeIds)
+      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
+      const oracleWallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.ORACLE_KEY, oracle))
+
+      const gov = await govService.create(wallet, oracleWallet, codeIds, whitelist)
+
       logger.info(`created mirror gov. id: ${gov.id}`)
     })
 
@@ -96,17 +103,6 @@ export function ownerCommands(): void {
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
       const owner = wallet.key.accAddress
       const msgs: Msg[] = []
-  // COLLECTOR = 'COLLECTOR',
-  // FACTORY = 'FACTORY',
-  // GOV = 'GOV',
-  // MARKET = 'MARKET', // todo: remove
-  // MINT = 'MINT',
-  // ORACLE = 'ORACLE',
-  // STAKING = 'STAKING',
-  // TOKEN = 'TOKEN',
-  // LP_TOKEN = 'LP_TOKEN',
-  // TOKEN_FACTORY = 'TOKEN_FACTORY',
-  // PAIR = 'PAIR',
 
       switch (contract) {
         case 'collector':

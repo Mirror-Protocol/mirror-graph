@@ -7,9 +7,18 @@ import config from 'config'
 
 export function loadCodeIds(): CodeIds {
   try {
-    return JSON.parse(fs.readFileSync('./codeIds.json', 'utf8') || '{}')
+    return JSON.parse(fs.readFileSync('./data/codeIds.json', 'utf8') || '{}')
   } catch (error) {
     logger.error('not provided codeIds.json')
+    return undefined
+  }
+}
+
+export function loadWhitelist(): { [symbol: string]: string} {
+  try {
+    return JSON.parse(fs.readFileSync('./whitelist.json', 'utf8') || '{}')
+  } catch (error) {
+    logger.error('not provided whitelist.json')
     return undefined
   }
 }
@@ -30,6 +39,6 @@ export async function writeOracleAddresses(): Promise<void> {
     }
     oracleInfo.assets[asset.symbol.substring(1)] = asset.address
   }
-  fs.writeFileSync('./address.json', JSON.stringify(oracleInfo))
+  fs.writeFileSync('./data/address.json', JSON.stringify(oracleInfo))
   logger.info(oracleInfo)
 }

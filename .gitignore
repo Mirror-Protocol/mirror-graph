@@ -35,23 +35,14 @@ typings/
 # dotenv environment variables file
 .env
 
-# config
-config/default.js
-
 # report
-report/*
-!report/.gitkeep
+data/*.json
+!data/.gitkeep
 
-# ormconfig
-ormconfig.*
-
-# direnv
 .envrc
 .direnv
 keystore.json
-address.json
 keystore-local.json
 *.envrc
-test.ts
-*.ormconfig.json
-codeIds.json
+*ormconfig.json
+environment/*
