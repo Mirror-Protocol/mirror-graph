@@ -31,10 +31,14 @@ export class PriceService {
   }
 
   async getContractPrice(asset: AssetEntity): Promise<string> {
-    const price = await this.poolService.getPool(asset)
-      .then((pool) => num(pool.collateralPool).dividedBy(pool.assetPool).toFixed(6))
-      .catch((error) => undefined)
-    return num(price).isNaN() ? undefined : price
+    const pool = await this.poolService.getPool(asset)
+    try {
+      const price = num(pool.collateralAmount).dividedBy(pool.assetAmount).toFixed(6)
+
+      return num(price).isNaN() ? undefined : price
+    } catch(error) {
+      return undefined
+    }
   }
 
   async setOHLC(

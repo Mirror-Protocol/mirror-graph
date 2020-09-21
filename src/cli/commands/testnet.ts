@@ -1,10 +1,10 @@
-import { Coin, Coins } from '@terra-money/terra.js'
+import { Coin } from '@terra-money/terra.js'
 import { Container } from 'typedi'
 import { program } from 'commander'
 import { getKey } from 'lib/keystore'
+import { num } from 'lib/num'
 import * as logger from 'lib/logger'
 import { TxWallet, contractQuery } from 'lib/terra'
-import { num } from 'lib/num'
 import {
   GovService,
   AssetService,
@@ -26,10 +26,10 @@ async function prices(): Promise<void> {
 
   for (const asset of assets) {
     const pool = await poolService.getPool(asset)
-    const price = await priceService.getPrice(asset)
+    const price = await priceService.getContractPrice(asset)
 
     logger.info(
-      `${asset.symbol} - price: ${price}, assetPool: ${pool.assetPool}, collateral: ${pool.collateralPool}, total: ${pool.totalShare}`
+      `${asset.symbol} - price: ${price}, assetPool: ${pool.assetAmount}, collateral: ${pool.collateralAmount}, total: ${pool.totalShare}`
     )
   }
 }
@@ -37,7 +37,7 @@ async function prices(): Promise<void> {
 export function testnet(): void {
   const govService = Container.get(GovService)
   const mintService = Container.get(MintService)
-  const marketService = Container.get(PoolService)
+  const poolService = Container.get(PoolService)
   const assetService = Container.get(AssetService)
   const accountService = Container.get(AccountService)
   const contractService = Container.get(ContractService)
@@ -76,14 +76,14 @@ export function testnet(): void {
     .command('lp-testnet')
     .requiredOption('-p, --password <lp-password>', 'lp key password')
     .action(async ({ password }) => {
-      const assets = await assetService.getAll()
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.LP_KEY, password))
+      const assets = await assetService.getAll()
 
       for (const asset of assets) {
         if (asset.symbol === config.MIRROR_TOKEN_SYMBOL) {
           continue
         }
-        await mintService.mint(asset, Coin.fromString('10000000000uusd'), wallet)
+        await mintService.openPosition(wallet, asset.symbol, Coin.fromString('10000000000uusd'), '1.5')
 
         const { balance } = await accountService.getAssetBalance(wallet.key.accAddress, asset)
         const oraclePrice = await oracleService.getPrice(asset)
@@ -94,10 +94,11 @@ export function testnet(): void {
           `balance: ${balance},`,
           `uusd: ${num(oraclePrice).multipliedBy(balance)}`
         )
-        await marketService.provideLiquidity(
-          new Coin(asset.symbol, balance),
-          new Coin('uusd', num(oraclePrice).multipliedBy(balance).toFixed(0)),
-          wallet
+        await poolService.provideLiquidity(
+          wallet,
+          asset,
+          balance,
+          num(oraclePrice).multipliedBy(balance).toFixed(0)
         )
       }
       await prices()
@@ -144,26 +145,15 @@ export function testnet(): void {
   })
 
   program
-    .command('buy <symbol> <coin>')
+    .command('buy <symbol> <offer-amount>')
     .requiredOption('--owner <owner-password>', 'owner key password')
-    .action(async (symbol, coin, { owner }) => {
+    .action(async (symbol, offerAmount, { owner }) => {
       const asset = await assetService.get({ symbol })
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
-      const marketContract = await contractService.get({ asset, type: ContractType.MARKET })
+      const offerCoin = Coin.fromString(offerAmount)
 
-      logger.info(`buy ${symbol}, ${coin}`)
-      const tx = await wallet
-        .execute(marketContract.address, { buy: { symbol } }, new Coins(coin))
-        .catch((error) => {
-          throw new Error(error)
-        })
-
-      const offer = tx.logs[0].events[1].attributes[2].value
-      const receive = tx.logs[0].events[1].attributes[3].value
-      const spread = tx.logs[0].events[1].attributes[4].value
-      const fee = tx.logs[0].events[1].attributes[5].value
-
-      logger.info(`offer: ${offer}, receive: ${receive}, spread: ${spread}, fee ${fee}`)
+      const tx = await poolService.buy(wallet, asset, offerCoin)
+      logger.info(tx)
       logger.info(await accountService.getBalances(wallet.key.accAddress))
     })
 
@@ -171,30 +161,12 @@ export function testnet(): void {
     .command('sell <coin>')
     .requiredOption('--owner <owner-password>', 'owner key password')
     .action(async (coin, { owner }) => {
+      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
       const sellCoin = Coin.fromString(coin)
       const asset = await assetService.get({ symbol: sellCoin.denom })
-      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
-      const tokenContract = await contractService.get({ asset, type: ContractType.TOKEN })
-      const marketContract = await contractService.get({ asset, type: ContractType.MARKET })
 
-      // execute sell
-      logger.info(`sell ${sellCoin.amount.toString()}${sellCoin.denom}`)
-      logger.info(await accountService.getBalances(wallet.key.accAddress))
-      const tx = await wallet.execute(tokenContract.address, {
-        send: {
-          amount: sellCoin.amount.toString(),
-          contract: marketContract.address,
-          msg: Buffer.from('{"sell": {"max_spread": "0.1"}}').toString('base64'),
-        },
-      })
+      const tx = await poolService.sell(wallet, asset, sellCoin.amount.toString())
       logger.info(tx)
-
-      const offer = tx.logs[0].events[1].attributes[7].value
-      const receive = tx.logs[0].events[1].attributes[8].value
-      const spread = tx.logs[0].events[1].attributes[9].value
-      const fee = tx.logs[0].events[1].attributes[10].value
-
-      logger.info(`offer: ${offer}, receive: ${receive}, spread: ${spread}, fee ${fee}`)
       logger.info(await accountService.getBalances(wallet.key.accAddress))
     })
 
@@ -205,9 +177,4 @@ export function testnet(): void {
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, owner))
       logger.info(await accountService.getBalances(wallet.key.accAddress))
     })
-
-  program.command('mint-config <symbol>').action(async (symbol) => {
-    const asset = await assetService.get({ symbol })
-    logger.info(await mintService.getConfigGeneral(asset))
-  })
 }
