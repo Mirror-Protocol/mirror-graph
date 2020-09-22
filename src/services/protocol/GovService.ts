@@ -3,8 +3,8 @@ import * as bluebird from 'bluebird'
 import { Repository, FindConditions, getManager, EntityManager } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { TxInfo } from '@terra-money/terra.js'
-import Container, { Service, Inject } from 'typedi'
-import { ContractService, AssetService } from 'services'
+import { Service, Inject } from 'typedi'
+import { ContractService } from 'services'
 import { GovEntity, AssetEntity, ContractEntity } from 'orm'
 import { CodeIds, ContractType } from 'types'
 import { TxWallet, findAttributes, findAttribute } from 'lib/terra'
@@ -163,9 +163,6 @@ export class GovService {
         ...pairEntities,
         ...assetEntities,
       ])
-
-      // save assets.json and address.json
-      await Container.get(AssetService).assetsToJSON()
 
       return govEntity
     })

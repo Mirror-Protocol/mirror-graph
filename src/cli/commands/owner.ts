@@ -79,13 +79,17 @@ export function ownerCommands(): void {
 
       const gov = await govService.create(wallet, oracleWallet, codeIds, whitelist)
 
+      // save assets.json and address.json
+      await govService.load(-1)
+      await assetService.assetsToJSON(gov.oracle)
+
       logger.info(`created mirror gov. id: ${gov.id}`)
     })
 
   program
     .command('assets-to-json')
     .action(async () => {
-      await assetService.assetsToJSON()
+      await assetService.assetsToJSON(govService.get().oracle)
 
       logger.info('complete')
     })

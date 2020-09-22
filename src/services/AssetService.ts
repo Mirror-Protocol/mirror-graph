@@ -38,9 +38,9 @@ export class AssetService {
     return this.assetRepo.find({ gov: this.gov })
   }
 
-  async assetsToJSON(): Promise<void> {
+  async assetsToJSON(oracle: string): Promise<void> {
     const assets = {}
-    const oracleInfo = { oracle: this.gov.oracle, assets: {} }
+    const oracleInfo = { oracle, assets: {} }
     const assetEntities = await this.getAll()
 
     assetEntities.map((asset) => {
