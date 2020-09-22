@@ -83,6 +83,14 @@ export function ownerCommands(): void {
     })
 
   program
+    .command('assets-to-json')
+    .action(async () => {
+      await assetService.assetsToJSON()
+
+      logger.info('complete')
+    })
+
+  program
     .command('migrate <gov-id> <contract-type>')
     .description(
       `migrate contract of <gov-id>. contract is one of [collector, factory, gov, market, mint, oracle, staking, token]`

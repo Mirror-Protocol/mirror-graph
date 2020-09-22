@@ -1,17 +1,10 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Column,
-  Index,
-  ManyToOne,
-  JoinColumn
+  Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Column, Index
 } from 'typeorm'
-import { GovEntity } from 'orm'
+import { HaveGov } from './base'
 
 @Entity('account')
-export class AccountEntity {
+export class AccountEntity extends HaveGov {
   @CreateDateColumn()
   createdAt: Date
 
@@ -24,11 +17,4 @@ export class AccountEntity {
   @Column()
   @Index()
   address: string
-
-  @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'gov_id' })
-  gov: GovEntity
-
-  @Column()
-  govId: number
 }

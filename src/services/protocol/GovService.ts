@@ -3,8 +3,8 @@ import * as bluebird from 'bluebird'
 import { Repository, FindConditions, getManager, EntityManager } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { TxInfo } from '@terra-money/terra.js'
-import { Service, Inject } from 'typedi'
-import { ContractService } from 'services'
+import Container, { Service, Inject } from 'typedi'
+import { ContractService, AssetService } from 'services'
 import { GovEntity, AssetEntity, ContractEntity } from 'orm'
 import { CodeIds, ContractType } from 'types'
 import { TxWallet, findAttributes, findAttribute } from 'lib/terra'
@@ -106,24 +106,14 @@ export class GovService {
       // factory contract: whitelist mirror token
       await wallet.execute(factoryContract.address, { uniswapCreationHook: { assetToken: mirrorToken.address } })
 
-      const oracleFeeder = oracleWallet.key.accAddress
-      const assets = {
-        [mirrorToken.address]: {
-          pair: pairEntities.find(pair => pair.type === ContractType.PAIR).address,
-          lpToken: pairEntities.find(pair => pair.type === ContractType.LP_TOKEN).address,
-        }
-      }
-      const oracleInfo = {
-        oracle: govEntity.oracle,
-        assets: {}
-      }
       // whitelisting assets
       const assetEntities = []
       await bluebird.mapSeries(Object.keys(whitelist), async (symbol) => {
         logger.info(`whitelisting ${symbol}`)
 
+        const name = whitelist[symbol]
         const tx = await wallet.execute(govEntity.factory, {
-          whitelist: { ...initMsgs.whitelist, symbol, name: whitelist[symbol], oracleFeeder }
+          whitelist: { ...initMsgs.whitelist, symbol, name, oracleFeeder: oracleWallet.key.accAddress }
         })
 
         const attributes = findAttributes(tx.logs[0].events, 'from_contract')
@@ -131,17 +121,15 @@ export class GovService {
         const pair = findAttribute(attributes, 'pair_contract_addr')
         const lpToken = findAttribute(attributes, 'liquidity_token_addr')
 
-        assets[address] = { pair, lpToken }
-        oracleInfo.assets[symbol.substring(1)] = address
-
-
         const asset = new AssetEntity({
-          gov: govEntity, symbol, name: whitelist[symbol], address, pair, lpToken
+          gov: govEntity, symbol, name, address, pair, lpToken
         })
-        const tokenEntity = new ContractEntity({ address, type: ContractType.TOKEN, gov: govEntity, asset })
-        const pairEntity = new ContractEntity({ address: pair, type: ContractType.PAIR, gov: govEntity, asset })
-        const lpTokenEntity = new ContractEntity({ address: lpToken, type: ContractType.LP_TOKEN, gov: govEntity, asset })
-        assetEntities.push(asset, tokenEntity, pairEntity, lpTokenEntity)
+        assetEntities.push(
+          asset,
+          new ContractEntity({ address, type: ContractType.TOKEN, gov: govEntity, asset }),
+          new ContractEntity({ address: pair, type: ContractType.PAIR, gov: govEntity, asset }),
+          new ContractEntity({ address: lpToken, type: ContractType.LP_TOKEN, gov: govEntity, asset })
+        )
       })
 
       const contracts = {
@@ -156,10 +144,6 @@ export class GovService {
       }
       // save contracts.json
       fs.writeFileSync('./data/contracts.json', JSON.stringify(contracts))
-      // save assets.json
-      fs.writeFileSync('./data/assets.json', JSON.stringify(assets))
-      // save address.json for oracle
-      fs.writeFileSync('./data/address.json', JSON.stringify(oracleInfo))
 
       // factory contract: update owner to gov
       // await wallet.execute(factory.address, { updateConfig: { owner: govContract.address } })
@@ -179,6 +163,9 @@ export class GovService {
         ...pairEntities,
         ...assetEntities,
       ])
+
+      // save assets.json and address.json
+      await Container.get(AssetService).assetsToJSON()
 
       return govEntity
     })

@@ -1,9 +1,11 @@
+import * as fs from 'fs'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions } from 'typeorm'
 import { Service, Inject } from 'typedi'
 import { ErrorTypes, APIError } from 'lib/error'
 import { AssetEntity, GovEntity } from 'orm'
 import { GovService } from 'services'
+import config from 'config'
 
 @Service()
 export class AssetService {
@@ -34,5 +36,26 @@ export class AssetService {
 
   async search(text?: string): Promise<AssetEntity[]> {
     return this.assetRepo.find({ gov: this.gov })
+  }
+
+  async assetsToJSON(): Promise<void> {
+    const assets = {}
+    const oracleInfo = { oracle: this.gov.oracle, assets: {} }
+    const assetEntities = await this.getAll()
+
+    assetEntities.map((asset) => {
+      const { address, symbol, name, pair, lpToken } = asset
+
+      assets[address] = { symbol, name, pair, lpToken }
+
+      if (symbol !== config.MIRROR_TOKEN_SYMBOL) {
+        oracleInfo.assets[symbol.substring(1)] = address
+      }
+    })
+
+    // save assets.json
+    fs.writeFileSync('./data/assets.json', JSON.stringify(assets))
+    // save address.json for oracle
+    fs.writeFileSync('./data/address.json', JSON.stringify(oracleInfo))
   }
 }

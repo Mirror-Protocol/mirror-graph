@@ -1,5 +1,5 @@
 import { Column, JoinColumn, ManyToOne } from 'typeorm'
-import { GovEntity, AssetEntity } from 'orm'
+import { GovEntity, AssetEntity, AccountEntity } from 'orm'
 
 export class HaveGov {
   @ManyToOne((type) => GovEntity, { onDelete: 'CASCADE' })
@@ -35,4 +35,22 @@ export class HaveGovAndMaybeAsset extends HaveGov {
 
   @Column({ nullable: true })
   assetId?: number
+}
+
+export class HaveAccount {
+  @ManyToOne((type) => AccountEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'account_id' })
+  account: AccountEntity
+
+  @Column()
+  accountId: number
+}
+
+export class HaveAccountAndAsset extends HaveAsset {
+  @ManyToOne((type) => AccountEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'account_id' })
+  account: AccountEntity
+
+  @Column()
+  accountId: number
 }

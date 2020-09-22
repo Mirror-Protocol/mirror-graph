@@ -34,11 +34,4 @@ export class PriceEntity extends HaveAsset {
 
   @Column('decimal', { precision: 40, scale: 6 })
   close: string
-
-  // @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
-  // @JoinColumn({ name: 'asset_id' })
-  // asset: AssetEntity
-
-  // @Column()
-  // assetId: number
 }
