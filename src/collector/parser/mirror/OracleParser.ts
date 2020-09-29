@@ -1,30 +1,40 @@
+import * as bluebird from 'bluebird'
+import { EntityManager } from 'typeorm'
 import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
-import { ContractEntity } from 'orm'
+import { AssetEntity, ContractEntity } from 'orm'
 import { MirrorParser } from './MirrorParser'
 
 export class OracleParser extends MirrorParser {
   async parse(
-    txInfo: TxInfo, msg: MsgExecuteContract, msgIndex: number, log: TxLog, contract: ContractEntity
-  ): Promise<unknown[]> {
+    manager: EntityManager,
+    txInfo: TxInfo,
+    msg: MsgExecuteContract,
+    msgIndex: number,
+    log: TxLog,
+    contract: ContractEntity,
+  ): Promise<boolean> {
     if (msg.execute_msg['feed_price']) {
-      return this.parseFeedPrice(txInfo, msg)
+      return this.parseFeedPrice(manager, txInfo, msg)
     }
+
+    return false
   }
 
-  async parseFeedPrice(txInfo: TxInfo, msg: MsgExecuteContract): Promise<unknown[]> {
+  async parseFeedPrice(manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract): Promise<boolean> {
     const timestamp = new Date(txInfo.timestamp).getTime()
-    const { asset_info: assetInfo, price } = msg.execute_msg['feed_price']
-    const token = assetInfo?.token?.contract_addr
-    if (!token) {
-      return []
-    }
-    const asset = await this.assetService.get({ token })
-    if (!asset) {
-      return []
-    }
+    const { price_infos: priceInfos } = msg.execute_msg['feed_price']
 
-    const priceEntity = await this.oracleService.setOHLC(asset, timestamp, price, false)
+    await bluebird.mapSeries(priceInfos, async (info) => {
+      const token = info['asset_token']
+      const price = info['price']
+      const asset = await manager.findOne(AssetEntity, { token })
+      if (!asset) {
+        return
+      }
 
-    return [priceEntity]
+      await this.oracleService.setOHLC(manager, asset, timestamp, price)
+    })
+
+    return true
   }
 }

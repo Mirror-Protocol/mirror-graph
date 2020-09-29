@@ -1,18 +1,17 @@
-import { Service, Inject } from 'typedi'
-import { Repository, FindConditions, LessThanOrEqual } from 'typeorm'
+import { Service } from 'typedi'
+import { Repository, FindConditions, LessThanOrEqual, EntityManager } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
 import { getOHLC, getHistory } from 'lib/price'
+import { getPairPool } from 'lib/mirror'
 import { PriceEntity, AssetEntity } from 'orm'
 import { HistoryRanges } from 'types'
 import { AssetOHLC, PriceAt } from 'graphql/schema'
-import { PoolService } from 'services'
 
 @Service()
 export class PriceService {
   constructor(
     @InjectRepository(PriceEntity) private readonly priceRepo: Repository<PriceEntity>,
-    @Inject((type) => PoolService) private readonly poolService: PoolService,
   ) {}
 
   async get(conditions: FindConditions<PriceEntity>): Promise<PriceEntity> {
@@ -31,7 +30,7 @@ export class PriceService {
   }
 
   async getContractPrice(asset: AssetEntity): Promise<string> {
-    const pool = await this.poolService.getPool(asset)
+    const pool = await getPairPool(asset.pair)
     try {
       const price = num(pool.collateralAmount).dividedBy(pool.assetAmount).toFixed(6)
 
@@ -42,13 +41,10 @@ export class PriceService {
   }
 
   async setOHLC(
-    asset: AssetEntity,
-    timestamp: number,
-    price: string,
-    needSave = true
+    manager: EntityManager, asset: AssetEntity, timestamp: number, price: string
   ): Promise<PriceEntity> {
     const datetime = new Date(timestamp - (timestamp % 60000))
-    let priceEntity = await this.get({ asset, datetime })
+    let priceEntity = await manager.findOne(PriceEntity, { asset, datetime })
 
     if (priceEntity) {
       priceEntity.high = num(price).isGreaterThan(priceEntity.high) ? price : priceEntity.high
@@ -60,7 +56,7 @@ export class PriceService {
       })
     }
 
-    return needSave ? this.priceRepo.save(priceEntity) : priceEntity
+    return manager.save(priceEntity)
   }
 
   async getOHLC(asset: AssetEntity, from: number, to: number): Promise<AssetOHLC> {

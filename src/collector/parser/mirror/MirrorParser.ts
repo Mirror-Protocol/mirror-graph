@@ -1,4 +1,5 @@
 import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
+import { EntityManager } from 'typeorm'
 import { Container } from 'typedi'
 import { ContractEntity } from 'orm'
 import {
@@ -12,8 +13,8 @@ import {
 export class MirrorParser {
   // return: entities to save
   public async parse(
-    txInfo: TxInfo, msg: MsgExecuteContract, msgIndex: number, log: TxLog, contract: ContractEntity
-  ): Promise<unknown[]> {
+    manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, msgIndex: number, log: TxLog, contract: ContractEntity
+  ): Promise<boolean> {
     throw new Error('must implement parse function')
   }
 

@@ -11,7 +11,7 @@ interface AssetInfo {
   amount: string
 }
 
-export interface Pool {
+export interface PairPool {
   totalShare: string // lp token supply
   assets: AssetInfo[]
 }

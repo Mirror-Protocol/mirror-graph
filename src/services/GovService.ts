@@ -1,7 +1,7 @@
 import { Repository, FindConditions, getManager, EntityManager } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Service } from 'typedi'
-import { GovEntity, ContractEntity } from 'orm'
+import { GovEntity, ContractEntity, AssetEntity } from 'orm'
 import { CodeIds, Contracts, Assets, ContractType } from 'types'
 import { TxWallet } from 'lib/terra'
 import * as logger from 'lib/logger'
@@ -62,21 +62,18 @@ export class GovService {
           )
         })
 
-      // await bluebird.mapSeries(Object.keys(assets), async (token) => {
-      //   const { symbol, name, pair, lpToken } = assets[token]
-      //   logger.info(`whitelisting ${symbol}`)
+      // create mirror asset, contract entities
+      const { symbol, name, token, pair, lpToken } = assets[mirrorToken]
+      const asset = new AssetEntity({
+        gov: govEntity, symbol, name, token, pair, lpToken
+      })
 
-      //   const asset = new AssetEntity({
-      //     gov: govEntity, symbol, name, token, pair, lpToken
-      //   })
-
-      //   contractEntities.push(
-      //     asset,
-      //     new ContractEntity({ address: token, type: ContractType.TOKEN, gov: govEntity, asset }),
-      //     new ContractEntity({ address: pair, type: ContractType.PAIR, gov: govEntity, asset }),
-      //     new ContractEntity({ address: lpToken, type: ContractType.LP_TOKEN, gov: govEntity, asset })
-      //   )
-      // })
+      entities.push(
+        asset,
+        new ContractEntity({ address: token, type: ContractType.TOKEN, gov: govEntity, asset }),
+        new ContractEntity({ address: pair, type: ContractType.PAIR, gov: govEntity, asset }),
+        new ContractEntity({ address: lpToken, type: ContractType.LP_TOKEN, gov: govEntity, asset })
+      )
 
       // save to db
       await manager.save(entities)

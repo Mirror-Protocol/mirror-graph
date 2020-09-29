@@ -1,5 +1,5 @@
 import { Service, Inject } from 'typedi'
-import { Repository, FindConditions, LessThanOrEqual } from 'typeorm'
+import { Repository, FindConditions, LessThanOrEqual, EntityManager } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
 import { getOHLC, getHistory } from 'lib/price'
@@ -45,13 +45,10 @@ export class OracleService {
   }
 
   async setOHLC(
-    asset: AssetEntity,
-    timestamp: number,
-    price: string,
-    needSave = true
+    manager: EntityManager, asset: AssetEntity, timestamp: number, price: string
   ): Promise<OraclePriceEntity> {
     const datetime = new Date(timestamp - (timestamp % 60000))
-    let priceEntity = await this.get({ asset, datetime })
+    let priceEntity = await manager.findOne(OraclePriceEntity, { asset, datetime })
 
     if (priceEntity) {
       priceEntity.high = num(price).isGreaterThan(priceEntity.high) ? price : priceEntity.high
@@ -63,7 +60,7 @@ export class OracleService {
       })
     }
 
-    return needSave ? this.oracleRepo.save(priceEntity) : priceEntity
+    return manager.save(priceEntity)
   }
 
   async getOHLC(asset: AssetEntity, from: number, to: number): Promise<AssetOHLC> {

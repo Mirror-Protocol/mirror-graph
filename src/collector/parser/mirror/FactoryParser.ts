@@ -1,13 +1,15 @@
 import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
-import { findAttributes, findAttribute } from 'lib/terra'
+import { EntityManager } from 'typeorm'
 import { AssetEntity, ContractEntity } from 'orm'
+import { findAttributes, findAttribute } from 'lib/terra'
+import * as logger from 'lib/logger'
 import { ContractType } from 'types'
 import { MirrorParser } from './MirrorParser'
 
 export class FactoryParser extends MirrorParser {
   async parse(
-    txInfo: TxInfo, msg: MsgExecuteContract, msgIndex: number, log: TxLog, contract: ContractEntity
-  ): Promise<unknown[]> {
+    manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, msgIndex: number, log: TxLog, contract: ContractEntity
+  ): Promise<boolean> {
     const { execute_msg: executeMsg } = msg
 
     if (executeMsg['whitelist']) {
@@ -25,14 +27,18 @@ export class FactoryParser extends MirrorParser {
 
       const asset = new AssetEntity({ govId, symbol, name, token, pair, lpToken })
 
-      return [
+      await manager.save([
         asset,
         new ContractEntity({ address: token, type: ContractType.TOKEN, govId, asset }),
         new ContractEntity({ address: pair, type: ContractType.PAIR, govId, asset }),
         new ContractEntity({ address: lpToken, type: ContractType.LP_TOKEN, govId, asset }),
-      ]
+      ])
+
+      logger.info(`whitelisting: ${symbol}`)
+
+      return true
     }
 
-    return []
+    return false
   }
 }

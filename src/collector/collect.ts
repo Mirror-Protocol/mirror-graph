@@ -3,7 +3,7 @@ import { getManager, EntityManager } from 'typeorm'
 import { getLatestBlockHeight, getTxs } from 'lib/terra'
 import * as logger from 'lib/logger'
 import { parseTxs } from './parser'
-import { getCollectedHeight, updateCollectedHeight, updateBlock } from './block'
+import { getCollectedHeight, updateBlock } from './block'
 import config from 'config'
 
 export async function collect(now: number): Promise<void> {
@@ -22,14 +22,11 @@ export async function collect(now: number): Promise<void> {
 
   return getManager()
     .transaction(async (manager: EntityManager) => {
-      const entities = await parseTxs(txs) || []
-      entities.push(await updateBlock(lastTx.height))
+      await parseTxs(manager, txs)
 
-      await manager.save(entities)
+      await manager.save(await updateBlock(lastTx.height))
     })
     .then(() => {
-      updateCollectedHeight(lastTx.height)
-
       logger.info(
         `collected: ${config.TERRA_CHAIN_ID}, ${collectedHeight + 1}-${lastTx.height},`,
         `${format(new Date(lastTx.timestamp), 'yyyy-MM-dd HH:mm:ss')}, ${txs.length} txs`
