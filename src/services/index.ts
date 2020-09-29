@@ -1,5 +1,6 @@
-export * from './protocol'
 export * from './AssetService'
+export * from './ContractService'
 export * from './PriceService'
 export * from './OracleService'
 export * from './AccountService'
+export * from './GovService'

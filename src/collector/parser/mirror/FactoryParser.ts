@@ -14,20 +14,20 @@ export class FactoryParser extends MirrorParser {
       const attributes = findAttributes(log.events, 'from_contract')
       const symbol = findAttribute(attributes, 'symbol') || ''
       const name = findAttribute(attributes, 'name') || ''
-      const address = findAttribute(attributes, 'asset_token')
+      const token = findAttribute(attributes, 'asset_token')
       const pair = findAttribute(attributes, 'pair_contract_addr')
       const lpToken = findAttribute(attributes, 'liquidity_token_addr')
       const govId = contract.govId
 
-      if (!address || !pair || !lpToken) {
-        throw new Error(`whitelist parsing failed. token(${address}), lpToken(${lpToken}), pair(${pair})`)
+      if (!token || !pair || !lpToken) {
+        throw new Error(`whitelist parsing failed. token(${token}), lpToken(${lpToken}), pair(${pair})`)
       }
 
-      const asset = new AssetEntity({ govId, symbol, name, address, pair, lpToken })
+      const asset = new AssetEntity({ govId, symbol, name, token, pair, lpToken })
 
       return [
         asset,
-        new ContractEntity({ address, type: ContractType.TOKEN, govId, asset }),
+        new ContractEntity({ address: token, type: ContractType.TOKEN, govId, asset }),
         new ContractEntity({ address: pair, type: ContractType.PAIR, govId, asset }),
         new ContractEntity({ address: lpToken, type: ContractType.LP_TOKEN, govId, asset }),
       ]

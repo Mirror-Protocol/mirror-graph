@@ -14,11 +14,11 @@ export class OracleParser extends MirrorParser {
   async parseFeedPrice(txInfo: TxInfo, msg: MsgExecuteContract): Promise<unknown[]> {
     const timestamp = new Date(txInfo.timestamp).getTime()
     const { asset_info: assetInfo, price } = msg.execute_msg['feed_price']
-    const address = assetInfo?.token?.contract_addr
-    if (!address) {
+    const token = assetInfo?.token?.contract_addr
+    if (!token) {
       return []
     }
-    const asset = await this.assetService.get({ address })
+    const asset = await this.assetService.get({ token })
     if (!asset) {
       return []
     }

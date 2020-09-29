@@ -28,6 +28,7 @@
     "date-fns": "^2.16.0",
     "form-data": "^3.0.0",
     "graphql": "^15",
+    "graphql-request": "^3.1.0",
     "graphql-scalars": "^1.2.7",
     "koa": "^2.13.0",
     "koa-body": "^4.2.0",

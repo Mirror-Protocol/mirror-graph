@@ -3,7 +3,7 @@ import { Column } from 'typeorm'
 // contract addresses
 export class GovContracts {
   @Column()
-  address: string // gov contract
+  gov: string // gov contract address
 
   @Column()
   mirrorToken: string

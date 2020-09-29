@@ -6,7 +6,7 @@ import { init as initErrorHandler, errorHandler } from 'lib/error'
 import { initMirror } from 'loaders'
 import * as logger from 'lib/logger'
 import { validateConfig } from 'config'
-import { collectBlock } from './block'
+import { collect } from './collect'
 
 bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
 global.Promise = bluebird as any // eslint-disable-line
@@ -15,8 +15,7 @@ async function loop(): Promise<void> {
   for (;;) {
     const now = Date.now()
 
-    await collectBlock(now)
-    // .catch(errorHandler)
+    await collect(now)
 
     await bluebird.delay(100)
   }
@@ -34,6 +33,8 @@ async function main(): Promise<void> {
   await initMirror()
 
   await loop()
+
+  console.log('done')
 }
 
 if (require.main === module) {

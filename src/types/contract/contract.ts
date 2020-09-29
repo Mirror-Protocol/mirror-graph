@@ -1,15 +1,3 @@
-export interface CodeIds {
-  collector: number
-  factory: number
-  gov: number
-  mint: number
-  oracle: number
-  staking: number
-  tokenFactory: number
-  pair: number
-  token: number
-}
-
 export interface ContractInfo {
   codeId: number
   address: string
@@ -18,15 +6,14 @@ export interface ContractInfo {
 }
 
 export enum ContractType {
-  COLLECTOR = 'COLLECTOR',
-  FACTORY = 'FACTORY',
-  GOV = 'GOV',
-  MARKET = 'MARKET', // todo: remove
-  MINT = 'MINT',
-  ORACLE = 'ORACLE',
-  STAKING = 'STAKING',
-  TOKEN = 'TOKEN',
-  LP_TOKEN = 'LP_TOKEN',
-  TOKEN_FACTORY = 'TOKEN_FACTORY',
-  PAIR = 'PAIR',
+  COLLECTOR = 'collector',
+  FACTORY = 'factory',
+  GOV = 'gov',
+  MINT = 'mint',
+  ORACLE = 'oracle',
+  STAKING = 'staking',
+  TOKEN = 'token',
+  LP_TOKEN = 'lpToken',
+  TOKEN_FACTORY = 'tokenFactory',
+  PAIR = 'pair',
 }
