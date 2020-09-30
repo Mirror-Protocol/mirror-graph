@@ -7,7 +7,7 @@ import { GovService } from 'services'
 @Service()
 export class AssetService {
   constructor(
-    @InjectRepository(AssetEntity) private readonly assetRepo: Repository<AssetEntity>,
+    @InjectRepository(AssetEntity) private readonly repo: Repository<AssetEntity>,
     @Inject((type) => GovService) private readonly govService: GovService,
   ) {}
 
@@ -15,17 +15,17 @@ export class AssetService {
     return this.govService.get()
   }
 
-  async get(conditions: FindConditions<AssetEntity>): Promise<AssetEntity> {
-    return this.assetRepo.findOne({
+  async get(conditions: FindConditions<AssetEntity>, repo = this.repo): Promise<AssetEntity> {
+    return repo.findOne({
       ...conditions, gov: conditions.gov || this.gov,
     })
   }
 
-  async getAll(): Promise<AssetEntity[]> {
-    return this.assetRepo.find({ gov: this.gov })
+  async getAll(repo = this.repo): Promise<AssetEntity[]> {
+    return repo.find({ gov: this.gov })
   }
 
-  async search(text?: string): Promise<AssetEntity[]> {
-    return this.assetRepo.find({ gov: this.gov })
+  async search(text?: string, repo = this.repo): Promise<AssetEntity[]> {
+    return repo.find({ gov: this.gov })
   }
 }

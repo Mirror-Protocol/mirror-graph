@@ -1,5 +1,5 @@
 import { Service, Inject } from 'typedi'
-import { Repository, FindConditions, LessThanOrEqual, EntityManager } from 'typeorm'
+import { Repository, FindConditions, LessThanOrEqual } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
 import { getOHLC, getHistory } from 'lib/price'
@@ -12,17 +12,16 @@ import { ContractService } from 'services'
 @Service()
 export class OracleService {
   constructor(
-    @InjectRepository(OraclePriceEntity)
-    private readonly oracleRepo: Repository<OraclePriceEntity>,
+    @InjectRepository(OraclePriceEntity) private readonly repo: Repository<OraclePriceEntity>,
     @Inject((type) => ContractService) private readonly contractService: ContractService,
   ) {}
 
-  async get(conditions: FindConditions<OraclePriceEntity>): Promise<OraclePriceEntity> {
-    return this.oracleRepo.findOne(conditions)
+  async get(conditions: FindConditions<OraclePriceEntity>, repo = this.repo): Promise<OraclePriceEntity> {
+    return repo.findOne(conditions)
   }
 
-  async getPrice(asset: AssetEntity, timestamp: number = Date.now()): Promise<string> {
-    const price = await this.oracleRepo.findOne(
+  async getPrice(asset: AssetEntity, timestamp: number = Date.now(), repo = this.repo): Promise<string> {
+    const price = await repo.findOne(
       { asset, datetime: LessThanOrEqual(new Date(timestamp)) },
       {
         select: ['close', 'datetime'],
@@ -45,10 +44,10 @@ export class OracleService {
   }
 
   async setOHLC(
-    manager: EntityManager, asset: AssetEntity, timestamp: number, price: string
+    asset: AssetEntity, timestamp: number, price: string, repo = this.repo
   ): Promise<OraclePriceEntity> {
     const datetime = new Date(timestamp - (timestamp % 60000))
-    let priceEntity = await manager.findOne(OraclePriceEntity, { asset, datetime })
+    let priceEntity = await repo.findOne({ asset, datetime })
 
     if (priceEntity) {
       priceEntity.high = num(price).isGreaterThan(priceEntity.high) ? price : priceEntity.high
@@ -60,14 +59,14 @@ export class OracleService {
       })
     }
 
-    return manager.save(priceEntity)
+    return repo.save(priceEntity)
   }
 
-  async getOHLC(asset: AssetEntity, from: number, to: number): Promise<AssetOHLC> {
-    return getOHLC<OraclePriceEntity>(this.oracleRepo, asset, from, to)
+  async getOHLC(asset: AssetEntity, from: number, to: number, repo = this.repo): Promise<AssetOHLC> {
+    return getOHLC<OraclePriceEntity>(repo, asset, from, to)
   }
 
-  async getHistory(asset: AssetEntity, range: HistoryRanges): Promise<PriceAt[]> {
-    return getHistory<OraclePriceEntity>(this.oracleRepo, asset, range)
+  async getHistory(asset: AssetEntity, range: HistoryRanges, repo = this.repo): Promise<PriceAt[]> {
+    return getHistory<OraclePriceEntity>(repo, asset, range)
   }
 }

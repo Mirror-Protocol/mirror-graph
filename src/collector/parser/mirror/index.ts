@@ -3,34 +3,31 @@ import { EntityManager } from 'typeorm'
 import { Container } from 'typedi'
 import { ContractService } from 'services'
 import { ContractType } from 'types'
-import { MirrorParser } from './MirrorParser'
-import { OracleParser } from './OracleParser'
-// import { TokenParser } from './TokenParser'
-// import { MintParser } from './MintParser'
+import { parse as parseFactory } from './FactoryParser'
+import { parse as parseOracle } from './OracleParser'
+import { parse as parsePair } from './PairParser'
+import { parse as parseToken } from './TokenParser'
+import { parse as parseMint } from './MintParser'
 // import { StakingParser } from './StakingParser'
-import { FactoryParser } from './FactoryParser'
-
-const parser: { [type: string]: MirrorParser } = {
-  // [ContractType.MINT]: new MintParser(),
-  [ContractType.ORACLE]: new OracleParser(),
-  // [ContractType.TOKEN]: new TokenParser(),
-  // [ContractType.LP_TOKEN]: new TokenParser(),
-  // [ContractType.STAKING]: new StakingParser(),
-  [ContractType.FACTORY]: new FactoryParser(),
-}
 
 export async function parseMirrorMsg(
-  manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, msgIndex: number, log: TxLog
-): Promise<boolean> {
+  manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog
+): Promise<void> {
   const contractService = Container.get(ContractService)
-  const contract = await contractService.get(
-    { address: msg.contract },
-    { relations: ['asset'] }
-  )
+  const contract = await contractService.get({ address: msg.contract })
+  if (!contract)
+    return
 
-  if (!contract || !parser[contract.type]) {
-    return false
+  switch (contract.type) {
+    case ContractType.FACTORY:
+      return parseFactory(manager, txInfo, msg, log, contract)
+    case ContractType.ORACLE:
+      return parseOracle(manager, txInfo, msg, log, contract)
+    case ContractType.PAIR:
+      return parsePair(manager, txInfo, msg, log, contract)
+    case ContractType.TOKEN:
+      return parseToken(manager, txInfo, msg, log, contract)
+    case ContractType.MINT:
+      return parseMint(manager, txInfo, msg, log, contract)
   }
-
-  return parser[contract.type].parse(manager, txInfo, msg, msgIndex, log, contract)
 }

@@ -4,22 +4,18 @@ import { contractQuery } from 'lib/terra'
 import { lcd } from 'lib/terra'
 import { num } from 'lib/num'
 import { AssetEntity } from 'orm'
-import { ContractType, MintPosition } from 'types'
 import { AssetBalance } from 'graphql/schema'
-import { AssetService, ContractService } from 'services'
+import { AssetService } from 'services'
 
 @Service()
 export class AccountService {
   constructor(
     @Inject((type) => AssetService) private readonly assetService: AssetService,
-    @Inject((type) => ContractService) private readonly contractService: ContractService
   ) {}
 
   async getBalance(address: string, symbol: string): Promise<AssetBalance> {
     if (symbol === 'uusd') {
       return this.getTerraBalance(address, symbol)
-    } else if (symbol.substr(-3, 3) === '-LP') {
-      return this.getLiquidityBalance(address, await this.assetService.get({ lpTokenSymbol: symbol }))
     }
 
     return this.getAssetBalance(address, await this.assetService.get({ symbol }))
@@ -31,24 +27,9 @@ export class AccountService {
   }
 
   async getAssetBalance(address: string, asset: AssetEntity): Promise<AssetBalance> {
-    const { balance } = await contractQuery(asset.address, { balance: { address } })
+    const { balance } = await contractQuery(asset.token, { balance: { address } })
 
     return { symbol: asset.symbol, balance }
-  }
-
-  async getLiquidityBalance(address: string, asset: AssetEntity): Promise<AssetBalance> {
-    const { balance } = await contractQuery(asset.lpToken, { balance: { address } })
-
-    return { symbol: asset.lpTokenSymbol, balance }
-  }
-
-  async getMintPosition(address: string, asset: AssetEntity): Promise<MintPosition> {
-    const mintContract = await this.contractService.get({ asset, type: ContractType.MINT })
-    if (!mintContract) {
-      return undefined
-    }
-
-    return contractQuery<MintPosition>(mintContract.address, { position: { address } })
   }
 
   async getBalances(address: string): Promise<AssetBalance[]> {

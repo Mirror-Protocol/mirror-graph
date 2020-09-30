@@ -684,16 +684,16 @@
   dependencies:
     defer-to-connect "^1.0.1"
 
-"@terra-money/terra.js@^0.4.15":
-  version "0.4.15"
-  resolved "https://registry.yarnpkg.com/@terra-money/terra.js/-/terra.js-0.4.15.tgz#fddf1c9db28649a209fb1e5c610fce65c10ead4e"
-  integrity sha512-cjf8CNM0m9bYB2U2iY7H6HqwTAQzZjD5U2y5sYD+pxtWckfqKDZF9PaMnPL5MXYxdt6A1onBFo7MRcnI18xWNw==
+"@terra-money/terra.js@0.4.23":
+  version "0.4.23"
+  resolved "https://registry.yarnpkg.com/@terra-money/terra.js/-/terra.js-0.4.23.tgz#1553984caca4862c5b771b4dbaa0a45a58681117"
+  integrity sha512-MmRqJcGYJSzCKTRDeeXmgurUlCrLOPncw6+HcQcriCd07x9D9ZBi5t4sLWosMws0YCTwEdM30g3WPvZnru/VdQ==
   dependencies:
     axios "^0.20.0"
     bech32 "^1.1.4"
     bip32 "^2.0.5"
     bip39 "^3.0.2"
-    crypto-js "^4"
+    crypto-js "3.3.0"
     decimal.js "^10.2.0"
     post-message-stream "^3.0.0"
     secp256k1 "^4.0.2"
@@ -2394,7 +2394,12 @@ cross-spawn@^7.0.0:
     shebang-command "^2.0.0"
     which "^2.0.1"
 
-crypto-js@^4, crypto-js@^4.0.0:
+crypto-js@3.3.0:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-3.3.0.tgz#846dd1cce2f68aacfa156c8578f926a609b7976b"
+  integrity sha512-DIT51nX0dCfKltpRiXV+/TVZq+Qq2NgF4644+K7Ttnla7zEzqc+kjJyiB96BHNyUTBxyjzRcZYpUdZa+QAqi6Q==
+
+crypto-js@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.0.0.tgz#2904ab2677a9d042856a2ea2ef80de92e4a36dcc"
   integrity sha512-bzHZN8Pn+gS7DQA6n+iUmBfl0hO5DJq++QP3U6uTucDtk/0iGpXd/Gg7CGR0p8tJhofJyaKoWBuJI4eAO00BBg==
@@ -3379,11 +3384,6 @@ got@^9.6.0:
     p-cancelable "^1.0.0"
     to-readable-stream "^1.0.0"
     url-parse-lax "^3.0.0"
-
-gql-query-builder@^3.5.0:
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/gql-query-builder/-/gql-query-builder-3.5.0.tgz#a3f686250e9fde4e38c8d6f109ecd6d67373d21c"
-  integrity sha512-OQz+YjYVeA9n7o1PkRY2+MYIviXAeSbyDoUJnyHlgAfhIyOsNTsO4V2m9GqvGAm28NwvfZ24BAqMTZvRi9rVIQ==
 
 graceful-fs@^4.1.2, graceful-fs@^4.2.4:
   version "4.2.4"

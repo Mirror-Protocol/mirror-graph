@@ -1,65 +1,91 @@
 import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
+import { EntityManager } from 'typeorm'
+import { Container } from 'typedi'
 import { findAttributes, findAttribute } from 'lib/terra'
-import { TxEntity, ContractEntity } from 'orm'
+import { splitTokenAmount } from 'lib/utils'
+import { AssetService, CdpService } from 'services'
+import { ContractEntity, AssetEntity, TxEntity, CdpEntity } from 'orm'
 import { TxType } from 'types'
-import { MirrorParser } from './MirrorParser'
 
-export class MintParser extends MirrorParser {
-  async parse(
-    txInfo: TxInfo, msg: MsgExecuteContract, msgIndex: number, log: TxLog, contract: ContractEntity
-  ): Promise<unknown[]> {
-    const { execute_msg: executeMsg } = msg
-    let type
-    let data
+export async function parseCdp(
+  manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity
+): Promise<void> {
+  const { execute_msg: executeMsg } = msg
+  const { govId } = contract
+  const { height, txhash: txHash, timestamp } = txInfo
+  const { sender } = msg
+  const datetime = new Date(timestamp)
 
-    if (executeMsg['open_position']) {
-      const attributes = findAttributes(log.events, 'from_contract')
-      const positionIdx = findAttribute(attributes, 'position_idx')
-      const mintAmount = findAttribute(attributes, 'mint_amount')
-      const collateralAmount = findAttribute(attributes, 'collateral_amount')
+  const attributes = findAttributes(log.events, 'from_contract')
+  const positionIdx = findAttribute(attributes, 'position_idx')
 
-      type = TxType.OPEN_POSITION
-      data = { positionIdx, mintAmount, collateralAmount }
-    } else if (executeMsg['deposit']) {
-      const attributes = findAttributes(log.events, 'from_contract')
-      const positionIdx = findAttribute(attributes, 'position_idx')
-      const depositAmount = findAttribute(attributes, 'deposit_amount')
+  let tx = {}
+  let cdp
 
-      type = TxType.DEPOSIT_COLLATERAL
-      data = { positionIdx, depositAmount }
-    } else if (executeMsg['withdraw']) {
-      const attributes = findAttributes(log.events, 'from_contract')
-      const positionIdx = findAttribute(attributes, 'position_idx')
-      const withdrawAmount = findAttribute(attributes, 'withdraw_amount')
-      const taxAmount = findAttribute(attributes, 'tax_amount')
+  if (executeMsg['open_position']) {
+    const mintAmount = findAttribute(attributes, 'mint_amount')
+    const collateralAmount = findAttribute(attributes, 'collateral_amount')
 
-      type = TxType.WITHDRAW_COLLATERAL
-      data = { positionIdx, withdrawAmount, taxAmount }
-    } else if (executeMsg['burn']) {
-      console.log(JSON.stringify(executeMsg['burn']))
-      // const values = log.events[1].attributes.map((attr) => attr.value)
+    const minted = splitTokenAmount(mintAmount)
+    const collateral = splitTokenAmount(collateralAmount)
+    const asset = await Container.get(AssetService)
+      .get({ token: minted.token }, manager.getRepository(AssetEntity))
+    const assetId = asset.id
 
-      // type = TxType.BURN
-      // data = {
-      //   refundAmount: values[2], burnAmount: values[3]
-      // }
-    } else if (executeMsg['auction']) {
-      // todo: parse auction msg
-      return []
-    } else {
-      return []
-    }
-
-    const { govId } = contract
-    const { txhash: txHash, timestamp } = txInfo
-    // const price = await this.priceService.getPrice(asset)
-    const datetime = new Date(timestamp)
-
-    const tx = new TxEntity({
-      txHash, sender: msg.sender, msgIndex, type, data, datetime, govId
+    cdp = new CdpEntity({
+      idx: positionIdx,
+      mintedAmount: minted.amount,
+      collateralToken: collateral.token,
+      collateralAmount: collateral.amount,
+      govId,
+      assetId,
     })
-    // const ohlc = price && await this.priceService.setOHLC(asset, datetime.getTime(), price)
-    // return [tx, ohlc]
-    return [tx]
+
+    tx = {
+      type: TxType.OPEN_POSITION,
+      data: { positionIdx, mintAmount, collateralAmount },
+      outValue: collateral.amount,
+      assetId,
+    }
+  } else if (executeMsg['deposit']) {
+    cdp = Container.get(CdpService).get({ idx: positionIdx })
+    const depositAmount = findAttribute(attributes, 'deposit_amount')
+    const outValue = splitTokenAmount(depositAmount).amount
+
+    tx = {
+      type: TxType.DEPOSIT_COLLATERAL,
+      data: { positionIdx, depositAmount },
+      outValue,
+    }
+  } else if (executeMsg['withdraw']) {
+    cdp = Container.get(CdpService).get({ idx: positionIdx })
+    const withdrawAmount = findAttribute(attributes, 'withdraw_amount')
+    const inValue = splitTokenAmount(withdrawAmount).amount
+
+    tx = {
+      type: TxType.WITHDRAW_COLLATERAL,
+      data: {
+        positionIdx,
+        withdrawAmount,
+        taxAmount: findAttribute(attributes, 'tax_amount'),
+      },
+      inValue,
+    }
+  }
+
+  const txEntity = new TxEntity({
+    ...tx, height, txHash, sender, datetime, govId, contract
+  })
+  await manager.save([cdp, txEntity])
+}
+
+export async function parse(
+  manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity
+): Promise<void> {
+  const { execute_msg: executeMsg } = msg
+  if (
+    executeMsg['open_position'] || executeMsg['deposit'] || executeMsg['withdraw']
+  ) {
+    parseCdp(manager, txInfo, msg, log, contract)
   }
 }

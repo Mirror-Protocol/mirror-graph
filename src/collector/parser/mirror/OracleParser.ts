@@ -1,40 +1,34 @@
 import * as bluebird from 'bluebird'
 import { EntityManager } from 'typeorm'
+import { Container } from 'typedi'
 import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
-import { AssetEntity, ContractEntity } from 'orm'
-import { MirrorParser } from './MirrorParser'
+import { OracleService } from 'services'
+import { AssetEntity, ContractEntity, OraclePriceEntity } from 'orm'
 
-export class OracleParser extends MirrorParser {
-  async parse(
-    manager: EntityManager,
-    txInfo: TxInfo,
-    msg: MsgExecuteContract,
-    msgIndex: number,
-    log: TxLog,
-    contract: ContractEntity,
-  ): Promise<boolean> {
-    if (msg.execute_msg['feed_price']) {
-      return this.parseFeedPrice(manager, txInfo, msg)
+export async function parseFeedPrice(
+  manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract
+): Promise<void> {
+  const timestamp = new Date(txInfo.timestamp).getTime()
+  const { price_infos: priceInfos } = msg.execute_msg['feed_price']
+
+  await bluebird.mapSeries(priceInfos, async (info) => {
+    const token = info['asset_token']
+    const price = info['price']
+    const asset = await manager.findOne(AssetEntity, { token })
+    if (!asset) {
+      return
     }
 
-    return false
-  }
+    await Container.get(OracleService).setOHLC(
+      asset, timestamp, price, manager.getRepository(OraclePriceEntity)
+    )
+  })
+}
 
-  async parseFeedPrice(manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract): Promise<boolean> {
-    const timestamp = new Date(txInfo.timestamp).getTime()
-    const { price_infos: priceInfos } = msg.execute_msg['feed_price']
-
-    await bluebird.mapSeries(priceInfos, async (info) => {
-      const token = info['asset_token']
-      const price = info['price']
-      const asset = await manager.findOne(AssetEntity, { token })
-      if (!asset) {
-        return
-      }
-
-      await this.oracleService.setOHLC(manager, asset, timestamp, price)
-    })
-
-    return true
+export async function parse(
+  manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity,
+): Promise<void> {
+  if (msg.execute_msg['feed_price']) {
+    return parseFeedPrice(manager, txInfo, msg)
   }
 }

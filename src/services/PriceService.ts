@@ -1,5 +1,5 @@
 import { Service } from 'typedi'
-import { Repository, FindConditions, LessThanOrEqual, EntityManager } from 'typeorm'
+import { Repository, FindConditions, LessThanOrEqual } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
 import { getOHLC, getHistory } from 'lib/price'
@@ -14,12 +14,12 @@ export class PriceService {
     @InjectRepository(PriceEntity) private readonly priceRepo: Repository<PriceEntity>,
   ) {}
 
-  async get(conditions: FindConditions<PriceEntity>): Promise<PriceEntity> {
-    return this.priceRepo.findOne(conditions)
+  async get(conditions: FindConditions<PriceEntity>, repo: Repository<PriceEntity> = this.priceRepo): Promise<PriceEntity> {
+    return repo.findOne(conditions)
   }
 
-  async getPrice(asset: AssetEntity, timestamp: number = Date.now()): Promise<string> {
-    const price = await this.priceRepo.findOne(
+  async getPrice(asset: AssetEntity, timestamp: number = Date.now(), repo: Repository<PriceEntity> = this.priceRepo): Promise<string> {
+    const price = await repo.findOne(
       { asset, datetime: LessThanOrEqual(new Date(timestamp)) },
       {
         select: ['close', 'datetime'],
@@ -41,10 +41,10 @@ export class PriceService {
   }
 
   async setOHLC(
-    manager: EntityManager, asset: AssetEntity, timestamp: number, price: string
+    asset: AssetEntity, timestamp: number, price: string, repo: Repository<PriceEntity> = this.priceRepo
   ): Promise<PriceEntity> {
     const datetime = new Date(timestamp - (timestamp % 60000))
-    let priceEntity = await manager.findOne(PriceEntity, { asset, datetime })
+    let priceEntity = await repo.findOne({ asset, datetime })
 
     if (priceEntity) {
       priceEntity.high = num(price).isGreaterThan(priceEntity.high) ? price : priceEntity.high
@@ -56,14 +56,14 @@ export class PriceService {
       })
     }
 
-    return manager.save(priceEntity)
+    return repo.save(priceEntity)
   }
 
-  async getOHLC(asset: AssetEntity, from: number, to: number): Promise<AssetOHLC> {
-    return getOHLC<PriceEntity>(this.priceRepo, asset, from, to)
+  async getOHLC(asset: AssetEntity, from: number, to: number, repo: Repository<PriceEntity> = this.priceRepo): Promise<AssetOHLC> {
+    return getOHLC<PriceEntity>(repo, asset, from, to)
   }
 
-  async getHistory(asset: AssetEntity, range: HistoryRanges): Promise<PriceAt[]> {
-    return getHistory<PriceEntity>(this.priceRepo, asset, range)
+  async getHistory(asset: AssetEntity, range: HistoryRanges, repo: Repository<PriceEntity> = this.priceRepo): Promise<PriceAt[]> {
+    return getHistory<PriceEntity>(repo, asset, range)
   }
 }

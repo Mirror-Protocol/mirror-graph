@@ -130,7 +130,7 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
     .map((rawTx) => {
       const infos = toSnakeCase(pick(
         rawTx,
-        ['Height', 'TxHash', 'GasWanted', 'GasUsed', 'RawLog', 'Logs', 'Events', 'Timestamp']
+        ['Height', 'GasWanted', 'GasUsed', 'RawLog', 'Logs', 'Events', 'Timestamp']
       ))
 
       const txValue = toSnakeCase(pick(rawTx.Tx, ['Fee', 'Signatures', 'Memo']))
@@ -139,6 +139,6 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
         value: { ...txValue, msg: rawTx.Tx.Msg.map((msg) => toMsg(msg.Type, msg.Value)) }
       }
 
-      return TxInfo.fromData({ ...infos, tx })
+      return TxInfo.fromData({ ...infos, txhash: rawTx.TxHash, tx })
   })
 }
