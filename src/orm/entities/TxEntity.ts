@@ -31,10 +31,10 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   @Column({ type: 'enum', enum: TxType })
   type: TxType
 
-  @Column({ default: '0' })
+  @Column('numeric', { precision: 40, default: 0 })
   inValue: string
 
-  @Column({ default: '0' })
+  @Column('numeric', { precision: 40, default: 0 })
   outValue: string
 
   @Column({ type: 'jsonb' })

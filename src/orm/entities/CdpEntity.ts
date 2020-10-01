@@ -9,7 +9,7 @@ import {
 import { HaveGovAndAsset } from './base'
 
 @Entity('cdp')
-@Index('idx_cdp_idx_assetid', ['idx', 'asset_id'], { unique: true })
+@Index('idx_cdp_idx_assetid', ['idx', 'assetId'], { unique: true })
 export class CdpEntity extends HaveGovAndAsset {
   constructor(options: Partial<CdpEntity>) {
     super()
@@ -29,12 +29,12 @@ export class CdpEntity extends HaveGovAndAsset {
   @Column()
   idx: string
 
-  @Column()
-  mintedAmount: string
+  @Column('numeric', { precision: 40, default: 0 })
+  mintAmount: string
 
   @Column()
   collateralToken: string
 
-  @Column()
+  @Column('numeric', { precision: 40, default: 0 })
   collateralAmount: string
 }

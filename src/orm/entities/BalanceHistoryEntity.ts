@@ -9,7 +9,7 @@ export class BalanceHistoryEntity extends HaveAccount {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column()
+  @Column('numeric', { precision: 40, default: 0 })
   balance: string
 
   @Column()

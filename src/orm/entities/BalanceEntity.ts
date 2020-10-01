@@ -9,6 +9,6 @@ export class BalanceEntity extends HaveAccountAndAsset {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column()
+  @Column('numeric', { precision: 40, default: 0 })
   balance: string
 }
