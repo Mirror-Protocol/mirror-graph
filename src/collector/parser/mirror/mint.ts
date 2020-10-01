@@ -7,7 +7,7 @@ import { AssetEntity, TxEntity, CdpEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './types'
 
-export async function parseCdp(
+export async function parse(
   { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
 ): Promise<void> {
   const assetService = Container.get(AssetService)
@@ -102,18 +102,12 @@ export async function parseCdp(
       data: { positionIdx, burnAmount },
       assetId: cdp.assetId,
     }
+  } else {
+    return
   }
 
   const txEntity = new TxEntity({
     ...tx, height, txHash, sender, datetime, govId, contract
   })
   await manager.save([cdp, txEntity])
-}
-
-export async function parse(args: ParseArgs): Promise<void> {
-  const { msg } = args
-
-  if (msg['open_position'] || msg['deposit'] || msg['withdraw'] || msg['mint']) {
-    return parseCdp(args)
-  }
 }

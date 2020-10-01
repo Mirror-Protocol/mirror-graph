@@ -11,11 +11,11 @@ export async function parse(
   const attributes = findAttributes(log.events, 'from_contract')
   let parsed = {}
 
-  const assetService = Container.get(AssetService)
-
   if (msg['bond'] || msg['unbond']) {
     const amount = findAttribute(attributes, 'amount')
     const assetToken = findAttribute(attributes, 'asset_token')
+
+    const assetService = Container.get(AssetService)
     const asset = await assetService.get(
       { token: assetToken }, manager.getRepository(AssetEntity)
     )

@@ -13,36 +13,34 @@ export async function parseHook(args: ParseArgs): Promise<void> {
   switch (contract.type) {
     case ContractType.PAIR:
       return pair.parse(args)
+
     case ContractType.MINT:
       return mint.parse(args)
+
     case ContractType.STAKING:
       return staking.parse(args)
   }
 }
 
 export async function parseSend(args: ParseArgs): Promise<void> {
-  const { manager, msg } = args
-  const { contract: hookAddress } = msg['send']
-
-  if (hookAddress) {
-    const contractService = Container.get(ContractService)
-    const hookContract = await contractService.get(
-      { address: hookAddress }, manager.getRepository(ContractEntity)
-    )
-    if (!hookContract || !msg['send'].msg) {
-      return
-    }
-    const hookMsg = JSON.parse(Buffer.from(msg['send'].msg, 'base64').toString())
-    return parseHook(Object.assign(args, { msg: hookMsg, contract: hookContract }))
-  }
-
   // todo: parse normal send
 }
 
 export async function parse(args: ParseArgs): Promise<void> {
-  const { msg } = args
+  const { manager, msg } = args
 
-  if (msg['send']) {
+  if (msg['send']?.contract) {
+    const contractService = Container.get(ContractService)
+    const contract = await contractService.get(
+      { address: msg['send'].contract }, manager.getRepository(ContractEntity)
+    )
+    if (!contract || !msg['send'].msg)
+      return
+
+    const hookMsg = JSON.parse(Buffer.from(msg['send'].msg, 'base64').toString())
+
+    return parseHook(Object.assign(args, { msg: hookMsg, contract }))
+  } else if(msg['send']) {
     return parseSend(args)
   }
 }

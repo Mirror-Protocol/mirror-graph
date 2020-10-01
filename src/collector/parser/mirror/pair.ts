@@ -6,10 +6,10 @@ import { ParseArgs } from './types'
 export async function parse(
   { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
 ): Promise<void> {
+  const attributes = findAttributes(log.events, 'from_contract')
   let parsed = {}
 
   if (msg['swap']) {
-    const attributes = findAttributes(log.events, 'from_contract')
     const offerAsset = findAttribute(attributes, 'offer_asset')
     const askAsset = findAttribute(attributes, 'ask_asset')
     const offerAmount = findAttribute(attributes, 'offer_amount')
@@ -30,8 +30,6 @@ export async function parse(
       }
     }
   } else if (msg['provide_liquidity']) {
-    const attributes = findAttributes(log.events, 'from_contract')
-
     parsed = {
       type: TxType.PROVIDE_LIQUIDITY,
       data: {
