@@ -6,17 +6,21 @@ import { ContractEntity } from 'orm'
 @Service()
 export class ContractService {
   constructor(
-    @InjectRepository(ContractEntity) private readonly contractRepo: Repository<ContractEntity>
+    @InjectRepository(ContractEntity) private readonly repo: Repository<ContractEntity>
   ) {}
 
-  async get(conditions: FindConditions<ContractEntity>, options?: FindOneOptions<ContractEntity>): Promise<ContractEntity> {
+  async get(
+    conditions: FindConditions<ContractEntity>,
+    repo = this.repo,
+    options?: FindOneOptions<ContractEntity>
+  ): Promise<ContractEntity> {
     if (!conditions.gov && !conditions.asset && !conditions.address) {
       throw new Error('conditions must have gov or asset')
     }
-    return this.contractRepo.findOne(conditions, options)
+    return repo.findOne(conditions, options)
   }
 
-  async find(options?: FindManyOptions<ContractEntity>): Promise<ContractEntity[]> {
-    return this.contractRepo.find(options)
+  async find(repo = this.repo, options?: FindManyOptions<ContractEntity>): Promise<ContractEntity[]> {
+    return repo.find(options)
   }
 }

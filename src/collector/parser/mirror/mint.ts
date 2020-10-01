@@ -1,20 +1,18 @@
-import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
-import { EntityManager } from 'typeorm'
 import { Container } from 'typedi'
 import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { AssetService, CdpService } from 'services'
-import { ContractEntity, AssetEntity, TxEntity, CdpEntity } from 'orm'
+import { AssetEntity, TxEntity, CdpEntity } from 'orm'
 import { TxType } from 'types'
+import { ParseArgs } from './types'
 
 export async function parseCdp(
-  manager: EntityManager, txInfo: TxInfo, sender: string, executeMsg: unknown, log: TxLog, contract: ContractEntity
+  { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
 ): Promise<void> {
   const assetService = Container.get(AssetService)
   const cdpService = Container.get(CdpService)
 
-  const { height, txhash: txHash, timestamp } = txInfo
   const { govId } = contract
   const datetime = new Date(timestamp)
 
@@ -24,7 +22,7 @@ export async function parseCdp(
   let tx = {}
   let cdp: CdpEntity
 
-  if (executeMsg['open_position']) {
+  if (msg['open_position']) {
     const mintAmount = findAttribute(attributes, 'mint_amount')
     const collateralAmount = findAttribute(attributes, 'collateral_amount')
 
@@ -50,7 +48,7 @@ export async function parseCdp(
       outValue: collateral.amount,
       assetId,
     }
-  } else if (executeMsg['deposit']) {
+  } else if (msg['deposit']) {
     const depositAmount = findAttribute(attributes, 'deposit_amount')
     const deposit = splitTokenAmount(depositAmount)
 
@@ -63,7 +61,7 @@ export async function parseCdp(
       outValue: deposit.amount,
       assetId: cdp.assetId,
     }
-  } else if (executeMsg['withdraw']) {
+  } else if (msg['withdraw']) {
     const withdrawAmount = findAttribute(attributes, 'withdraw_amount')
     const withdraw = splitTokenAmount(withdrawAmount)
 
@@ -80,7 +78,7 @@ export async function parseCdp(
       inValue: withdraw.amount,
       assetId: cdp.assetId,
     }
-  } else if (executeMsg['mint']) {
+  } else if (msg['mint']) {
     const mintAmount = findAttribute(attributes, 'mint_amount')
     const mint = splitTokenAmount(mintAmount)
 
@@ -92,7 +90,7 @@ export async function parseCdp(
       data: { positionIdx, mintAmount },
       assetId: cdp.assetId,
     }
-  } else if (executeMsg['burn']) {
+  } else if (msg['burn']) {
     const burnAmount = findAttribute(attributes, 'burn_amount')
     const burn = splitTokenAmount(burnAmount)
 
@@ -112,17 +110,10 @@ export async function parseCdp(
   await manager.save([cdp, txEntity])
 }
 
-export async function parse(
-  manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity
-): Promise<void> {
-  const { execute_msg: executeMsg } = msg
+export async function parse(args: ParseArgs): Promise<void> {
+  const { msg } = args
 
-  if (
-    executeMsg['open_position'] ||
-    executeMsg['deposit'] ||
-    executeMsg['withdraw'] ||
-    executeMsg['mint']
-  ) {
-    parseCdp(manager, txInfo, msg.sender, msg['execute_msg'], log, contract)
+  if (msg['open_position'] || msg['deposit'] || msg['withdraw'] || msg['mint']) {
+    return parseCdp(args)
   }
 }

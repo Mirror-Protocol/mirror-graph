@@ -1,31 +1,35 @@
-import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
-import { EntityManager } from 'typeorm'
 import { findAttributes, findAttribute } from 'lib/terra'
-import { TxEntity, ContractEntity } from 'orm'
+import { TxEntity } from 'orm'
 import { TxType } from 'types'
+import { ParseArgs } from './types'
 
 export async function parse(
-  manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity,
+  { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
 ): Promise<void> {
-  const { execute_msg: executeMsg } = msg
   let parsed = {}
 
-  if (executeMsg['swap']) { // buy
+  if (msg['swap']) {
     const attributes = findAttributes(log.events, 'from_contract')
+    const offerAsset = findAttribute(attributes, 'offer_asset')
+    const askAsset = findAttribute(attributes, 'ask_asset')
     const offerAmount = findAttribute(attributes, 'offer_amount')
+    const returnAmount = findAttribute(attributes, 'return_amount')
 
     parsed = {
-      type: TxType.BUY,
-      outValue: offerAmount,
+      type: offerAsset === 'uusd' ? TxType.BUY : TxType.SELL,
+      outValue: offerAsset === 'uusd' ? offerAmount : '0',
+      inValue: askAsset === 'uusd' ? returnAmount : '0',
       data: {
+        offerAsset,
+        askAsset,
         offerAmount,
-        returnAmount: findAttribute(attributes, 'return_amount'),
+        returnAmount,
         taxAmount: findAttribute(attributes, 'tax_amount'),
         spreadAmount: findAttribute(attributes, 'spread_amount'),
         commissionAmount: findAttribute(attributes, 'commission_amount'),
       }
     }
-  } else if (executeMsg['provide_liquidity']) {
+  } else if (msg['provide_liquidity']) {
     const attributes = findAttributes(log.events, 'from_contract')
 
     parsed = {
@@ -40,8 +44,6 @@ export async function parse(
   }
 
   const { assetId, govId } = contract
-  const { height, txhash: txHash, timestamp } = txInfo
-  const { sender } = msg
   const datetime = new Date(timestamp)
 
   const tx = new TxEntity({

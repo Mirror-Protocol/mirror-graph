@@ -1,16 +1,11 @@
-import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
-import { EntityManager } from 'typeorm'
 import { AssetEntity, ContractEntity } from 'orm'
 import { findAttributes, findAttribute } from 'lib/terra'
 import * as logger from 'lib/logger'
 import { ContractType } from 'types'
+import { ParseArgs } from './types'
 
-export async function parse(
-  manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity
-): Promise<void> {
-  const { execute_msg: executeMsg } = msg
-
-  if (executeMsg['whitelist']) {
+export async function parse({ manager, msg, log, contract }: ParseArgs): Promise<void> {
+  if (msg['whitelist']) {
     const attributes = findAttributes(log.events, 'from_contract')
     const symbol = findAttribute(attributes, 'symbol') || ''
     const name = findAttribute(attributes, 'name') || ''
