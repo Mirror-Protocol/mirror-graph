@@ -9,12 +9,11 @@ import { ContractEntity, AssetEntity, TxEntity, CdpEntity } from 'orm'
 import { TxType } from 'types'
 
 export async function parseCdp(
-  manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity
+  manager: EntityManager, txInfo: TxInfo, sender: string, executeMsg: unknown, log: TxLog, contract: ContractEntity
 ): Promise<void> {
   const assetService = Container.get(AssetService)
   const cdpService = Container.get(CdpService)
 
-  const { execute_msg: executeMsg, sender } = msg
   const { height, txhash: txHash, timestamp } = txInfo
   const { govId } = contract
   const datetime = new Date(timestamp)
@@ -62,6 +61,7 @@ export async function parseCdp(
       type: TxType.DEPOSIT_COLLATERAL,
       data: { positionIdx, depositAmount },
       outValue: deposit.amount,
+      assetId: cdp.assetId,
     }
   } else if (executeMsg['withdraw']) {
     const withdrawAmount = findAttribute(attributes, 'withdraw_amount')
@@ -78,6 +78,7 @@ export async function parseCdp(
         taxAmount: findAttribute(attributes, 'tax_amount'),
       },
       inValue: withdraw.amount,
+      assetId: cdp.assetId,
     }
   } else if (executeMsg['mint']) {
     const mintAmount = findAttribute(attributes, 'mint_amount')
@@ -89,6 +90,19 @@ export async function parseCdp(
     tx = {
       type: TxType.MINT,
       data: { positionIdx, mintAmount },
+      assetId: cdp.assetId,
+    }
+  } else if (executeMsg['burn']) {
+    const burnAmount = findAttribute(attributes, 'burn_amount')
+    const burn = splitTokenAmount(burnAmount)
+
+    cdp = await cdpService.get({ idx: positionIdx }, manager.getRepository(CdpEntity))
+    cdp.mintAmount = num(cdp.mintAmount).minus(burn.amount).toString()
+
+    tx = {
+      type: TxType.BURN,
+      data: { positionIdx, burnAmount },
+      assetId: cdp.assetId,
     }
   }
 
@@ -109,6 +123,6 @@ export async function parse(
     executeMsg['withdraw'] ||
     executeMsg['mint']
   ) {
-    parseCdp(manager, txInfo, msg, log, contract)
+    parseCdp(manager, txInfo, msg.sender, msg['execute_msg'], log, contract)
   }
 }

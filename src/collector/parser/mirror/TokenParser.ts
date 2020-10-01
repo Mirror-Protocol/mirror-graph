@@ -1,3 +1,4 @@
+import * as bluebird from 'bluebird'
 import { TxInfo, TxLog, MsgExecuteContract } from '@terra-money/terra.js'
 import { EntityManager } from 'typeorm'
 import { Container } from 'typedi'
@@ -5,6 +6,7 @@ import { findAttributes, findAttribute } from 'lib/terra'
 import { ContractService } from 'services'
 import { TxEntity, ContractEntity } from 'orm'
 import { TxType, ContractType } from 'types'
+import { parseCdp } from './MintParser'
 
 export async function parseSell(
   manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity, hookMsg: object
@@ -67,6 +69,11 @@ export async function parseSend(
     if (hookContract.type === ContractType.PAIR) {
       hookMsg['swap'] &&
         await parseSell(manager, txInfo, msg, log, contract, hookMsg['swap'])
+    } else if (hookContract.type === ContractType.MINT) {
+      await bluebird.map(['open_position', 'deposit', 'burn'], (execute) => {
+        hookMsg[execute] &&
+          parseCdp(manager, txInfo, msg.sender, hookMsg, log, contract)
+      })
     } else if (hookContract.type === ContractType.STAKING) {
       hookMsg['bond'] &&
         await parseStake(manager, txInfo, msg, log, contract, hookMsg['bond'])
