@@ -3,6 +3,7 @@ import { EntityManager } from 'typeorm'
 import { Container } from 'typedi'
 import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
+import { num } from 'lib/num'
 import { AssetService, CdpService } from 'services'
 import { ContractEntity, AssetEntity, TxEntity, CdpEntity } from 'orm'
 import { TxType } from 'types'
@@ -10,31 +11,34 @@ import { TxType } from 'types'
 export async function parseCdp(
   manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity
 ): Promise<void> {
-  const { execute_msg: executeMsg } = msg
-  const { govId } = contract
+  const assetService = Container.get(AssetService)
+  const cdpService = Container.get(CdpService)
+
+  const { execute_msg: executeMsg, sender } = msg
   const { height, txhash: txHash, timestamp } = txInfo
-  const { sender } = msg
+  const { govId } = contract
   const datetime = new Date(timestamp)
 
   const attributes = findAttributes(log.events, 'from_contract')
   const positionIdx = findAttribute(attributes, 'position_idx')
 
   let tx = {}
-  let cdp
+  let cdp: CdpEntity
 
   if (executeMsg['open_position']) {
     const mintAmount = findAttribute(attributes, 'mint_amount')
     const collateralAmount = findAttribute(attributes, 'collateral_amount')
 
-    const minted = splitTokenAmount(mintAmount)
+    const mint = splitTokenAmount(mintAmount)
     const collateral = splitTokenAmount(collateralAmount)
-    const asset = await Container.get(AssetService)
-      .get({ token: minted.token }, manager.getRepository(AssetEntity))
+    const asset = await assetService.get(
+      { token: mint.token }, manager.getRepository(AssetEntity)
+    )
     const assetId = asset.id
 
     cdp = new CdpEntity({
       idx: positionIdx,
-      mintedAmount: minted.amount,
+      mintAmount: mint.amount,
       collateralToken: collateral.token,
       collateralAmount: collateral.amount,
       govId,
@@ -48,19 +52,23 @@ export async function parseCdp(
       assetId,
     }
   } else if (executeMsg['deposit']) {
-    cdp = Container.get(CdpService).get({ idx: positionIdx })
     const depositAmount = findAttribute(attributes, 'deposit_amount')
-    const outValue = splitTokenAmount(depositAmount).amount
+    const deposit = splitTokenAmount(depositAmount)
+
+    cdp = await cdpService.get({ idx: positionIdx }, manager.getRepository(CdpEntity))
+    cdp.collateralAmount = num(cdp.collateralAmount).plus(deposit.amount).toString()
 
     tx = {
       type: TxType.DEPOSIT_COLLATERAL,
       data: { positionIdx, depositAmount },
-      outValue,
+      outValue: deposit.amount,
     }
   } else if (executeMsg['withdraw']) {
-    cdp = Container.get(CdpService).get({ idx: positionIdx })
     const withdrawAmount = findAttribute(attributes, 'withdraw_amount')
-    const inValue = splitTokenAmount(withdrawAmount).amount
+    const withdraw = splitTokenAmount(withdrawAmount)
+
+    cdp = await cdpService.get({ idx: positionIdx }, manager.getRepository(CdpEntity))
+    cdp.collateralAmount = num(cdp.collateralAmount).minus(withdraw.amount).toString()
 
     tx = {
       type: TxType.WITHDRAW_COLLATERAL,
@@ -69,7 +77,18 @@ export async function parseCdp(
         withdrawAmount,
         taxAmount: findAttribute(attributes, 'tax_amount'),
       },
-      inValue,
+      inValue: withdraw.amount,
+    }
+  } else if (executeMsg['mint']) {
+    const mintAmount = findAttribute(attributes, 'mint_amount')
+    const mint = splitTokenAmount(mintAmount)
+
+    cdp = await cdpService.get({ idx: positionIdx }, manager.getRepository(CdpEntity))
+    cdp.mintAmount = num(cdp.mintAmount).plus(mint.amount).toString()
+
+    tx = {
+      type: TxType.MINT,
+      data: { positionIdx, mintAmount },
     }
   }
 
@@ -83,8 +102,12 @@ export async function parse(
   manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog, contract: ContractEntity
 ): Promise<void> {
   const { execute_msg: executeMsg } = msg
+
   if (
-    executeMsg['open_position'] || executeMsg['deposit'] || executeMsg['withdraw']
+    executeMsg['open_position'] ||
+    executeMsg['deposit'] ||
+    executeMsg['withdraw'] ||
+    executeMsg['mint']
   ) {
     parseCdp(manager, txInfo, msg, log, contract)
   }
