@@ -6,7 +6,7 @@ import {
   Column,
   Index,
 } from 'typeorm'
-import { HaveGov } from './base'
+import { HaveGov } from '../Have'
 
 @Entity('asset')
 @Index('idx_asset_symbol_and_token_and_gov', ['symbol', 'token', 'gov'], { unique: true })

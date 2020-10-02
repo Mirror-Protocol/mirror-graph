@@ -1,7 +1,7 @@
 import {
   Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Column, Index
 } from 'typeorm'
-import { HaveGov } from './base'
+import { HaveGov } from '../Have'
 
 @Entity('account')
 export class AccountEntity extends HaveGov {

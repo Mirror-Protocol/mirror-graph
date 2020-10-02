@@ -12,18 +12,18 @@ export class AssetPositionsResolver {
     return (await this.accountService.getAssetBalance(address, asset))?.balance
   }
 
-  @FieldResolver()
-  async lpToken(@Root('asset') asset: AssetEntity, @Root('address') address: string): Promise<string> {
-    return (await this.accountService.getLiquidityBalance(address, asset))?.balance
-  }
+  // @FieldResolver()
+  // async lpToken(@Root('asset') asset: AssetEntity, @Root('address') address: string): Promise<string> {
+  //   return (await this.accountService.getLiquidityBalance(address, asset))?.balance
+  // }
 
-  @FieldResolver()
-  async mint(@Root('asset') asset: AssetEntity, @Root('address') address: string): Promise<string> {
-    return (await this.accountService.getMintPosition(address, asset))?.assetAmount
-  }
+  // @FieldResolver()
+  // async mint(@Root('asset') asset: AssetEntity, @Root('address') address: string): Promise<string> {
+  //   return (await this.accountService.getMintPosition(address, asset))?.assetAmount
+  // }
 
-  @FieldResolver()
-  async collateral(@Root('asset') asset: AssetEntity, @Root('address') address: string): Promise<string> {
-    return (await this.accountService.getMintPosition(address, asset))?.collateralAmount
-  }
+  // @FieldResolver()
+  // async collateral(@Root('asset') asset: AssetEntity, @Root('address') address: string): Promise<string> {
+  //   return (await this.accountService.getMintPosition(address, asset))?.collateralAmount
+  // }
 }

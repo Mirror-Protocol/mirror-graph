@@ -1,11 +1,9 @@
 import { Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Column } from 'typeorm'
 import { CodeIds } from 'types'
-import { GovContracts } from './base'
 
 @Entity('gov')
-export class GovEntity extends GovContracts {
+export class GovEntity {
   constructor(options: Partial<GovEntity>) {
-    super()
     Object.assign(this, options)
   }
 
@@ -26,4 +24,28 @@ export class GovEntity extends GovContracts {
 
   @Column()
   owner: string
+
+  @Column()
+  gov: string // gov contract address
+
+  @Column()
+  mirrorToken: string
+
+  @Column()
+  factory: string
+
+  @Column()
+  oracle: string
+
+  @Column()
+  mint: string
+
+  @Column()
+  staking: string
+
+  @Column()
+  tokenFactory: string
+
+  @Column()
+  collector: string
 }

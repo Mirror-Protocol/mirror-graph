@@ -9,17 +9,17 @@ import { ParseArgs } from './parseArgs'
 export async function parse(
   { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
 ): Promise<void> {
+  const assetRepo = manager.getRepository(AssetEntity)
+  const cdpRepo = manager.getRepository(CdpEntity)
+
   const { govId } = contract
   const datetime = new Date(timestamp)
 
+  let cdp: CdpEntity
+  let tx = {}
+
   const attributes = findAttributes(log.events, 'from_contract')
   const positionIdx = findAttribute(attributes, 'position_idx')
-
-  let tx = {}
-  let cdp: CdpEntity
-
-  const assetRepo = manager.getRepository(AssetEntity)
-  const cdpRepo = manager.getRepository(CdpEntity)
 
   if (msg['open_position']) {
     const mintAmount = findAttribute(attributes, 'mint_amount')
@@ -32,11 +32,10 @@ export async function parse(
     const assetId = asset.id
 
     cdp = new CdpEntity({
-      idx: positionIdx,
+      id: positionIdx,
       mintAmount: mint.amount,
       collateralToken: collateral.token,
       collateralAmount: collateral.amount,
-      govId,
       assetId,
     })
 
@@ -50,7 +49,7 @@ export async function parse(
     const depositAmount = findAttribute(attributes, 'deposit_amount')
     const deposit = splitTokenAmount(depositAmount)
 
-    cdp = await cdpService().get({ idx: positionIdx }, cdpRepo)
+    cdp = await cdpService().get({ id: positionIdx }, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).plus(deposit.amount).toString()
 
     tx = {
@@ -63,7 +62,7 @@ export async function parse(
     const withdrawAmount = findAttribute(attributes, 'withdraw_amount')
     const withdraw = splitTokenAmount(withdrawAmount)
 
-    cdp = await cdpService().get({ idx: positionIdx }, cdpRepo)
+    cdp = await cdpService().get({ id: positionIdx }, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).minus(withdraw.amount).toString()
 
     tx = {
@@ -80,7 +79,7 @@ export async function parse(
     const mintAmount = findAttribute(attributes, 'mint_amount')
     const mint = splitTokenAmount(mintAmount)
 
-    cdp = await cdpService().get({ idx: positionIdx }, cdpRepo)
+    cdp = await cdpService().get({ id: positionIdx }, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).plus(mint.amount).toString()
 
     tx = {
@@ -92,7 +91,7 @@ export async function parse(
     const burnAmount = findAttribute(attributes, 'burn_amount')
     const burn = splitTokenAmount(burnAmount)
 
-    cdp = await cdpService().get({ idx: positionIdx }, cdpRepo)
+    cdp = await cdpService().get({ id: positionIdx }, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).minus(burn.amount).toString()
 
     tx = {

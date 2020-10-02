@@ -3,7 +3,7 @@ import {
 } from 'typeorm'
 import { TxType } from 'types'
 import { ContractEntity } from 'orm'
-import { HaveGovAndMaybeAsset } from './base'
+import { HaveGovAndMaybeAsset } from '../Have'
 
 @Entity('tx')
 @Index('idx_tx_account_datetime_gov', ['account', 'datetime', 'gov'], { unique: true })

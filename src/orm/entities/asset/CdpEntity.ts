@@ -1,16 +1,16 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   CreateDateColumn,
   UpdateDateColumn,
   Column,
   Index,
 } from 'typeorm'
-import { HaveGovAndAsset } from './base'
+import { HaveAsset } from '../Have'
 
 @Entity('cdp')
-@Index('idx_cdp_idx_assetid', ['idx', 'assetId'], { unique: true })
-export class CdpEntity extends HaveGovAndAsset {
+@Index('idx_cdp_assetid', ['assetId'], { unique: true })
+export class CdpEntity extends HaveAsset {
   constructor(options: Partial<CdpEntity>) {
     super()
 
@@ -23,11 +23,8 @@ export class CdpEntity extends HaveGovAndAsset {
   @UpdateDateColumn()
   updatedAt: Date
 
-  @PrimaryGeneratedColumn()
-  id: number
-
-  @Column()
-  idx: string
+  @PrimaryColumn('numeric', { precision: 40, default: 0 })
+  id: string
 
   @Column('numeric', { precision: 40, default: 0 })
   mintAmount: string
