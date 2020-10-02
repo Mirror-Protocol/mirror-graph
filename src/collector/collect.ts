@@ -13,8 +13,9 @@ export async function collect(now: number): Promise<void> {
     return
   }
 
+  // logger.info(`collecting ${collectedHeight + 1}-${Math.min(collectedHeight + 1 + 1000, latestHeight)}`)
   // get last collected ~ latest txs, limit 1000
-  const txs = await getTxs(collectedHeight + 1, latestHeight, 1000)
+  const txs = await getTxs(collectedHeight + 1, latestHeight, 500)
   if (!txs || txs.length < 1) {
     return
   }

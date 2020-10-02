@@ -44,42 +44,31 @@ export async function getContractStore<T>(address: string, query: unknown): Prom
   return toCamelCase(JSON.parse(response.WasmContractsContractAddressStore.Result))
 }
 
-function toMsg(type: string, value: string): { type: string; value: unknown } {
-  const obj = JSON.parse(value)
-
-  switch (type) {
-    case 'wasm/MsgExecuteContract':
-      obj['execute_msg'] = Buffer.from(obj.execute_msg).toString('base64')
-      break
-
-    case 'wasm/MsgInstantiateContract':
-      obj['init_msg'] = Buffer.from(obj.init_msg).toString('base64')
-      break
-
-    case 'wasm/MsgMigrateContract':
-      obj['migrate_msg'] = Buffer.from(obj.migrate_msg).toString('base64')
-      break
-  }
-
-  return Msg.fromData({ type, value: obj } as Msg.Data).toData()
-}
-
 export async function getTxs(start: number, end: number, limit = 100): Promise<TxInfo[]> {
   const response = await mantle.request(
     gql`query($range: [Int!]!, $limit: Int) {
-      TxInfos(Height_range: $range, Limit: $limit, Order: ASC) {
-        Height
-        TxHash
-        Success
-        Code
-        GasWanted
-        GasUsed
-        Timestamp
+      Blocks(Height_range: $range, Limit: $limit, Order: ASC, Success: true) {
+        Txs {
+          Height
+          TxHash
+          Success
+          Code
+          GasWanted
+          GasUsed
+          Timestamp
 
-        RawLog
-        Logs {
-          MsgIndex
-          Log
+          RawLog
+          Logs {
+            MsgIndex
+            Log
+            Events {
+              Type
+              Attributes {
+                Key
+                Value
+              }
+            }
+          }
           Events {
             Type
             Attributes {
@@ -87,33 +76,26 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
               Value
             }
           }
-        }
-        Events {
-          Type
-          Attributes {
-            Key
-            Value
-          }
-        }
-        Tx {
-          Fee {
-            Gas
-            Amount {
-              Denom
-              Amount
+          Tx {
+            Fee {
+              Gas
+              Amount {
+                Denom
+                Amount
+              }
             }
-          }
-          Msg {
-            Type
-            Value
-          }
-          Memo
-          Signatures {
-            PubKey {
+            Msg {
               Type
               Value
             }
-            Signature
+            Memo
+            Signatures {
+              PubKey {
+                Type
+                Value
+              }
+              Signature
+            }
           }
         }
       }
@@ -124,10 +106,10 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
     }
   )
 
-  return response
-    ?.TxInfos
-    ?.filter((rawTx) => rawTx.Success && !rawTx.Code)
-    .map((rawTx) => {
+  const txs: TxInfo[] = []
+
+  response?.Blocks?.map((Block) => {
+    Block.Txs?.map((rawTx) => {
       const infos = toSnakeCase(pick(
         rawTx,
         ['Height', 'GasWanted', 'GasUsed', 'RawLog', 'Logs', 'Events', 'Timestamp']
@@ -136,9 +118,17 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
       const txValue = toSnakeCase(pick(rawTx.Tx, ['Fee', 'Signatures', 'Memo']))
       const tx = {
         type: 'core/StdTx',
-        value: { ...txValue, msg: rawTx.Tx.Msg.map((msg) => toMsg(msg.Type, msg.Value)) }
+        value: {
+          ...txValue,
+          msg: rawTx.Tx.Msg.map((msg) =>
+            Msg.fromData({ type: msg.Type, value: JSON.parse(msg.Value) }).toData()
+          )
+        }
       }
 
-      return TxInfo.fromData({ ...infos, txhash: rawTx.TxHash, tx })
+      txs.push(TxInfo.fromData({ ...infos, txhash: rawTx.TxHash, tx }))
+    })
   })
+
+  return txs
 }
