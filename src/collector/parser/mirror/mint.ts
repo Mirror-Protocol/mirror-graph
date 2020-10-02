@@ -105,7 +105,7 @@ export async function parse(
   }
 
   const txEntity = new TxEntity({
-    ...tx, height, txHash, sender, datetime, govId, contract
+    ...tx, height, txHash, account: sender, datetime, govId, contract
   })
   await manager.save([cdp, txEntity])
 }

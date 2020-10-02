@@ -6,7 +6,7 @@ import { ContractEntity } from 'orm'
 import { HaveGovAndMaybeAsset } from './base'
 
 @Entity('tx')
-@Index('idx_tx_sender_datetime_gov', ['sender', 'datetime', 'gov'], { unique: true })
+@Index('idx_tx_account_datetime_gov', ['account', 'datetime', 'gov'], { unique: true })
 export class TxEntity extends HaveGovAndMaybeAsset {
   constructor(options: Partial<TxEntity>) {
     super()
@@ -26,7 +26,7 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   txHash: string
 
   @Column()
-  sender: string
+  account: string
 
   @Column({ type: 'enum', enum: TxType })
   type: TxType

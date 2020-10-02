@@ -1,6 +1,7 @@
+import { findAttributes, findAttribute } from 'lib/terra'
 import { contractService } from 'services'
-import { ContractEntity } from 'orm'
-import { ContractType } from 'types'
+import { ContractEntity, TxEntity } from 'orm'
+import { ContractType, TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 import * as mint from './mint'
 import * as pair from './pair'
@@ -21,24 +22,42 @@ export async function parseHook(args: ParseArgs): Promise<void> {
   }
 }
 
-export async function parseSend(args: ParseArgs): Promise<void> {
-  // todo: parse normal send
+export async function parseTransfer(
+  { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
+): Promise<void> {
+  const { assetId, govId } = contract
+  const datetime = new Date(timestamp)
+
+  const attributes = findAttributes(log.events, 'from_contract')
+  const from = findAttribute(attributes, 'from')
+  const to = findAttribute(attributes, 'to')
+  const amount = findAttribute(attributes, 'amount')
+
+  const tx = { height, txHash, account: sender, datetime, govId, assetId, contract }
+
+  const sendTx = new TxEntity({ ...tx, type: TxType.SEND, data: { from, to, amount } })
+  const recvTx = new TxEntity({
+    ...tx, type: TxType.RECEIVE, data: { from, to, amount }, account: to
+  })
+
+  await manager.save([sendTx, recvTx])
 }
 
 export async function parse(args: ParseArgs): Promise<void> {
   const { manager, msg } = args
 
-  if (msg['send']?.contract) {
-    const contract = await contractService().get(
-      { address: msg['send'].contract }, manager.getRepository(ContractEntity)
-    )
+  if(msg['transfer']) {
+    return parseTransfer(args)
+  } else if (msg['send']?.contract) {
+    const address = msg['send'].contract
+    const contractRepo = manager.getRepository(ContractEntity)
+    const contract = await contractService().get({ address }, contractRepo)
+
     if (!contract || !msg['send'].msg)
       return
 
     const hookMsg = JSON.parse(Buffer.from(msg['send'].msg, 'base64').toString())
 
     return parseHook(Object.assign(args, { msg: hookMsg, contract }))
-  } else if(msg['send']) {
-    return parseSend(args)
   }
 }

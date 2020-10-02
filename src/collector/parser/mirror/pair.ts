@@ -52,7 +52,7 @@ export async function parse(
   }
 
   const tx = new TxEntity({
-    ...parsed, height, txHash, sender, datetime, govId, assetId, contract
+    ...parsed, height, txHash, account: sender, datetime, govId, assetId, contract
   })
 
   await manager.save(tx)
