@@ -70,6 +70,7 @@ export class GovService {
 
       entities.push(
         asset,
+        new AssetEntity({ gov: govEntity, symbol: 'uusd', name: 'uusd', token: 'uusd', pair: 'uusd', lpToken: 'uusd' }),
         new ContractEntity({ address: token, type: ContractType.TOKEN, gov: govEntity, asset }),
         new ContractEntity({ address: pair, type: ContractType.PAIR, gov: govEntity, asset }),
         new ContractEntity({ address: lpToken, type: ContractType.LP_TOKEN, gov: govEntity, asset })
