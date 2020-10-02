@@ -11,14 +11,14 @@ import { AssetOHLC, PriceAt } from 'graphql/schema'
 @Service()
 export class PriceService {
   constructor(
-    @InjectRepository(PriceEntity) private readonly priceRepo: Repository<PriceEntity>,
+    @InjectRepository(PriceEntity) private readonly repo: Repository<PriceEntity>,
   ) {}
 
-  async get(conditions: FindConditions<PriceEntity>, repo: Repository<PriceEntity> = this.priceRepo): Promise<PriceEntity> {
+  async get(conditions: FindConditions<PriceEntity>, repo = this.repo): Promise<PriceEntity> {
     return repo.findOne(conditions)
   }
 
-  async getPrice(asset: AssetEntity, timestamp: number = Date.now(), repo: Repository<PriceEntity> = this.priceRepo): Promise<string> {
+  async getPrice(asset: AssetEntity, timestamp: number = Date.now(), repo = this.repo): Promise<string> {
     const price = await repo.findOne(
       { asset, datetime: LessThanOrEqual(new Date(timestamp)) },
       {
@@ -41,7 +41,7 @@ export class PriceService {
   }
 
   async setOHLC(
-    asset: AssetEntity, timestamp: number, price: string, repo: Repository<PriceEntity> = this.priceRepo
+    asset: AssetEntity, timestamp: number, price: string, repo = this.repo, needSave = true
   ): Promise<PriceEntity> {
     const datetime = new Date(timestamp - (timestamp % 60000))
     let priceEntity = await repo.findOne({ asset, datetime })
@@ -56,14 +56,14 @@ export class PriceService {
       })
     }
 
-    return repo.save(priceEntity)
+    return needSave ? repo.save(priceEntity) : priceEntity
   }
 
-  async getOHLC(asset: AssetEntity, from: number, to: number, repo: Repository<PriceEntity> = this.priceRepo): Promise<AssetOHLC> {
+  async getOHLC(asset: AssetEntity, from: number, to: number, repo = this.repo): Promise<AssetOHLC> {
     return getOHLC<PriceEntity>(repo, asset, from, to)
   }
 
-  async getHistory(asset: AssetEntity, range: HistoryRanges, repo: Repository<PriceEntity> = this.priceRepo): Promise<PriceAt[]> {
+  async getHistory(asset: AssetEntity, range: HistoryRanges, repo = this.repo): Promise<PriceAt[]> {
     return getHistory<PriceEntity>(repo, asset, range)
   }
 }

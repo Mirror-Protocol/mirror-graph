@@ -44,7 +44,7 @@ export class OracleService {
   }
 
   async setOHLC(
-    asset: AssetEntity, timestamp: number, price: string, repo = this.repo
+    asset: AssetEntity, timestamp: number, price: string, repo = this.repo, needSave = true
   ): Promise<OraclePriceEntity> {
     const datetime = new Date(timestamp - (timestamp % 60000))
     let priceEntity = await repo.findOne({ asset, datetime })
@@ -59,7 +59,7 @@ export class OracleService {
       })
     }
 
-    return repo.save(priceEntity)
+    return needSave ? repo.save(priceEntity) : priceEntity
   }
 
   async getOHLC(asset: AssetEntity, from: number, to: number, repo = this.repo): Promise<AssetOHLC> {
