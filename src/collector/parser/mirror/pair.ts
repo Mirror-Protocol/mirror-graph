@@ -6,6 +6,8 @@ import { ParseArgs } from './parseArgs'
 export async function parse(
   { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
 ): Promise<void> {
+  const { assetId, govId } = contract
+  const datetime = new Date(timestamp)
   const attributes = findAttributes(log.events, 'from_contract')
   let parsed = {}
 
@@ -37,12 +39,17 @@ export async function parse(
         share: findAttribute(attributes, 'share'),
       }
     }
+  } else if (msg['withdraw_liquidity']) {
+    parsed = {
+      type: TxType.WITHDRAW_LIQUIDITY,
+      data: {
+        refundAssets: findAttribute(attributes, 'refund_assets'),
+        withdrawnShare: findAttribute(attributes, 'withdrawn_share'),
+      }
+    }
   } else {
     return
   }
-
-  const { assetId, govId } = contract
-  const datetime = new Date(timestamp)
 
   const tx = new TxEntity({
     ...parsed, height, txHash, sender, datetime, govId, assetId, contract
