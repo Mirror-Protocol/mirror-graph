@@ -2,7 +2,7 @@ import { AssetEntity, ContractEntity } from 'orm'
 import { findAttributes, findAttribute } from 'lib/terra'
 import * as logger from 'lib/logger'
 import { ContractType } from 'types'
-import { ParseArgs } from './types'
+import { ParseArgs } from './parseArgs'
 
 export async function parse({ manager, msg, log, contract }: ParseArgs): Promise<void> {
   if (msg['whitelist']) {

@@ -1,6 +1,6 @@
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions } from 'typeorm'
-import { Service, Inject } from 'typedi'
+import { Container, Service, Inject } from 'typedi'
 import { AssetEntity, GovEntity } from 'orm'
 import { GovService } from 'services'
 
@@ -28,4 +28,8 @@ export class AssetService {
   async search(text?: string, repo = this.repo): Promise<AssetEntity[]> {
     return repo.find({ gov: this.gov })
   }
+}
+
+export function assetService(): AssetService {
+  return Container.get(AssetService)
 }

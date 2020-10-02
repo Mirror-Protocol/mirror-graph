@@ -1,18 +1,14 @@
-import { Container } from 'typedi'
 import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
-import { AssetService, CdpService } from 'services'
+import { assetService, cdpService } from 'services'
 import { AssetEntity, TxEntity, CdpEntity } from 'orm'
 import { TxType } from 'types'
-import { ParseArgs } from './types'
+import { ParseArgs } from './parseArgs'
 
 export async function parse(
   { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
 ): Promise<void> {
-  const assetService = Container.get(AssetService)
-  const cdpService = Container.get(CdpService)
-
   const { govId } = contract
   const datetime = new Date(timestamp)
 
@@ -22,15 +18,17 @@ export async function parse(
   let tx = {}
   let cdp: CdpEntity
 
+  const assetRepo = manager.getRepository(AssetEntity)
+  const cdpRepo = manager.getRepository(CdpEntity)
+
   if (msg['open_position']) {
     const mintAmount = findAttribute(attributes, 'mint_amount')
     const collateralAmount = findAttribute(attributes, 'collateral_amount')
 
     const mint = splitTokenAmount(mintAmount)
     const collateral = splitTokenAmount(collateralAmount)
-    const asset = await assetService.get(
-      { token: mint.token }, manager.getRepository(AssetEntity)
-    )
+
+    const asset = await assetService().get({ token: mint.token }, assetRepo)
     const assetId = asset.id
 
     cdp = new CdpEntity({
@@ -52,7 +50,7 @@ export async function parse(
     const depositAmount = findAttribute(attributes, 'deposit_amount')
     const deposit = splitTokenAmount(depositAmount)
 
-    cdp = await cdpService.get({ idx: positionIdx }, manager.getRepository(CdpEntity))
+    cdp = await cdpService().get({ idx: positionIdx }, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).plus(deposit.amount).toString()
 
     tx = {
@@ -65,7 +63,7 @@ export async function parse(
     const withdrawAmount = findAttribute(attributes, 'withdraw_amount')
     const withdraw = splitTokenAmount(withdrawAmount)
 
-    cdp = await cdpService.get({ idx: positionIdx }, manager.getRepository(CdpEntity))
+    cdp = await cdpService().get({ idx: positionIdx }, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).minus(withdraw.amount).toString()
 
     tx = {
@@ -82,7 +80,7 @@ export async function parse(
     const mintAmount = findAttribute(attributes, 'mint_amount')
     const mint = splitTokenAmount(mintAmount)
 
-    cdp = await cdpService.get({ idx: positionIdx }, manager.getRepository(CdpEntity))
+    cdp = await cdpService().get({ idx: positionIdx }, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).plus(mint.amount).toString()
 
     tx = {
@@ -94,7 +92,7 @@ export async function parse(
     const burnAmount = findAttribute(attributes, 'burn_amount')
     const burn = splitTokenAmount(burnAmount)
 
-    cdp = await cdpService.get({ idx: positionIdx }, manager.getRepository(CdpEntity))
+    cdp = await cdpService().get({ idx: positionIdx }, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).minus(burn.amount).toString()
 
     tx = {

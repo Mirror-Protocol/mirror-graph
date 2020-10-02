@@ -1,6 +1,6 @@
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions } from 'typeorm'
-import { Service } from 'typedi'
+import { Container, Service } from 'typedi'
 import { CdpEntity } from 'orm'
 
 @Service()
@@ -16,4 +16,8 @@ export class CdpService {
   async getAll(repo = this.repo): Promise<CdpEntity[]> {
     return repo.find()
   }
+}
+
+export function cdpService(): CdpService {
+  return Container.get(CdpService)
 }

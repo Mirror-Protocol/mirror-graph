@@ -1,4 +1,4 @@
-import { Service, Inject } from 'typedi'
+import { Container, Service, Inject } from 'typedi'
 import { Repository, FindConditions, LessThanOrEqual } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
@@ -69,4 +69,8 @@ export class OracleService {
   async getHistory(asset: AssetEntity, range: HistoryRanges, repo = this.repo): Promise<PriceAt[]> {
     return getHistory<OraclePriceEntity>(repo, asset, range)
   }
+}
+
+export function oracleService(): OracleService {
+  return Container.get(OracleService)
 }

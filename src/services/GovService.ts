@@ -1,6 +1,6 @@
 import { Repository, FindConditions, getManager, EntityManager } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { Service } from 'typedi'
+import { Container, Service } from 'typedi'
 import { GovEntity, ContractEntity, AssetEntity } from 'orm'
 import { CodeIds, Contracts, Assets, ContractType } from 'types'
 import { TxWallet } from 'lib/terra'
@@ -81,4 +81,8 @@ export class GovService {
       return govEntity
     })
   }
+}
+
+export function govService(): GovService {
+  return Container.get(GovService)
 }

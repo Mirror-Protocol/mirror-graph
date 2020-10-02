@@ -1,4 +1,4 @@
-import { Service } from 'typedi'
+import { Container, Service } from 'typedi'
 import { Repository, FindConditions, LessThanOrEqual } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
@@ -66,4 +66,8 @@ export class PriceService {
   async getHistory(asset: AssetEntity, range: HistoryRanges, repo: Repository<PriceEntity> = this.priceRepo): Promise<PriceAt[]> {
     return getHistory<PriceEntity>(repo, asset, range)
   }
+}
+
+export function priceService(): PriceService {
+  return Container.get(PriceService)
 }

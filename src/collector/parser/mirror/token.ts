@@ -1,8 +1,7 @@
-import { Container } from 'typedi'
-import { ContractService } from 'services'
+import { contractService } from 'services'
 import { ContractEntity } from 'orm'
 import { ContractType } from 'types'
-import { ParseArgs } from './types'
+import { ParseArgs } from './parseArgs'
 import * as mint from './mint'
 import * as pair from './pair'
 import * as staking from './staking'
@@ -30,8 +29,7 @@ export async function parse(args: ParseArgs): Promise<void> {
   const { manager, msg } = args
 
   if (msg['send']?.contract) {
-    const contractService = Container.get(ContractService)
-    const contract = await contractService.get(
+    const contract = await contractService().get(
       { address: msg['send'].contract }, manager.getRepository(ContractEntity)
     )
     if (!contract || !msg['send'].msg)

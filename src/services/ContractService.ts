@@ -1,6 +1,6 @@
 import { Repository, FindConditions, FindOneOptions, FindManyOptions } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { Service } from 'typedi'
+import { Container, Service } from 'typedi'
 import { ContractEntity } from 'orm'
 
 @Service()
@@ -23,4 +23,8 @@ export class ContractService {
   async find(repo = this.repo, options?: FindManyOptions<ContractEntity>): Promise<ContractEntity[]> {
     return repo.find(options)
   }
+}
+
+export function contractService(): ContractService {
+  return Container.get(ContractService)
 }

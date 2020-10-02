@@ -1,9 +1,8 @@
-import { Container } from 'typedi'
 import { findAttributes, findAttribute } from 'lib/terra'
-import { AssetService } from 'services'
+import { assetService } from 'services'
 import { AssetEntity, TxEntity } from 'orm'
 import { TxType } from 'types'
-import { ParseArgs } from './types'
+import { ParseArgs } from './parseArgs'
 
 export async function parse(
   { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
@@ -15,8 +14,7 @@ export async function parse(
     const amount = findAttribute(attributes, 'amount')
     const assetToken = findAttribute(attributes, 'asset_token')
 
-    const assetService = Container.get(AssetService)
-    const asset = await assetService.get(
+    const asset = await assetService().get(
       { token: assetToken }, manager.getRepository(AssetEntity)
     )
 

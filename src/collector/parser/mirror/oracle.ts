@@ -1,12 +1,12 @@
 import * as bluebird from 'bluebird'
-import { Container } from 'typedi'
-import { OracleService } from 'services'
+import { oracleService } from 'services'
 import { AssetEntity, OraclePriceEntity } from 'orm'
-import { ParseArgs } from './types'
+import { ParseArgs } from './parseArgs'
 
-export async function parseFeedPrice({ manager, msg, timestamp: txTimestamp }: Partial<ParseArgs>): Promise<void> {
-  const timestamp = new Date(txTimestamp).getTime()
+export async function parseFeedPrice({ manager, msg, timestamp: txTimestamp }: ParseArgs): Promise<void> {
   const { price_infos: priceInfos } = msg['feed_price']
+  const timestamp = new Date(txTimestamp).getTime()
+  const repo = manager.getRepository(OraclePriceEntity)
 
   await bluebird.mapSeries(priceInfos, async (info) => {
     const token = info['asset_token']
@@ -16,9 +16,7 @@ export async function parseFeedPrice({ manager, msg, timestamp: txTimestamp }: P
       return
     }
 
-    await Container.get(OracleService).setOHLC(
-      asset, timestamp, price, manager.getRepository(OraclePriceEntity)
-    )
+    await oracleService().setOHLC(asset, timestamp, price, repo)
   })
 }
 
