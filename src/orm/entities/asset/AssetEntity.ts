@@ -1,20 +1,22 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   CreateDateColumn,
   UpdateDateColumn,
   Column,
-  Index,
+  OneToOne,
 } from 'typeorm'
+import { AssetPositionEntity } from './AssetPositionEntity'
 import { HaveGov } from '../Have'
 
 @Entity('asset')
-@Index('idx_asset_symbol_and_token_and_gov', ['symbol', 'token', 'gov'], { unique: true })
 export class AssetEntity extends HaveGov {
   constructor(options: Partial<AssetEntity>) {
     super()
 
     Object.assign(this, options)
+
+    this.position = new AssetPositionEntity({ asset: this })
   }
 
   @CreateDateColumn()
@@ -23,8 +25,8 @@ export class AssetEntity extends HaveGov {
   @UpdateDateColumn()
   updatedAt: Date
 
-  @PrimaryGeneratedColumn()
-  id: number
+  @PrimaryColumn()
+  token: string // token address
 
   @Column()
   symbol: string
@@ -33,11 +35,15 @@ export class AssetEntity extends HaveGov {
   name: string
 
   @Column()
-  token: string // token address
-
-  @Column()
   lpToken: string // lpToken address
 
   @Column()
   pair: string // pair address
+
+  @OneToOne(
+    (type) => AssetPositionEntity,
+    (position) => position.asset,
+    { cascade: true, eager: true }
+  )
+  position: AssetPositionEntity
 }

@@ -1,4 +1,4 @@
-import { Column, JoinColumn, ManyToOne } from 'typeorm'
+import { Column, JoinColumn, ManyToOne, Index } from 'typeorm'
 import { GovEntity, AssetEntity, AccountEntity } from 'orm'
 
 export class HaveGov {
@@ -12,45 +12,49 @@ export class HaveGov {
 
 export class HaveAsset {
   @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'asset_id' })
+  @JoinColumn({ name: 'token' })
   asset: AssetEntity
 
   @Column()
-  assetId: number
+  @Index()
+  token: string
 }
 
 export class HaveGovAndAsset extends HaveGov {
   @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'asset_id' })
+  @JoinColumn({ name: 'token' })
   asset: AssetEntity
 
   @Column()
-  assetId: number
+  @Index()
+  token: string
 }
 
 export class HaveGovAndMaybeAsset extends HaveGov {
   @ManyToOne((type) => AssetEntity, { onDelete: 'CASCADE', nullable: true })
-  @JoinColumn({ name: 'asset_id' })
+  @JoinColumn({ name: 'token' })
   asset?: AssetEntity
 
   @Column({ nullable: true })
-  assetId?: number
+  token?: string
 }
 
 export class HaveAccount {
   @ManyToOne((type) => AccountEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'account_id' })
+  @JoinColumn({ name: 'account_address' })
   account: AccountEntity
 
   @Column()
-  accountId: number
+  @Index()
+  accountAddress: number
 }
 
 export class HaveAccountAndAsset extends HaveAsset {
   @ManyToOne((type) => AccountEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'account_id' })
+  @JoinColumn({ name: 'account_address' })
   account: AccountEntity
 
   @Column()
-  accountId: number
+  @Index()
+  accountAddress: number
 }

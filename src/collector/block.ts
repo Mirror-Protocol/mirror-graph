@@ -9,7 +9,7 @@ export async function getLastBlockFromDB(): Promise<BlockEntity> {
 
 export async function getCollectedHeight(): Promise<number> {
   const latestBlockFromDB = await getLastBlockFromDB()
-  return latestBlockFromDB?.height || 73000
+  return latestBlockFromDB?.height || 0
 }
 
 export async function updateBlock(height: number): Promise<BlockEntity> {

@@ -4,12 +4,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Column,
-  Index,
 } from 'typeorm'
 import { HaveAsset } from '../Have'
 
 @Entity('cdp')
-@Index('idx_cdp_assetid', ['assetId'], { unique: true })
 export class CdpEntity extends HaveAsset {
   constructor(options: Partial<CdpEntity>) {
     super()

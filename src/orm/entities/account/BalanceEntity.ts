@@ -1,8 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, CreateDateColumn, Column, Index } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, CreateDateColumn, Column } from 'typeorm'
 import { HaveAccountAndAsset } from '../Have'
 
 @Entity('balance')
-@Index('idx_balance_accountid_assetid', ['accountId', 'assetId'], { unique: true })
 export class BalanceEntity extends HaveAccountAndAsset {
   @CreateDateColumn()
   createdAt: Date

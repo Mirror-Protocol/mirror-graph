@@ -25,7 +25,7 @@ export async function parseHook(args: ParseArgs): Promise<void> {
 export async function parseTransfer(
   { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
 ): Promise<void> {
-  const { assetId, govId } = contract
+  const { token, govId } = contract
   const datetime = new Date(timestamp)
 
   const attributes = findAttributes(log.events, 'from_contract')
@@ -33,7 +33,7 @@ export async function parseTransfer(
   const to = findAttribute(attributes, 'to')
   const amount = findAttribute(attributes, 'amount')
 
-  const tx = { height, txHash, account: sender, datetime, govId, assetId, contract }
+  const tx = { height, txHash, account: sender, datetime, govId, token, contract }
 
   const sendTx = new TxEntity({ ...tx, type: TxType.SEND, data: { from, to, amount } })
   const recvTx = new TxEntity({
@@ -52,7 +52,7 @@ export async function parse(args: ParseArgs): Promise<void> {
   } else if (msg['send']?.contract) {
     const address = msg['send'].contract
     const contractRepo = manager.getRepository(ContractEntity)
-    const contract = await contractService().get({ address }, contractRepo)
+    const contract = await contractService().get({ address }, undefined, contractRepo)
 
     if (!contract || !msg['send'].msg)
       return

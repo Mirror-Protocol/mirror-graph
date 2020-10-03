@@ -1,6 +1,4 @@
-import {
-  Entity, PrimaryGeneratedColumn, CreateDateColumn, Column, Index
-} from 'typeorm'
+import { Entity, PrimaryColumn, CreateDateColumn, Column, Index } from 'typeorm'
 import { ContractType } from 'types'
 import { HaveGovAndMaybeAsset } from '../Have'
 
@@ -15,10 +13,7 @@ export class ContractEntity extends HaveGovAndMaybeAsset {
   @CreateDateColumn()
   createdAt: Date
 
-  @PrimaryGeneratedColumn()
-  id: number
-
-  @Column()
+  @PrimaryColumn()
   address: string
 
   @Column({ type: 'enum', enum: ContractType })

@@ -1,6 +1,6 @@
 import * as bluebird from 'bluebird'
 import { oracleService } from 'services'
-import { AssetEntity, OraclePriceEntity } from 'orm'
+import { OraclePriceEntity } from 'orm'
 import { ParseArgs } from './parseArgs'
 
 export async function parseFeedPrice(
@@ -14,11 +14,8 @@ export async function parseFeedPrice(
     .mapSeries(priceInfos, async (info) => {
       const token = info['asset_token']
       const price = info['price']
-      const asset = await manager.findOne(AssetEntity, { token })
 
-      return asset
-        ? await oracleService().setOHLC(asset, timestamp, price, repo, false)
-        : undefined
+      return oracleService().setOHLC(token, timestamp, price, repo, false)
     })
     .filter(Boolean)
 

@@ -41,10 +41,10 @@ export class PriceService {
   }
 
   async setOHLC(
-    asset: AssetEntity, timestamp: number, price: string, repo = this.repo, needSave = true
+    token: string, timestamp: number, price: string, repo = this.repo, needSave = true
   ): Promise<PriceEntity> {
     const datetime = new Date(timestamp - (timestamp % 60000))
-    let priceEntity = await repo.findOne({ asset, datetime })
+    let priceEntity = await repo.findOne({ token, datetime })
 
     if (priceEntity) {
       priceEntity.high = num(price).isGreaterThan(priceEntity.high) ? price : priceEntity.high
@@ -52,19 +52,19 @@ export class PriceService {
       priceEntity.close = price
     } else {
       priceEntity = new PriceEntity({
-        asset, open: price, high: price, low: price, close: price, datetime
+        token, open: price, high: price, low: price, close: price, datetime
       })
     }
 
     return needSave ? repo.save(priceEntity) : priceEntity
   }
 
-  async getOHLC(asset: AssetEntity, from: number, to: number, repo = this.repo): Promise<AssetOHLC> {
-    return getOHLC<PriceEntity>(repo, asset, from, to)
+  async getOHLC(token: string, from: number, to: number, repo = this.repo): Promise<AssetOHLC> {
+    return getOHLC<PriceEntity>(repo, token, from, to)
   }
 
-  async getHistory(asset: AssetEntity, range: HistoryRanges, repo = this.repo): Promise<PriceAt[]> {
-    return getHistory<PriceEntity>(repo, asset, range)
+  async getHistory(token: string, range: HistoryRanges, repo = this.repo): Promise<PriceAt[]> {
+    return getHistory<PriceEntity>(repo, token, range)
   }
 }
 

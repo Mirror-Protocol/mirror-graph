@@ -11,8 +11,8 @@ export class ContractService {
 
   async get(
     conditions: FindConditions<ContractEntity>,
+    options?: FindOneOptions<ContractEntity>,
     repo = this.repo,
-    options?: FindOneOptions<ContractEntity>
   ): Promise<ContractEntity> {
     if (!conditions.gov && !conditions.asset && !conditions.address) {
       throw new Error('conditions must have gov or asset')
@@ -20,7 +20,7 @@ export class ContractService {
     return repo.findOne(conditions, options)
   }
 
-  async find(repo = this.repo, options?: FindManyOptions<ContractEntity>): Promise<ContractEntity[]> {
+  async find(options?: FindManyOptions<ContractEntity>, repo = this.repo): Promise<ContractEntity[]> {
     return repo.find(options)
   }
 }

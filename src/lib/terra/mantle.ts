@@ -116,13 +116,16 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
       ))
 
       const txValue = toSnakeCase(pick(rawTx.Tx, ['Fee', 'Signatures', 'Memo']))
+      // console.log(JSON.stringify(rawTx.Tx.Msg))
       const tx = {
         type: 'core/StdTx',
         value: {
           ...txValue,
-          msg: rawTx.Tx.Msg.map((msg) =>
-            Msg.fromData({ type: msg.Type, value: JSON.parse(msg.Value) }).toData()
-          )
+          msg: rawTx.Tx.Msg
+            .map((msg) =>
+              Msg.fromData({ type: msg.Type, value: JSON.parse(msg.Value) } as Msg.Data)?.toData()
+            )
+            .filter(Boolean)
         }
       }
 

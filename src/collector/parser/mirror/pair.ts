@@ -1,4 +1,5 @@
 import { findAttributes, findAttribute } from 'lib/terra'
+// import { assetService } from 'services'
 import { TxEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
@@ -6,7 +7,7 @@ import { ParseArgs } from './parseArgs'
 export async function parse(
   { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
 ): Promise<void> {
-  const { assetId, govId } = contract
+  const { token, govId } = contract
   const datetime = new Date(timestamp)
   const attributes = findAttributes(log.events, 'from_contract')
   let parsed = {}
@@ -39,6 +40,8 @@ export async function parse(
         share: findAttribute(attributes, 'share'),
       }
     }
+    // const position = await assetService().getPosition({ assetId })
+
   } else if (msg['withdraw_liquidity']) {
     parsed = {
       type: TxType.WITHDRAW_LIQUIDITY,
@@ -52,7 +55,7 @@ export async function parse(
   }
 
   const tx = new TxEntity({
-    ...parsed, height, txHash, account: sender, datetime, govId, assetId, contract
+    ...parsed, height, txHash, account: sender, datetime, govId, token, contract
   })
 
   await manager.save(tx)

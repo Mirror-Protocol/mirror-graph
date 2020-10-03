@@ -1,6 +1,5 @@
 import { findAttributes, findAttribute } from 'lib/terra'
-import { assetService } from 'services'
-import { AssetEntity, TxEntity } from 'orm'
+import { TxEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
@@ -14,14 +13,10 @@ export async function parse(
     const amount = findAttribute(attributes, 'amount')
     const assetToken = findAttribute(attributes, 'asset_token')
 
-    const asset = await assetService().get(
-      { token: assetToken }, manager.getRepository(AssetEntity)
-    )
-
     parsed = {
       type: msg['bond'] ? TxType.STAKE : TxType.UNSTAKE,
       data: { assetToken, amount },
-      assetId: asset.id,
+      token: assetToken,
     }
   } else {
     return

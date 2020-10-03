@@ -1,32 +1,29 @@
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { Repository, FindConditions } from 'typeorm'
-import { Container, Service, Inject } from 'typedi'
-import { AssetEntity, GovEntity } from 'orm'
-import { GovService } from 'services'
+import { Repository, FindConditions, FindOneOptions } from 'typeorm'
+import { Container, Service } from 'typedi'
+import { AssetEntity, AssetPositionEntity } from 'orm'
 
 @Service()
 export class AssetService {
   constructor(
     @InjectRepository(AssetEntity) private readonly repo: Repository<AssetEntity>,
-    @Inject((type) => GovService) private readonly govService: GovService,
+    @InjectRepository(AssetPositionEntity) private readonly positionRepo: Repository<AssetPositionEntity>,
   ) {}
 
-  get gov(): GovEntity {
-    return this.govService.get()
+  async get(
+    conditions: FindConditions<AssetEntity>,
+    options?: FindOneOptions<AssetEntity>,
+    repo = this.repo
+  ): Promise<AssetEntity> {
+    return repo.findOne(conditions)
   }
 
-  async get(conditions: FindConditions<AssetEntity>, repo = this.repo): Promise<AssetEntity> {
-    return repo.findOne({
-      ...conditions, gov: conditions.gov || this.gov,
-    })
+  async getAll(options?: FindOneOptions<AssetEntity>, repo = this.repo): Promise<AssetEntity[]> {
+    return repo.find()
   }
 
-  async getAll(repo = this.repo): Promise<AssetEntity[]> {
-    return repo.find({ gov: this.gov })
-  }
-
-  async search(text?: string, repo = this.repo): Promise<AssetEntity[]> {
-    return repo.find({ gov: this.gov })
+  async getPosition(conditions: FindConditions<AssetPositionEntity>, repo = this.positionRepo): Promise<AssetPositionEntity> {
+    return repo.findOne(conditions)
   }
 }
 

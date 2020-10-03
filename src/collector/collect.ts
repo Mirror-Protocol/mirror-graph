@@ -13,12 +13,11 @@ export async function collect(now: number): Promise<void> {
     return
   }
 
-  // logger.info(`collecting ${collectedHeight + 1}-${Math.min(collectedHeight + 1 + 1000, latestHeight)}`)
-  // get last collected ~ latest txs, limit 1000
   const txs = await getTxs(collectedHeight + 1, latestHeight, 500)
   if (!txs || txs.length < 1) {
     return
   }
+  const firstTx = txs[0]
   const lastTx = txs[txs.length - 1]
 
   return getManager()
@@ -29,7 +28,7 @@ export async function collect(now: number): Promise<void> {
     })
     .then(() => {
       logger.info(
-        `collected: ${config.TERRA_CHAIN_ID}, ${collectedHeight + 1}-${lastTx.height},`,
+        `collected: ${config.TERRA_CHAIN_ID}, ${firstTx.height}-${lastTx.height},`,
         `${format(new Date(lastTx.timestamp), 'yyyy-MM-dd HH:mm:ss')}, ${txs.length} txs`
       )
     })

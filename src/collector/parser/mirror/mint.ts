@@ -1,15 +1,14 @@
 import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
-import { assetService, cdpService } from 'services'
-import { AssetEntity, TxEntity, CdpEntity } from 'orm'
+import { cdpService } from 'services'
+import { TxEntity, CdpEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
   { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
 ): Promise<void> {
-  const assetRepo = manager.getRepository(AssetEntity)
   const cdpRepo = manager.getRepository(CdpEntity)
 
   const { govId } = contract
@@ -28,22 +27,19 @@ export async function parse(
     const mint = splitTokenAmount(mintAmount)
     const collateral = splitTokenAmount(collateralAmount)
 
-    const asset = await assetService().get({ token: mint.token }, assetRepo)
-    const assetId = asset.id
-
     cdp = new CdpEntity({
       id: positionIdx,
       mintAmount: mint.amount,
       collateralToken: collateral.token,
       collateralAmount: collateral.amount,
-      assetId,
+      token: mint.token,
     })
 
     tx = {
       type: TxType.OPEN_POSITION,
       data: { positionIdx, mintAmount, collateralAmount },
       outValue: collateral.amount,
-      assetId,
+      token: mint.token,
     }
   } else if (msg['deposit']) {
     const depositAmount = findAttribute(attributes, 'deposit_amount')
@@ -56,7 +52,7 @@ export async function parse(
       type: TxType.DEPOSIT_COLLATERAL,
       data: { positionIdx, depositAmount },
       outValue: deposit.amount,
-      assetId: cdp.assetId,
+      token: deposit.token,
     }
   } else if (msg['withdraw']) {
     const withdrawAmount = findAttribute(attributes, 'withdraw_amount')
@@ -73,7 +69,7 @@ export async function parse(
         taxAmount: findAttribute(attributes, 'tax_amount'),
       },
       inValue: withdraw.amount,
-      assetId: cdp.assetId,
+      token: withdraw.token,
     }
   } else if (msg['mint']) {
     const mintAmount = findAttribute(attributes, 'mint_amount')
@@ -85,7 +81,7 @@ export async function parse(
     tx = {
       type: TxType.MINT,
       data: { positionIdx, mintAmount },
-      assetId: cdp.assetId,
+      token: mint.token,
     }
   } else if (msg['burn']) {
     const burnAmount = findAttribute(attributes, 'burn_amount')
@@ -97,7 +93,7 @@ export async function parse(
     tx = {
       type: TxType.BURN,
       data: { positionIdx, burnAmount },
-      assetId: cdp.assetId,
+      token: burn.token,
     }
   } else {
     return

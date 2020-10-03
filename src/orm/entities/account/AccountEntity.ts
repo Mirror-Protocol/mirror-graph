@@ -1,6 +1,4 @@
-import {
-  Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Column, Index
-} from 'typeorm'
+import { Entity, PrimaryColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm'
 import { HaveGov } from '../Have'
 
 @Entity('account')
@@ -11,10 +9,6 @@ export class AccountEntity extends HaveGov {
   @UpdateDateColumn()
   updatedAt: Date
 
-  @PrimaryGeneratedColumn()
-  id: number
-
-  @Column()
-  @Index()
+  @PrimaryColumn()
   address: string
 }
