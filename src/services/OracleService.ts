@@ -1,19 +1,18 @@
-import { Container, Service, Inject } from 'typedi'
+import { Container, Service } from 'typedi'
 import { Repository, FindConditions, LessThanOrEqual } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
 import { getOHLC, getHistory } from 'lib/price'
-import { contractQuery } from 'lib/terra'
+import { getOraclePrice } from 'lib/mirror'
 import { OraclePriceEntity, AssetEntity } from 'orm'
-import { HistoryRanges, ContractType, OraclePrice } from 'types'
+import { HistoryRanges } from 'types'
 import { AssetOHLC, PriceAt } from 'graphql/schema'
-import { ContractService } from 'services'
+import { govService } from 'services'
 
 @Service()
 export class OracleService {
   constructor(
     @InjectRepository(OraclePriceEntity) private readonly repo: Repository<OraclePriceEntity>,
-    @Inject((type) => ContractService) private readonly contractService: ContractService,
   ) {}
 
   async get(conditions: FindConditions<OraclePriceEntity>, repo = this.repo): Promise<OraclePriceEntity> {
@@ -32,15 +31,7 @@ export class OracleService {
   }
 
   async getContractPrice(asset: AssetEntity): Promise<string> {
-    const oracleContract = await this.contractService.get({ asset, type: ContractType.ORACLE })
-    if (!oracleContract) {
-      return undefined
-    }
-    const oraclePrice = await contractQuery<OraclePrice>(oracleContract.address, { price: {} })
-    if (!oraclePrice) {
-      return undefined
-    }
-    return num(oraclePrice.price).multipliedBy(oraclePrice.priceMultiplier).toFixed(6)
+    return getOraclePrice(govService().get().oracle, asset.token)
   }
 
   async setOHLC(

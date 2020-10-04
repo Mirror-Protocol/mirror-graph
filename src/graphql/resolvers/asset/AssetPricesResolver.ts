@@ -28,7 +28,7 @@ export class AssetPricesResolver {
   async history(
     @Root() asset: AssetEntity, @Arg('range', (type) => HistoryRanges) range: HistoryRanges
   ): Promise<PriceAt[]> {
-    return this.priceService.getHistory(asset, range)
+    return this.priceService.getHistory(asset.token, range)
   }
 
   @FieldResolver()
@@ -37,7 +37,7 @@ export class AssetPricesResolver {
     @Arg('from', { description: 'datetime' }) from: Date,
     @Arg('to', { description: 'datetime' }) to: Date
   ): Promise<AssetOHLC> {
-    return this.priceService.getOHLC(asset, from.getTime(), to.getTime())
+    return this.priceService.getOHLC(asset.token, from.getTime(), to.getTime())
   }
 
   @FieldResolver()
@@ -56,6 +56,6 @@ export class AssetPricesResolver {
   async oracleHistory(
     @Root() asset: AssetEntity, @Arg('range', (type) => HistoryRanges) range: HistoryRanges
   ): Promise<PriceAt[]> {
-    return this.oracleService.getHistory(asset, range)
+    return this.oracleService.getHistory(asset.token, range)
   }
 }

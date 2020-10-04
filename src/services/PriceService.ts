@@ -3,7 +3,7 @@ import { Repository, FindConditions, LessThanOrEqual } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
 import { getOHLC, getHistory } from 'lib/price'
-import { getPairPool } from 'lib/mirror'
+import { getPairPrice } from 'lib/mirror'
 import { PriceEntity, AssetEntity } from 'orm'
 import { HistoryRanges } from 'types'
 import { AssetOHLC, PriceAt } from 'graphql/schema'
@@ -30,14 +30,7 @@ export class PriceService {
   }
 
   async getContractPrice(asset: AssetEntity): Promise<string> {
-    const pool = await getPairPool(asset.pair)
-    try {
-      const price = num(pool.collateralAmount).dividedBy(pool.assetAmount).toFixed(6)
-
-      return num(price).isNaN() ? undefined : price
-    } catch(error) {
-      return undefined
-    }
+    return getPairPrice(asset.pair)
   }
 
   async setOHLC(
