@@ -1,5 +1,5 @@
 import { ObjectType, Field } from 'type-graphql'
-import { AssetPosition, AssetPrices } from 'graphql/schema'
+import { AssetPositions, AssetPrices } from 'graphql/schema'
 
 @ObjectType({ simpleResolvers: true })
 export class Asset {
@@ -15,8 +15,8 @@ export class Asset {
   @Field()
   pair: string
 
-  @Field((type) => AssetPosition)
-  position: AssetPosition
+  @Field((type) => AssetPositions)
+  positions: AssetPositions
 
   @Field((type) => AssetPrices, { nullable: true })
   prices?: AssetPrices

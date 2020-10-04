@@ -6,7 +6,7 @@ import {
   Column,
   OneToOne,
 } from 'typeorm'
-import { AssetPositionEntity } from './AssetPositionEntity'
+import { AssetPositionsEntity } from './AssetPositionsEntity'
 import { HaveGov } from '../Have'
 
 @Entity('asset')
@@ -16,7 +16,7 @@ export class AssetEntity extends HaveGov {
 
     Object.assign(this, options)
 
-    this.position = new AssetPositionEntity({ asset: this })
+    this.positions = new AssetPositionsEntity({ asset: this })
   }
 
   @CreateDateColumn()
@@ -41,9 +41,9 @@ export class AssetEntity extends HaveGov {
   pair: string // pair address
 
   @OneToOne(
-    (type) => AssetPositionEntity,
-    (position) => position.asset,
+    (type) => AssetPositionsEntity,
+    (positions) => positions.asset,
     { cascade: true, eager: true }
   )
-  position: AssetPositionEntity
+  positions: AssetPositionsEntity
 }

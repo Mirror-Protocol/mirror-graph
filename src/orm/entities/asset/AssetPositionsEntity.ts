@@ -9,9 +9,9 @@ import {
 } from 'typeorm'
 import { AssetEntity } from 'orm'
 
-@Entity('asset_position')
-export class AssetPositionEntity {
-  constructor(options?: Partial<AssetPositionEntity>) {
+@Entity('asset_positions')
+export class AssetPositionsEntity {
+  constructor(options?: Partial<AssetPositionsEntity>) {
     options && Object.assign(this, options)
   }
 
@@ -33,7 +33,7 @@ export class AssetPositionEntity {
   @Column('numeric', { precision: 40, default: 0, comment: 'used as collateral amount' })
   asCollateral: string
 
-  @OneToOne((type) => AssetEntity, (asset) => asset.position, { onDelete: 'CASCADE' })
+  @OneToOne((type) => AssetEntity, (asset) => asset.positions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'token' })
   asset: AssetEntity
 }

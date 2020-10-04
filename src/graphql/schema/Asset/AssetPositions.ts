@@ -1,7 +1,7 @@
 import { ObjectType, Field } from 'type-graphql'
 
 @ObjectType({ simpleResolvers: true })
-export class AssetPosition {
+export class AssetPositions {
   @Field()
   mint: string
 

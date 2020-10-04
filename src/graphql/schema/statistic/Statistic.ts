@@ -7,4 +7,7 @@ export class Statistic {
 
   @Field()
   totalValueLocked: string
+
+  @Field()
+  collateralRatio: string
 }

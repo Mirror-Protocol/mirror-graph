@@ -2,7 +2,7 @@ import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { assetService, cdpService } from 'services'
-import { TxEntity, CdpEntity, AssetPositionEntity } from 'orm'
+import { TxEntity, CdpEntity, AssetPositionsEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
@@ -10,7 +10,7 @@ export async function parse(
   { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
 ): Promise<void> {
   const cdpRepo = manager.getRepository(CdpEntity)
-  const positionRepo = manager.getRepository(AssetPositionEntity)
+  const positionsRepo = manager.getRepository(AssetPositionsEntity)
 
   const { govId } = contract
   const datetime = new Date(timestamp)
@@ -38,8 +38,8 @@ export async function parse(
     })
 
     // add mint/asCollateral position
-    await assetService().addMintPosition(mint.token, mint.amount, positionRepo)
-    await assetService().addAsCollateralPosition(collateral.token, collateral.amount, positionRepo)
+    await assetService().addMintPosition(mint.token, mint.amount, positionsRepo)
+    await assetService().addAsCollateralPosition(collateral.token, collateral.amount, positionsRepo)
 
     tx = {
       type: TxType.OPEN_POSITION,
@@ -56,7 +56,7 @@ export async function parse(
     cdp.collateralAmount = num(cdp.collateralAmount).plus(deposit.amount).toString()
 
     // add asCollateral position
-    await assetService().addAsCollateralPosition(deposit.token, deposit.amount, positionRepo)
+    await assetService().addAsCollateralPosition(deposit.token, deposit.amount, positionsRepo)
 
     tx = {
       type: TxType.DEPOSIT_COLLATERAL,
@@ -73,7 +73,7 @@ export async function parse(
     cdp.collateralAmount = num(cdp.collateralAmount).minus(withdraw.amount).toString()
 
     // remove asCollateral position
-    await assetService().addAsCollateralPosition(withdraw.token, `-${withdraw.amount}`, positionRepo)
+    await assetService().addAsCollateralPosition(withdraw.token, `-${withdraw.amount}`, positionsRepo)
 
     tx = {
       type: TxType.WITHDRAW_COLLATERAL,
@@ -94,7 +94,7 @@ export async function parse(
     cdp.mintAmount = num(cdp.mintAmount).plus(mint.amount).toString()
 
     // add mint position
-    await assetService().addMintPosition(mint.token, mint.amount, positionRepo)
+    await assetService().addMintPosition(mint.token, mint.amount, positionsRepo)
 
     tx = {
       type: TxType.MINT,
@@ -110,7 +110,7 @@ export async function parse(
     cdp.mintAmount = num(cdp.mintAmount).minus(burn.amount).toString()
 
     // add mint position
-    await assetService().addMintPosition(burn.token, `-${burn.amount}`, positionRepo)
+    await assetService().addMintPosition(burn.token, `-${burn.amount}`, positionsRepo)
 
     tx = {
       type: TxType.BURN,

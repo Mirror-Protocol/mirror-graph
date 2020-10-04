@@ -1,6 +1,6 @@
 import { findAttributes, findAttribute } from 'lib/terra'
 import { assetService } from 'services'
-import { TxEntity, AssetPositionEntity } from 'orm'
+import { TxEntity, AssetPositionsEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 import { splitTokenAmount } from 'lib/utils'
@@ -41,11 +41,11 @@ export async function parse(
     }
 
     // add liquidity position
-    const positionRepo = manager.getRepository(AssetPositionEntity)
+    const positionsRepo = manager.getRepository(AssetPositionsEntity)
     const liquidities = assets.split(', ')
     for (const liquidityAmount of liquidities) {
       const liquidity = splitTokenAmount(liquidityAmount)
-      await assetService().addLiquidityPosition(liquidity.token, liquidity.amount, positionRepo)
+      await assetService().addLiquidityPosition(liquidity.token, liquidity.amount, positionsRepo)
     }
   } else if (msg['withdraw_liquidity']) {
     const refundAssets = findAttribute(attributes, 'refund_assets')
@@ -55,11 +55,11 @@ export async function parse(
     }
 
     // remove liquidity position
-    const positionRepo = manager.getRepository(AssetPositionEntity)
+    const positionsRepo = manager.getRepository(AssetPositionsEntity)
     const liquidities = refundAssets.split(', ')
     for (const liquidityAmount of liquidities) {
       const liquidity = splitTokenAmount(liquidityAmount)
-      await assetService().addLiquidityPosition(liquidity.token, `-${liquidity.amount}`, positionRepo)
+      await assetService().addLiquidityPosition(liquidity.token, `-${liquidity.amount}`, positionsRepo)
     }
   } else {
     return

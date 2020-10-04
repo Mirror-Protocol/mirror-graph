@@ -2,14 +2,14 @@ import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions, FindOneOptions } from 'typeorm'
 import { Container, Service } from 'typedi'
 import { num } from 'lib/num'
-import { AssetEntity, AssetPositionEntity } from 'orm'
+import { AssetEntity, AssetPositionsEntity } from 'orm'
 import config from 'config'
 
 @Service()
 export class AssetService {
   constructor(
     @InjectRepository(AssetEntity) private readonly repo: Repository<AssetEntity>,
-    @InjectRepository(AssetPositionEntity) private readonly positionRepo: Repository<AssetPositionEntity>,
+    @InjectRepository(AssetPositionsEntity) private readonly positionsRepo: Repository<AssetPositionsEntity>,
   ) {}
 
   async get(
@@ -24,36 +24,36 @@ export class AssetService {
     return repo.find(options)
   }
 
-  async getPosition(
-    conditions: FindConditions<AssetPositionEntity>,
-    options?: FindOneOptions<AssetPositionEntity>,
-    repo = this.positionRepo
-  ): Promise<AssetPositionEntity> {
+  async getPositions(
+    conditions: FindConditions<AssetPositionsEntity>,
+    options?: FindOneOptions<AssetPositionsEntity>,
+    repo = this.positionsRepo
+  ): Promise<AssetPositionsEntity> {
     return repo.findOne(conditions, options)
   }
 
-  async addMintPosition(token: string, amount: string, repo = this.positionRepo): Promise<AssetPositionEntity> {
-    const position = await this.getPosition({ token }, undefined, repo)
+  async addMintPosition(token: string, amount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
+    const positions = await this.getPositions({ token }, undefined, repo)
 
-    position.mint = num(position.mint).plus(amount).toFixed(config.DECIMALS)
+    positions.mint = num(positions.mint).plus(amount).toFixed(config.DECIMALS)
 
-    return repo.save(position)
+    return repo.save(positions)
   }
 
-  async addLiquidityPosition(token: string, amount: string, repo = this.positionRepo): Promise<AssetPositionEntity> {
-    const position = await this.getPosition({ token }, undefined, repo)
+  async addLiquidityPosition(token: string, amount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
+    const positions = await this.getPositions({ token }, undefined, repo)
 
-    position.liquidity = num(position.liquidity).plus(amount).toFixed(config.DECIMALS)
+    positions.liquidity = num(positions.liquidity).plus(amount).toFixed(config.DECIMALS)
 
-    return repo.save(position)
+    return repo.save(positions)
   }
 
-  async addAsCollateralPosition(token: string, amount: string, repo = this.positionRepo): Promise<AssetPositionEntity> {
-    const position = await this.getPosition({ token }, undefined, repo)
+  async addAsCollateralPosition(token: string, amount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
+    const positions = await this.getPositions({ token }, undefined, repo)
 
-    position.asCollateral = num(position.asCollateral).plus(amount).toFixed(config.DECIMALS)
+    positions.asCollateral = num(positions.asCollateral).plus(amount).toFixed(config.DECIMALS)
 
-    return repo.save(position)
+    return repo.save(positions)
   }
 }
 
