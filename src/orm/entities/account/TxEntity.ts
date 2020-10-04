@@ -31,14 +31,11 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   @Column({ type: 'enum', enum: TxType })
   type: TxType
 
-  @Column('numeric', { precision: 40, default: 0 })
-  inValue: string
-
-  @Column('numeric', { precision: 40, default: 0 })
-  outValue: string
-
   @Column({ type: 'jsonb' })
   data: object
+
+  @Column('numeric', { precision: 40, default: 0 })
+  feeValue: string
 
   @Column()
   datetime: Date

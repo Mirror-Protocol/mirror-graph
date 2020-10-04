@@ -1,10 +1,11 @@
+import { addDays } from 'date-fns'
 import * as bluebird from 'bluebird'
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { num } from 'lib/num'
-import { AssetService, OracleService } from 'services'
-import { DailyStatisticEntity } from 'orm'
+import { AssetService, OracleService, govService } from 'services'
+import { DailyStatisticEntity, TxEntity } from 'orm'
 import { Statistic, LiquidityValue, TradingVolume } from 'graphql/schema'
 import config from 'config'
 
@@ -14,6 +15,7 @@ export class StatisticService {
     @Inject((type) => AssetService) private readonly assetService: AssetService,
     @Inject((type) => OracleService) private readonly oracleService: OracleService,
     @InjectRepository(DailyStatisticEntity) private readonly dailyRepo: Repository<DailyStatisticEntity>,
+    @InjectRepository(TxEntity) private readonly txRepo: Repository<TxEntity>,
   ) {}
 
   async statistic(): Promise<Partial<Statistic>> {
@@ -34,11 +36,20 @@ export class StatisticService {
       assetMarketCap = assetMarketCap.plus(num(asset.positions.mint).multipliedBy(price))
       totalValueLocked = totalValueLocked.plus(num(asset.positions.asCollateral).multipliedBy(price))
     })
+    const to = Date.now()
+    const from = addDays(to, -1).getTime()
+    const feeValue24h = (await this.txRepo
+      .createQueryBuilder()
+      .select('sum(fee_value)', 'fee')
+      .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .getRawOne()
+    ).fee.toString()
 
     return {
       assetMarketCap: assetMarketCap.toFixed(config.DECIMALS),
       totalValueLocked: totalValueLocked.toFixed(config.DECIMALS),
       collateralRatio: totalValueLocked.dividedBy(assetMarketCap).multipliedBy(100).toFixed(2),
+      feeValue24h
     }
   }
 
@@ -51,7 +62,8 @@ export class StatisticService {
     if (daily) {
       daily.tradingVolume = num(daily.tradingVolume).plus(volume).toFixed(config.DECIMALS)
     } else {
-      daily = new DailyStatisticEntity({ datetime, tradingVolume: volume })
+      const gov = govService().get()
+      daily = new DailyStatisticEntity({ gov, datetime, tradingVolume: volume })
     }
 
     return repo.save(daily)
@@ -75,7 +87,8 @@ export class StatisticService {
       liquidityValue = liquidityValue.plus(num(asset.positions.liquidity).multipliedBy(price))
     })
 
-    const daily = (await repo.findOne({ datetime })) || new DailyStatisticEntity({ datetime })
+    const daily = (await repo.findOne({ datetime }))
+      || new DailyStatisticEntity({ gov: govService().get(), datetime })
 
     daily.cumulativeLiquidity = liquidityValue.toFixed(config.DECIMALS)
 

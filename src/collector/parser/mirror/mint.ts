@@ -44,7 +44,6 @@ export async function parse(
     tx = {
       type: TxType.OPEN_POSITION,
       data: { positionIdx, mintAmount, collateralAmount },
-      outValue: collateral.amount,
       token: mint.token,
     }
   } else if (msg['deposit']) {
@@ -61,7 +60,6 @@ export async function parse(
     tx = {
       type: TxType.DEPOSIT_COLLATERAL,
       data: { positionIdx, depositAmount },
-      outValue: deposit.amount,
       token: deposit.token,
     }
   } else if (msg['withdraw']) {
@@ -82,7 +80,6 @@ export async function parse(
         withdrawAmount,
         taxAmount: findAttribute(attributes, 'tax_amount'),
       },
-      inValue: withdraw.amount,
       token: withdraw.token,
     }
   } else if (msg['mint']) {

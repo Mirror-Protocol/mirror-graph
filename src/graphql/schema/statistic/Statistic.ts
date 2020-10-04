@@ -12,6 +12,9 @@ export class Statistic {
   @Field()
   collateralRatio: string
 
+  @Field()
+  feeValue24h: string
+
   @Field((type) => [LiquidityValue], { nullable: true })
   liquidityHistory: LiquidityValue[]
 

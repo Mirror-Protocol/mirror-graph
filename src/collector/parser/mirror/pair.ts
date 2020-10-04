@@ -1,9 +1,10 @@
 import { findAttributes, findAttribute } from 'lib/terra'
+import { splitTokenAmount } from 'lib/utils'
+import { num } from 'lib/num'
 import { assetService, statisticService } from 'services'
 import { TxEntity, AssetPositionsEntity, DailyStatisticEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
-import { splitTokenAmount } from 'lib/utils'
 
 export async function parse(
   { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
@@ -18,12 +19,14 @@ export async function parse(
     const askAsset = findAttribute(attributes, 'ask_asset')
     const offerAmount = findAttribute(attributes, 'offer_amount')
     const returnAmount = findAttribute(attributes, 'return_amount')
+    const commissionAmount = findAttribute(attributes, 'commission_amount')
     const type = offerAsset === 'uusd' ? TxType.BUY : TxType.SELL
+    const feeValue = type === TxType.BUY
+      ? num(offerAmount).dividedBy(returnAmount).multipliedBy(commissionAmount).toFixed(6)
+      : commissionAmount
 
     parsed = {
       type,
-      outValue: type === TxType.BUY ? offerAmount : '0',
-      inValue: type === TxType.SELL ? returnAmount : '0',
       data: {
         offerAsset,
         askAsset,
@@ -31,8 +34,9 @@ export async function parse(
         returnAmount,
         taxAmount: findAttribute(attributes, 'tax_amount'),
         spreadAmount: findAttribute(attributes, 'spread_amount'),
-        commissionAmount: findAttribute(attributes, 'commission_amount'),
-      }
+        commissionAmount,
+      },
+      feeValue
     }
 
     // add daily trading volume
