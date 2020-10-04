@@ -1,6 +1,6 @@
 import { findAttributes, findAttribute } from 'lib/terra'
-import { assetService } from 'services'
-import { TxEntity, AssetPositionsEntity } from 'orm'
+import { assetService, statisticService } from 'services'
+import { TxEntity, AssetPositionsEntity, DailyStatisticEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 import { splitTokenAmount } from 'lib/utils'
@@ -18,11 +18,12 @@ export async function parse(
     const askAsset = findAttribute(attributes, 'ask_asset')
     const offerAmount = findAttribute(attributes, 'offer_amount')
     const returnAmount = findAttribute(attributes, 'return_amount')
+    const type = offerAsset === 'uusd' ? TxType.BUY : TxType.SELL
 
     parsed = {
-      type: offerAsset === 'uusd' ? TxType.BUY : TxType.SELL,
-      outValue: offerAsset === 'uusd' ? offerAmount : '0',
-      inValue: askAsset === 'uusd' ? returnAmount : '0',
+      type,
+      outValue: type === TxType.BUY ? offerAmount : '0',
+      inValue: type === TxType.SELL ? returnAmount : '0',
       data: {
         offerAsset,
         askAsset,
@@ -33,6 +34,11 @@ export async function parse(
         commissionAmount: findAttribute(attributes, 'commission_amount'),
       }
     }
+
+    // add daily trading volume
+    const volume = type === TxType.BUY ? offerAmount : returnAmount
+    const dailyStatRepo = manager.getRepository(DailyStatisticEntity)
+    await statisticService().addDailyTradingVolume(datetime.getTime(), volume, dailyStatRepo)
   } else if (msg['provide_liquidity']) {
     const assets = findAttribute(attributes, 'assets')
     parsed = {

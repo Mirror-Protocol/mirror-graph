@@ -1,12 +1,10 @@
 import {
   Column, Entity, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, Index
 } from 'typeorm'
-import { HaveAsset } from '../Have'
 
 @Entity('daily_statistic')
-export class DailyStatisticEntity extends HaveAsset {
+export class DailyStatisticEntity {
   constructor(options: Partial<DailyStatisticEntity>) {
-    super()
     Object.assign(this, options)
   }
 
