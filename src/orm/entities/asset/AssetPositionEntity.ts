@@ -25,13 +25,13 @@ export class AssetPositionEntity {
   token: string
 
   @Column('numeric', { precision: 40, default: 0 })
-  mintAmount: string
+  mint: string
 
   @Column('numeric', { precision: 40, default: 0 })
-  liquidityAmount: string
+  liquidity: string
 
   @Column('numeric', { precision: 40, default: 0, comment: 'used as collateral amount' })
-  asCollateralAmount: string
+  asCollateral: string
 
   @OneToOne((type) => AssetEntity, (asset) => asset.position, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'token' })

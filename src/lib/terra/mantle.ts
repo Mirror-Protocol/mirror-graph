@@ -33,7 +33,7 @@ export async function getContractStore<T>(address: string, query: unknown): Prom
     }`,
     {
       address,
-      query: JSON.stringify(query)
+      query: JSON.stringify(toSnakeCase(query))
     }
   )
 

@@ -1,8 +1,9 @@
 import { findAttributes, findAttribute } from 'lib/terra'
-// import { assetService } from 'services'
-import { TxEntity } from 'orm'
+import { assetService } from 'services'
+import { TxEntity, AssetPositionEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
+import { splitTokenAmount } from 'lib/utils'
 
 export async function parse(
   { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
@@ -33,22 +34,32 @@ export async function parse(
       }
     }
   } else if (msg['provide_liquidity']) {
+    const assets = findAttribute(attributes, 'assets')
     parsed = {
       type: TxType.PROVIDE_LIQUIDITY,
-      data: {
-        assets: findAttribute(attributes, 'assets'),
-        share: findAttribute(attributes, 'share'),
-      }
+      data: { assets, share: findAttribute(attributes, 'share') }
     }
-    // const position = await assetService().getPosition({ assetId })
 
+    // add liquidity position
+    const positionRepo = manager.getRepository(AssetPositionEntity)
+    const liquidities = assets.split(', ')
+    for (const liquidityAmount of liquidities) {
+      const liquidity = splitTokenAmount(liquidityAmount)
+      await assetService().addLiquidityPosition(liquidity.token, liquidity.amount, positionRepo)
+    }
   } else if (msg['withdraw_liquidity']) {
+    const refundAssets = findAttribute(attributes, 'refund_assets')
     parsed = {
       type: TxType.WITHDRAW_LIQUIDITY,
-      data: {
-        refundAssets: findAttribute(attributes, 'refund_assets'),
-        withdrawnShare: findAttribute(attributes, 'withdrawn_share'),
-      }
+      data: { refundAssets, withdrawnShare: findAttribute(attributes, 'withdrawn_share') }
+    }
+
+    // remove liquidity position
+    const positionRepo = manager.getRepository(AssetPositionEntity)
+    const liquidities = refundAssets.split(', ')
+    for (const liquidityAmount of liquidities) {
+      const liquidity = splitTokenAmount(liquidityAmount)
+      await assetService().addLiquidityPosition(liquidity.token, `-${liquidity.amount}`, positionRepo)
     }
   } else {
     return

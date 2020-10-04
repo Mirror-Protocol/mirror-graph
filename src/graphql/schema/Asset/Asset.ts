@@ -1,6 +1,5 @@
 import { ObjectType, Field } from 'type-graphql'
-import { AssetContracts, AssetPositions, AssetPrices } from 'graphql/schema'
-import { AssetCategoty } from 'types'
+import { AssetPosition, AssetPrices } from 'graphql/schema'
 
 @ObjectType({ simpleResolvers: true })
 export class Asset {
@@ -8,22 +7,16 @@ export class Asset {
   symbol: string
 
   @Field()
-  lpTokenSymbol: string
-
-  @Field()
   name: string
 
   @Field()
-  description: string
+  lpToken: string
 
-  @Field((type) => AssetCategoty)
-  category: AssetCategoty
+  @Field()
+  pair: string
 
-  @Field((type) => AssetContracts, { nullable: true, description: 'contract address' })
-  contracts?: AssetContracts
-
-  @Field((type) => AssetPositions, { nullable: true })
-  positions?: AssetPositions
+  @Field((type) => AssetPosition)
+  position: AssetPosition
 
   @Field((type) => AssetPrices, { nullable: true })
   prices?: AssetPrices
