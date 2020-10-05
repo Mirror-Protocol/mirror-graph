@@ -1,3 +1,2 @@
 export * from './Statistic'
-export * from './LiquidityValue'
-export * from './TradingVolume'
+export * from './HistoryValue'

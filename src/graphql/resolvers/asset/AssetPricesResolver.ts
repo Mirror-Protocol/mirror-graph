@@ -19,9 +19,9 @@ export class AssetPricesResolver {
 
   @FieldResolver()
   async priceAt(
-    @Root() asset: AssetEntity, @Arg('datetime', { description: 'datetime' }) datetime: Date
+    @Root() asset: AssetEntity, @Arg('timestamp') timestamp: number
   ): Promise<string> {
-    return this.priceService.getPrice(asset, datetime.getTime())
+    return this.priceService.getPrice(asset, timestamp)
   }
 
   @FieldResolver()
@@ -34,10 +34,10 @@ export class AssetPricesResolver {
   @FieldResolver()
   async ohlc(
     @Root() asset: AssetEntity,
-    @Arg('from', { description: 'datetime' }) from: Date,
-    @Arg('to', { description: 'datetime' }) to: Date
+    @Arg('from', { description: 'timestamp' }) from: number,
+    @Arg('to', { description: 'timestamp' }) to: number
   ): Promise<AssetOHLC> {
-    return this.priceService.getOHLC(asset.token, from.getTime(), to.getTime())
+    return this.priceService.getOHLC(asset.token, from, to)
   }
 
   @FieldResolver()
@@ -47,9 +47,9 @@ export class AssetPricesResolver {
 
   @FieldResolver()
   async oraclePriceAt(
-    @Root() asset: AssetEntity, @Arg('datetime', { description: 'datetime' }) datetime: Date
+    @Root() asset: AssetEntity, @Arg('timestamp') timestamp: number
   ): Promise<string> {
-    return this.oracleService.getPrice(asset, datetime.getTime())
+    return this.oracleService.getPrice(asset, timestamp)
   }
 
   @FieldResolver()

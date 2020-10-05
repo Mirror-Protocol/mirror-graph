@@ -1,7 +1,7 @@
 import { ObjectType, Field } from 'type-graphql'
 
 @ObjectType({ simpleResolvers: true })
-export class TradingVolume {
+export class HistoryValue {
   @Field()
   timestamp: number
 
