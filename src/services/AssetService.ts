@@ -3,7 +3,6 @@ import { Repository, FindConditions, FindOneOptions } from 'typeorm'
 import { Container, Service } from 'typedi'
 import { num } from 'lib/num'
 import { AssetEntity, AssetPositionsEntity } from 'orm'
-import config from 'config'
 
 @Service()
 export class AssetService {
@@ -35,15 +34,18 @@ export class AssetService {
   async addMintPosition(token: string, amount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions({ token }, undefined, repo)
 
-    positions.mint = num(positions.mint).plus(amount).toFixed(config.DECIMALS)
+    positions.mint = num(positions.mint).plus(amount).toString()
 
     return repo.save(positions)
   }
 
-  async addLiquidityPosition(token: string, amount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
-    const positions = await this.getPositions({ token }, undefined, repo)
+  async addLiquidityPosition(token: string, amount: string, uusdAmount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
+    const positions = await this.getPositions(
+      { token }, { select: ['liquidity', 'uusdLiquidity']}, repo
+    )
 
-    positions.liquidity = num(positions.liquidity).plus(amount).toFixed(config.DECIMALS)
+    positions.liquidity = num(positions.liquidity).plus(amount).toString()
+    positions.uusdLiquidity = num(positions.uusdLiquidity).plus(uusdAmount).toString()
 
     return repo.save(positions)
   }
@@ -51,7 +53,7 @@ export class AssetService {
   async addAsCollateralPosition(token: string, amount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions({ token }, undefined, repo)
 
-    positions.asCollateral = num(positions.asCollateral).plus(amount).toFixed(config.DECIMALS)
+    positions.asCollateral = num(positions.asCollateral).plus(amount).toString()
 
     return repo.save(positions)
   }

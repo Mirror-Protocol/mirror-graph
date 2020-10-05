@@ -17,7 +17,7 @@ export async function getPairPool(pair: string):
 
 export async function getPairPrice(pair: string): Promise<string> {
   const pool = await getPairPool(pair)
-  const price = num(pool.collateralAmount).dividedBy(pool.assetAmount).toFixed(6)
+  const price = num(pool.collateralAmount).dividedBy(pool.assetAmount).toString()
 
   return num(price).isNaN() ? undefined : price
 }
@@ -30,5 +30,5 @@ export async function getOraclePrice(oracle: string, token: string): Promise<str
   if (!oraclePrice)
     return undefined
 
-  return num(oraclePrice.price).multipliedBy(oraclePrice.priceMultiplier).toFixed(6)
+  return num(oraclePrice.price).multipliedBy(oraclePrice.priceMultiplier).toString()
 }

@@ -24,13 +24,22 @@ export class AssetPositionsEntity {
   @PrimaryColumn()
   token: string
 
-  @Column('numeric', { precision: 40, default: 0 })
+  @Column('numeric', { precision: 40, default: 0, comment: 'total minted amount' })
   mint: string
 
-  @Column('numeric', { precision: 40, default: 0 })
+  @Column('numeric', { precision: 40, default: 0, comment: 'total liquidity amount' })
   liquidity: string
 
-  @Column('numeric', { precision: 40, default: 0, comment: 'used as collateral amount' })
+  @Column('numeric', { precision: 40, default: 0, comment: 'total uusd liquidity amount' })
+  uusdLiquidity: string
+
+  @Column('numeric', { precision: 40, default: 0, comment: 'current liquidity pool amount' })
+  pool: string
+
+  @Column('numeric', { precision: 40, default: 0, comment: 'current liquidity uusd pool amount' })
+  uusdPool: string
+
+  @Column('numeric', { precision: 40, default: 0, comment: 'total used as collateral amount' })
   asCollateral: string
 
   @OneToOne((type) => AssetEntity, (asset) => asset.positions, { onDelete: 'CASCADE' })

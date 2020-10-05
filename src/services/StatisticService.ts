@@ -7,7 +7,6 @@ import { num } from 'lib/num'
 import { AssetService, OracleService, govService } from 'services'
 import { DailyStatisticEntity, TxEntity } from 'orm'
 import { Statistic, HistoryValue } from 'graphql/schema'
-import config from 'config'
 
 @Service()
 export class StatisticService {
@@ -36,20 +35,21 @@ export class StatisticService {
       assetMarketCap = assetMarketCap.plus(num(asset.positions.mint).multipliedBy(price))
       totalValueLocked = totalValueLocked.plus(num(asset.positions.asCollateral).multipliedBy(price))
     })
+
     const to = Date.now()
     const from = addDays(to, -1).getTime()
-    const feeValue24h = (await this.txRepo
+
+    const fee = await this.txRepo
       .createQueryBuilder()
       .select('sum(fee_value)', 'fee')
       .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
       .getRawOne()
-    ).fee.toString()
 
     return {
-      assetMarketCap: assetMarketCap.toFixed(config.DECIMALS),
-      totalValueLocked: totalValueLocked.toFixed(config.DECIMALS),
+      assetMarketCap: assetMarketCap.toString(),
+      totalValueLocked: totalValueLocked.toString(),
       collateralRatio: totalValueLocked.dividedBy(assetMarketCap).multipliedBy(100).toFixed(2),
-      feeValue24h
+      feeValue24h: fee?.toString() || '0'
     }
   }
 
@@ -60,10 +60,11 @@ export class StatisticService {
     let daily = await repo.findOne({ datetime })
 
     if (daily) {
-      daily.tradingVolume = num(daily.tradingVolume).plus(volume).toFixed(config.DECIMALS)
+      daily.tradingVolume = num(daily.tradingVolume).plus(volume).toString()
     } else {
-      const gov = govService().get()
-      daily = new DailyStatisticEntity({ gov, datetime, tradingVolume: volume })
+      daily = new DailyStatisticEntity({
+        gov: govService().get(), datetime, tradingVolume: volume
+      })
     }
 
     return repo.save(daily)
@@ -74,23 +75,23 @@ export class StatisticService {
     const assets = await this.assetService.getAll()
     let liquidityValue = num(0)
 
-    await bluebird.map(assets, async (asset) => {
-      if (asset.token === 'uusd') {
-        liquidityValue = liquidityValue.plus(asset.positions.liquidity)
-        return
+    await bluebird.map(
+      assets.filter((asset) => asset.token !== 'uusd'),
+      async (asset) => {
+        const price = await this.oracleService.getPrice(asset)
+        if (!price)
+          return
+
+        liquidityValue = liquidityValue
+          .plus(num(asset.positions.liquidity).multipliedBy(price))
+          .plus(asset.positions.uusdLiquidity)
       }
-
-      const price = await this.oracleService.getPrice(asset)
-      if (!price)
-        return
-
-      liquidityValue = liquidityValue.plus(num(asset.positions.liquidity).multipliedBy(price))
-    })
+    )
 
     const daily = (await repo.findOne({ datetime }))
       || new DailyStatisticEntity({ gov: govService().get(), datetime })
 
-    daily.cumulativeLiquidity = liquidityValue.toFixed(config.DECIMALS)
+    daily.cumulativeLiquidity = liquidityValue.toString()
 
     return repo.save(daily)
   }

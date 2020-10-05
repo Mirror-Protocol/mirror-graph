@@ -22,7 +22,7 @@ export async function parse(
     const commissionAmount = findAttribute(attributes, 'commission_amount')
     const type = offerAsset === 'uusd' ? TxType.BUY : TxType.SELL
     const feeValue = type === TxType.BUY
-      ? num(offerAmount).dividedBy(returnAmount).multipliedBy(commissionAmount).toFixed(6)
+      ? num(offerAmount).dividedBy(returnAmount).multipliedBy(commissionAmount).toString()
       : commissionAmount
 
     parsed = {
@@ -52,11 +52,10 @@ export async function parse(
 
     // add liquidity position
     const positionsRepo = manager.getRepository(AssetPositionsEntity)
-    const liquidities = assets.split(', ')
-    for (const liquidityAmount of liquidities) {
-      const liquidity = splitTokenAmount(liquidityAmount)
-      await assetService().addLiquidityPosition(liquidity.token, liquidity.amount, positionsRepo)
-    }
+    const liquidities = assets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
+    await assetService().addLiquidityPosition(
+      liquidities[0].token, liquidities[0].amount, liquidities[1].amount, positionsRepo
+    )
   } else if (msg['withdraw_liquidity']) {
     const refundAssets = findAttribute(attributes, 'refund_assets')
     parsed = {
@@ -66,11 +65,10 @@ export async function parse(
 
     // remove liquidity position
     const positionsRepo = manager.getRepository(AssetPositionsEntity)
-    const liquidities = refundAssets.split(', ')
-    for (const liquidityAmount of liquidities) {
-      const liquidity = splitTokenAmount(liquidityAmount)
-      await assetService().addLiquidityPosition(liquidity.token, `-${liquidity.amount}`, positionsRepo)
-    }
+    const liquidities = refundAssets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
+    await assetService().addLiquidityPosition(
+      liquidities[1].token, `-${liquidities[1].amount}`, `-${liquidities[0].amount}`, positionsRepo
+    )
   } else {
     return
   }
