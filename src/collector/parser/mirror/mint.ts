@@ -54,7 +54,7 @@ export async function parse(
     cdp = await cdpService().get({ id: positionIdx }, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).plus(deposit.amount).toString()
 
-    // add asCollateral position
+    // add asset's asCollateral position
     await assetService().addAsCollateralPosition(deposit.token, deposit.amount, positionsRepo)
 
     tx = {
@@ -70,7 +70,7 @@ export async function parse(
     cdp = await cdpService().get({ id: positionIdx }, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).minus(withdraw.amount).toString()
 
-    // remove asCollateral position
+    // remove asset's asCollateral position
     await assetService().addAsCollateralPosition(withdraw.token, `-${withdraw.amount}`, positionsRepo)
 
     tx = {
@@ -90,7 +90,7 @@ export async function parse(
     cdp = await cdpService().get({ id: positionIdx }, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).plus(mint.amount).toString()
 
-    // add mint position
+    // add asset's mint position
     await assetService().addMintPosition(mint.token, mint.amount, positionsRepo)
 
     tx = {
@@ -106,7 +106,7 @@ export async function parse(
     cdp = await cdpService().get({ id: positionIdx }, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).minus(burn.amount).toString()
 
-    // add mint position
+    // remove asset's mint position
     await assetService().addMintPosition(burn.token, `-${burn.amount}`, positionsRepo)
 
     tx = {

@@ -33,8 +33,6 @@ async function main(): Promise<void> {
   await initMirror()
 
   await loop()
-
-  console.log('done')
 }
 
 if (require.main === module) {

@@ -32,7 +32,7 @@ export class AssetService {
   }
 
   async addMintPosition(token: string, amount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
-    const positions = await this.getPositions({ token }, undefined, repo)
+    const positions = await this.getPositions({ token }, { select: ['token', 'mint'] }, repo)
 
     positions.mint = num(positions.mint).plus(amount).toString()
 
@@ -41,17 +41,37 @@ export class AssetService {
 
   async addLiquidityPosition(token: string, amount: string, uusdAmount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions(
-      { token }, { select: ['liquidity', 'uusdLiquidity']}, repo
+      { token },
+      { select: ['token', 'liquidity', 'uusdLiquidity', 'pool', 'uusdPool'] },
+      repo
     )
 
     positions.liquidity = num(positions.liquidity).plus(amount).toString()
     positions.uusdLiquidity = num(positions.uusdLiquidity).plus(uusdAmount).toString()
 
+    positions.pool = num(positions.pool).plus(amount).toString()
+    positions.uusdPool = num(positions.uusdPool).plus(uusdAmount).toString()
+
+    return repo.save(positions)
+  }
+
+  async addPoolPosition(token: string, amount: string, uusdAmount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
+    const positions = await this.getPositions(
+      { token }, { select: ['token', 'pool', 'uusdPool']}, repo
+    )
+
+    positions.pool = num(positions.pool).plus(amount).toString()
+    positions.uusdPool = num(positions.uusdPool).plus(uusdAmount).toString()
+
     return repo.save(positions)
   }
 
   async addAsCollateralPosition(token: string, amount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
-    const positions = await this.getPositions({ token }, undefined, repo)
+    const positions = await this.getPositions(
+      { token },
+      { select: ['token', 'asCollateral'] },
+      repo
+    )
 
     positions.asCollateral = num(positions.asCollateral).plus(amount).toString()
 

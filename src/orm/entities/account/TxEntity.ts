@@ -34,7 +34,10 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   @Column({ type: 'jsonb' })
   data: object
 
-  @Column('numeric', { precision: 40, default: 0 })
+  @Column('numeric', { precision: 40, default: 0, comment: 'uusd volume' })
+  volume: string
+
+  @Column('numeric', { precision: 40, default: 0, comment: 'uusd fee value' })
   feeValue: string
 
   @Column()

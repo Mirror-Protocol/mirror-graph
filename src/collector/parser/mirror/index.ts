@@ -3,6 +3,7 @@ import { EntityManager } from 'typeorm'
 import { Container } from 'typedi'
 import { ContractService } from 'services'
 import { ContractType } from 'types'
+import { ContractEntity } from 'orm'
 import { ParseArgs } from './parseArgs'
 import * as factory from './factory'
 import * as oracle from './oracle'
@@ -15,7 +16,9 @@ export async function parseMirrorMsg(
   manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog
 ): Promise<void> {
   const contractService = Container.get(ContractService)
-  const contract = await contractService.get({ address: msg.contract })
+  const contract = await contractService.get(
+    { address: msg.contract }, undefined, manager.getRepository(ContractEntity)
+  )
   if (!contract)
     return
 
