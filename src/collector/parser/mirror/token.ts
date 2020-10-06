@@ -1,6 +1,6 @@
 import { findAttributes, findAttribute } from 'lib/terra'
-import { contractService } from 'services'
-import { ContractEntity, TxEntity } from 'orm'
+import { accountService, contractService, priceService } from 'services'
+import { ContractEntity, TxEntity, BalanceEntity, PriceEntity } from 'orm'
 import { ContractType, TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 import * as mint from './mint'
@@ -40,9 +40,15 @@ export async function parseTransfer(
     ...tx, type: TxType.RECEIVE, data: { from, to, amount }, account: to
   })
 
+  const balanceRepo = manager.getRepository(BalanceEntity)
+  const price = await priceService().getPrice(token, datetime.getTime(), manager.getRepository(PriceEntity))
+  // remove send account balance
+  await accountService().addBalance(from, token, price, `-${amount}`, balanceRepo)
+  // add recv account balance
+  await accountService().addBalance(to, token, price, amount, balanceRepo)
+
   await manager.save([sendTx, recvTx])
 }
-
 
 export async function parse(args: ParseArgs): Promise<void> {
   const { manager, msg } = args

@@ -13,15 +13,15 @@ export class AssetPricesResolver {
 
   @FieldResolver()
   async price(@Root() asset: AssetEntity): Promise<string> {
-    return this.priceService.getPrice(asset)
-    // return this.priceService.getContractPrice(asset)
+    return this.priceService.getPrice(asset.token)
+    // return this.priceService.getContractPrice(asset.pair)
   }
 
   @FieldResolver()
   async priceAt(
     @Root() asset: AssetEntity, @Arg('timestamp') timestamp: number
   ): Promise<string> {
-    return this.priceService.getPrice(asset, timestamp)
+    return this.priceService.getPrice(asset.token, timestamp)
   }
 
   @FieldResolver()
@@ -42,14 +42,14 @@ export class AssetPricesResolver {
 
   @FieldResolver()
   async oraclePrice(@Root() asset: AssetEntity): Promise<string> {
-    return this.oracleService.getPrice(asset)
+    return this.oracleService.getPrice(asset.token)
   }
 
   @FieldResolver()
   async oraclePriceAt(
     @Root() asset: AssetEntity, @Arg('timestamp') timestamp: number
   ): Promise<string> {
-    return this.oracleService.getPrice(asset, timestamp)
+    return this.oracleService.getPrice(asset.token, timestamp)
   }
 
   @FieldResolver()

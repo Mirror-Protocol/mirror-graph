@@ -28,7 +28,7 @@ export class StatisticService {
         return
       }
 
-      const price = await this.oracleService.getPrice(asset)
+      const price = await this.oracleService.getPrice(asset.token)
       if (!price)
         return
 
@@ -78,7 +78,7 @@ export class StatisticService {
     await bluebird.map(
       assets.filter((asset) => asset.token !== 'uusd'),
       async (asset) => {
-        const price = await this.oracleService.getPrice(asset)
+        const price = await this.oracleService.getPrice(asset.token)
         if (!price)
           return
 

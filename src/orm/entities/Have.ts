@@ -47,7 +47,7 @@ export class HaveAccount {
 
   @Column()
   @Index()
-  address: number
+  address: string
 }
 
 export class HaveAccountAndAsset extends HaveAsset {
@@ -57,5 +57,5 @@ export class HaveAccountAndAsset extends HaveAsset {
 
   @Column()
   @Index()
-  address: number
+  address: string
 }

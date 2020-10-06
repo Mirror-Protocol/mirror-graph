@@ -1,8 +1,8 @@
 import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
-import { assetService, cdpService } from 'services'
-import { TxEntity, CdpEntity, AssetPositionsEntity } from 'orm'
+import { assetService, accountService, cdpService, oracleService } from 'services'
+import { TxEntity, CdpEntity, AssetPositionsEntity, BalanceEntity, OraclePriceEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
@@ -11,6 +11,8 @@ export async function parse(
 ): Promise<void> {
   const cdpRepo = manager.getRepository(CdpEntity)
   const positionsRepo = manager.getRepository(AssetPositionsEntity)
+  const balanceRepo = manager.getRepository(BalanceEntity)
+  const oracleRepo = manager.getRepository(OraclePriceEntity)
 
   const { govId } = contract
   const datetime = new Date(timestamp)
@@ -40,6 +42,10 @@ export async function parse(
     // add mint/asCollateral position
     await assetService().addMintPosition(mint.token, mint.amount, positionsRepo)
     await assetService().addAsCollateralPosition(collateral.token, collateral.amount, positionsRepo)
+
+    // add account balance
+    const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
+    await accountService().addBalance(sender, mint.token, price, mint.amount, balanceRepo)
 
     tx = {
       type: TxType.OPEN_POSITION,
@@ -93,6 +99,10 @@ export async function parse(
     // add asset's mint position
     await assetService().addMintPosition(mint.token, mint.amount, positionsRepo)
 
+    // add account balance
+    const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
+    await accountService().addBalance(sender, mint.token, price, mint.amount, balanceRepo)
+
     tx = {
       type: TxType.MINT,
       data: { positionIdx, mintAmount },
@@ -108,6 +118,10 @@ export async function parse(
 
     // remove asset's mint position
     await assetService().addMintPosition(burn.token, `-${burn.amount}`, positionsRepo)
+
+    // remove account balance
+    const price = await oracleService().getPrice(burn.token, datetime.getTime(), oracleRepo)
+    await accountService().addBalance(sender, burn.token, price, burn.amount, balanceRepo)
 
     tx = {
       type: TxType.BURN,

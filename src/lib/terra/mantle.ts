@@ -109,7 +109,7 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
   const txs: TxInfo[] = []
 
   response?.Blocks?.map((Block) => {
-    Block.Txs?.map((rawTx) => {
+    Block.Txs?.filter(rawTx => rawTx.Success).map((rawTx) => {
       const infos = toSnakeCase(pick(
         rawTx,
         ['Height', 'GasWanted', 'GasUsed', 'RawLog', 'Logs', 'Events', 'Timestamp']

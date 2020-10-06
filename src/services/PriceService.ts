@@ -4,7 +4,7 @@ import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
 import { getOHLC, getHistory } from 'lib/price'
 import { getPairPrice } from 'lib/mirror'
-import { PriceEntity, AssetEntity } from 'orm'
+import { PriceEntity } from 'orm'
 import { HistoryRanges } from 'types'
 import { AssetOHLC, PriceAt } from 'graphql/schema'
 
@@ -18,9 +18,9 @@ export class PriceService {
     return repo.findOne(conditions)
   }
 
-  async getPrice(asset: AssetEntity, timestamp: number = Date.now(), repo = this.repo): Promise<string> {
+  async getPrice(token: string, timestamp: number = Date.now(), repo = this.repo): Promise<string> {
     const price = await repo.findOne(
-      { asset, datetime: LessThanOrEqual(new Date(timestamp)) },
+      { token, datetime: LessThanOrEqual(new Date(timestamp)) },
       {
         select: ['close', 'datetime'],
         order: { datetime: 'DESC' }
@@ -29,8 +29,8 @@ export class PriceService {
     return price?.close
   }
 
-  async getContractPrice(asset: AssetEntity): Promise<string> {
-    return getPairPrice(asset.pair)
+  async getContractPrice(pair: string): Promise<string> {
+    return getPairPrice(pair)
   }
 
   async setOHLC(
