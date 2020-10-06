@@ -13,12 +13,12 @@ export class AccountService {
     @Inject((type) => AssetService) private readonly assetService: AssetService,
   ) {}
 
-  async getBalance(address: string, symbol: string): Promise<AssetBalance> {
-    if (symbol === 'uusd') {
-      return this.getTerraBalance(address, symbol)
+  async getBalance(address: string, token: string): Promise<AssetBalance> {
+    if (token === 'uusd') {
+      return this.getTerraBalance(address, token)
     }
 
-    return this.getAssetBalance(address, await this.assetService.get({ symbol }))
+    return this.getAssetBalance(address, await this.assetService.get({ token }))
   }
 
   async getTerraBalance(address: string, symbol: string): Promise<AssetBalance> {

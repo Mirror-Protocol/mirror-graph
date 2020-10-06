@@ -83,6 +83,9 @@ export async function parse(
   }
 
   // set pool price ohlc
+  const tx = new TxEntity({
+    ...parsed, height, txHash, account: sender, datetime, govId, token, contract
+  })
   const price = await priceService().setOHLC(
     token,
     datetime.getTime(),
@@ -90,9 +93,6 @@ export async function parse(
     manager.getRepository(PriceEntity),
     false
   )
-  const tx = new TxEntity({
-    ...parsed, height, txHash, account: sender, datetime, govId, token, contract
-  })
 
   await manager.save([tx, price])
 }
