@@ -3,7 +3,7 @@ import { ObjectType, Field } from 'type-graphql'
 @ObjectType({ simpleResolvers: true })
 export class AssetBalance {
   @Field()
-  symbol: string
+  token: string
 
   @Field()
   balance: string

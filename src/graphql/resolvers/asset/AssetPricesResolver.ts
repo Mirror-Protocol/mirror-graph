@@ -13,8 +13,8 @@ export class AssetPricesResolver {
 
   @FieldResolver()
   async price(@Root() asset: AssetEntity): Promise<string> {
-    // return this.priceService.getPrice(asset)
-    return this.priceService.getContractPrice(asset)
+    return this.priceService.getPrice(asset)
+    // return this.priceService.getContractPrice(asset)
   }
 
   @FieldResolver()

@@ -36,25 +36,26 @@ export class HaveGovAndMaybeAsset extends HaveGov {
   asset?: AssetEntity
 
   @Column({ nullable: true })
+  @Index()
   token?: string
 }
 
 export class HaveAccount {
   @ManyToOne((type) => AccountEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'account_address' })
+  @JoinColumn({ name: 'address' })
   account: AccountEntity
 
   @Column()
   @Index()
-  accountAddress: number
+  address: number
 }
 
 export class HaveAccountAndAsset extends HaveAsset {
   @ManyToOne((type) => AccountEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'account_address' })
+  @JoinColumn({ name: 'address' })
   account: AccountEntity
 
   @Column()
   @Index()
-  accountAddress: number
+  address: number
 }

@@ -32,3 +32,9 @@ export async function getOraclePrice(oracle: string, token: string): Promise<str
 
   return num(oraclePrice.price).multipliedBy(oraclePrice.priceMultiplier).toString()
 }
+
+export async function getTokenBalance(token: string, address: string): Promise<string> {
+  const { balance } = await getContractStore(token, { balance: { address } })
+
+  return balance
+}

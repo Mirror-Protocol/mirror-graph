@@ -1,10 +1,3 @@
-export interface ContractInfo {
-  codeId: number
-  address: string
-  owner: string
-  migratable: boolean
-}
-
 export enum ContractType {
   COLLECTOR = 'collector',
   FACTORY = 'factory',

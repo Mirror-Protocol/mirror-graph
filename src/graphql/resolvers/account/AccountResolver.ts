@@ -8,11 +8,11 @@ export class AccountResolver {
     private readonly accountService: AccountService,
   ) {}
 
-  @Query((returns) => AssetBalance)
+  @Query((returns) => String)
   async balance(
-    @Arg('address') address: string, @Arg('symbol') symbol: string
-  ): Promise<AssetBalance> {
-    return this.accountService.getBalance(address, symbol)
+    @Arg('address') address: string, @Arg('token') token: string
+  ): Promise<string> {
+    return this.accountService.getBalance(address, token)
   }
 
   @Query((returns) => [AssetBalance])
