@@ -24,4 +24,18 @@ export function ownerCommands(): void {
 
       logger.info(`mirror contracts loaded. gov id: ${gov.id}`)
     })
+
+  program
+    .command('update-code-ids')
+    .description('update codeIds from json')
+    .action(async ({ password }) => {
+      const codeIds = loadCodeIds()
+
+      const gov = govService.get()
+      gov.codeIds = codeIds
+
+      await govService.update(gov)
+
+      logger.info(`codeIds updated. gov id: ${gov.id}`)
+    })
 }
