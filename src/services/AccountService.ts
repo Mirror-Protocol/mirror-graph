@@ -1,19 +1,24 @@
-import * as bluebird from 'bluebird'
 import { Repository, FindConditions, FindOneOptions } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { Container, Service, Inject } from 'typedi'
+import { Container, Service } from 'typedi'
 import { lcd } from 'lib/terra'
 import { num } from 'lib/num'
-import { AssetService } from 'services'
 import { AssetBalance } from 'graphql/schema'
 import { BalanceEntity } from 'orm'
 
 @Service()
 export class AccountService {
   constructor(
-    @Inject((type) => AssetService) private readonly assetService: AssetService,
     @InjectRepository(BalanceEntity) private readonly balanceRepo: Repository<BalanceEntity>,
   ) {}
+
+  async getBalanceEntity(
+    conditions: FindConditions<BalanceEntity>,
+    options?: FindOneOptions<BalanceEntity>,
+    repo = this.balanceRepo
+  ): Promise<BalanceEntity> {
+    return repo.findOne(conditions, options)
+  }
 
   async getBalance(address: string, token: string): Promise<AssetBalance> {
     if (token === 'uusd') {
@@ -21,7 +26,9 @@ export class AccountService {
       return { token, balance: coin.amount.toString(), averagePrice: '0' }
     }
 
-    const balanceEntity = await this.getBalanceEntity({ address, token })
+    const balanceEntity = await this.getBalanceEntity(
+      { address, token }, { select: ['balance', 'averagePrice']}
+    )
     if (!balanceEntity)
       return
 
@@ -32,20 +39,13 @@ export class AccountService {
     }
   }
 
-  async getBalances(address: string): Promise<AssetBalance[]> {
-    const balances = await bluebird
-      .map(this.assetService.getAll(), (asset) => this.getBalance(address, asset.token))
-      .filter(Boolean)
+  async getBalances(address: string, repo = this.balanceRepo): Promise<AssetBalance[]> {
+    const balances = await repo.find({
+      select: ['token', 'balance', 'averagePrice'],
+      where: { address }
+    })
 
-    return balances.filter((balance) => num(balance.balance).isGreaterThan(0))
-  }
-
-  async getBalanceEntity(
-    conditions: FindConditions<BalanceEntity>,
-    options?: FindOneOptions<BalanceEntity>,
-    repo = this.balanceRepo
-  ): Promise<BalanceEntity> {
-    return repo.findOne(conditions, options)
+    return balances
   }
 
   async addBalance(

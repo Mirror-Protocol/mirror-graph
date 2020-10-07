@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, CreateDateColumn, Column } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, CreateDateColumn, Column, Index } from 'typeorm'
 import { HaveAccount } from '../Have'
 
 @Entity('balance_history')
@@ -9,9 +9,10 @@ export class BalanceHistoryEntity extends HaveAccount {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column('numeric', { precision: 40, default: 0 })
-  balance: string
+  @Column({ type: 'jsonb' })
+  balances: { [token: string]: string }
 
   @Column()
+  @Index()
   datetime: Date
 }

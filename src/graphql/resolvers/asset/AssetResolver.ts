@@ -14,7 +14,7 @@ export class AssetResolver {
 
   @Query((returns) => [Asset], { description: 'Get all listed assets' })
   async assets(): Promise<Asset[]> {
-    return this.assetService.getAll()
+    return this.assetService.getAll({ where: { isListed: true }})
   }
 
   @FieldResolver()

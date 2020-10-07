@@ -40,6 +40,9 @@ export class AssetEntity extends HaveGov {
   @Column()
   pair: string // pair address
 
+  @Column({ default: true })
+  isListed: boolean
+
   @OneToOne(
     (type) => AssetPositionsEntity,
     (positions) => positions.asset,
