@@ -39,17 +39,17 @@ export class StatisticService {
     const to = Date.now()
     const from = addDays(to, -1).getTime()
 
-    const fee = await this.txRepo
+    const feeRaw = await this.txRepo
       .createQueryBuilder()
       .select('sum(fee_value)', 'fee')
       .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
       .getRawOne()
 
     return {
-      assetMarketCap: assetMarketCap.toString(),
-      totalValueLocked: totalValueLocked.toString(),
+      assetMarketCap: assetMarketCap.toFixed(0),
+      totalValueLocked: totalValueLocked.toFixed(0),
       collateralRatio: totalValueLocked.dividedBy(assetMarketCap).multipliedBy(100).toFixed(2),
-      feeValue24h: fee?.toString() || '0'
+      feeValue24h: feeRaw?.fee?.toFixed(0) || '0'
     }
   }
 
