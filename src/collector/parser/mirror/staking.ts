@@ -26,7 +26,7 @@ export async function parse(
   const datetime = new Date(timestamp)
 
   const tx = new TxEntity({
-    ...parsed, height, txHash, account: sender, datetime, govId, contract
+    ...parsed, height, txHash, address: sender, datetime, govId, contract
   })
   await manager.save(tx)
 }

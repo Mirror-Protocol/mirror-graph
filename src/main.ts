@@ -30,7 +30,7 @@ async function gracefulShutdown(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  logger.info('Initialize mirror-api-server')
+  logger.info('Initialize mirror-graph')
 
   initErrorHandler({ sentryDsn: process.env.SENTRY })
 

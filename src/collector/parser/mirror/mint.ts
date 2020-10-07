@@ -120,8 +120,7 @@ export async function parse(
     await assetService().addMintPosition(burn.token, `-${burn.amount}`, positionsRepo)
 
     // remove account balance
-    const price = await oracleService().getPrice(burn.token, datetime.getTime(), oracleRepo)
-    await accountService().addBalance(sender, burn.token, price, burn.amount, balanceRepo)
+    await accountService().removeBalance(sender, burn.token, burn.amount, balanceRepo)
 
     tx = {
       type: TxType.BURN,
@@ -133,7 +132,7 @@ export async function parse(
   }
 
   const txEntity = new TxEntity({
-    ...tx, height, txHash, account: sender, datetime, govId, contract
+    ...tx, height, txHash, address: sender, datetime, govId, contract
   })
   await manager.save([cdp, txEntity])
 }

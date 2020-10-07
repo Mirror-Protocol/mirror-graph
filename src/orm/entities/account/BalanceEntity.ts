@@ -19,7 +19,7 @@ export class BalanceEntity extends HaveAsset {
   @Index()
   address: string
 
-  @Column('numeric', { precision: 40, default: 0 })
+  @Column('decimal', { precision: 40, scale: 6 })
   averagePrice: string
 
   @Column('numeric', { precision: 40, default: 0 })

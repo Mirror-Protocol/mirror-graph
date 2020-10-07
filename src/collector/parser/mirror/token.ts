@@ -37,13 +37,13 @@ export async function parseTransfer(
 
   const sendTx = new TxEntity({ ...tx, type: TxType.SEND, data: { from, to, amount } })
   const recvTx = new TxEntity({
-    ...tx, type: TxType.RECEIVE, data: { from, to, amount }, account: to
+    ...tx, type: TxType.RECEIVE, data: { from, to, amount }, address: to
   })
 
   const balanceRepo = manager.getRepository(BalanceEntity)
   const price = await priceService().getPrice(token, datetime.getTime(), manager.getRepository(PriceEntity))
   // remove send account balance
-  await accountService().addBalance(from, token, price, `-${amount}`, balanceRepo)
+  await accountService().removeBalance(from, token, amount, balanceRepo)
   // add recv account balance
   await accountService().addBalance(to, token, price, amount, balanceRepo)
 

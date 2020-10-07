@@ -26,7 +26,7 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   txHash: string
 
   @Column()
-  account: string
+  address: string
 
   @Column({ type: 'enum', enum: TxType })
   type: TxType

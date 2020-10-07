@@ -65,13 +65,11 @@ export async function parse(
     )
 
     // add account balance
-    await accountService().addBalance(
-      sender,
-      token,
-      price,
-      type === TxType.BUY ? recvAmount : `-${offerAmount}`,
-      balanceRepo
-    )
+    if (type === TxType.BUY) {
+      await accountService().addBalance(sender, token, price, recvAmount, balanceRepo)
+    } else {
+      await accountService().removeBalance(sender, token, offerAmount, balanceRepo)
+    }
 
     // add daily trading volume
     const dailyStatRepo = manager.getRepository(DailyStatisticEntity)
@@ -88,8 +86,7 @@ export async function parse(
     }
 
     // remove account balance
-    const price = await priceService().getPrice(token, datetime.getTime(), manager.getRepository(PriceEntity))
-    await accountService().addBalance(sender, token, price, `-${assetToken.amount}`, balanceRepo)
+    await accountService().removeBalance(sender, token, assetToken.amount, balanceRepo)
 
     // add asset's liquidity position
     positions = await assetService().addLiquidityPosition(
@@ -120,7 +117,7 @@ export async function parse(
 
   // set pool price ohlc
   const tx = new TxEntity({
-    ...parsed, height, txHash, account: sender, datetime, govId, token, contract
+    ...parsed, height, txHash, address: sender, datetime, govId, token, contract
   })
 
   const price = await priceService().setOHLC(
