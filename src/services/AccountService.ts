@@ -4,7 +4,6 @@ import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { lcd } from 'lib/terra'
 import { num } from 'lib/num'
-import { getTokenBalance } from 'lib/mirror'
 import { AssetService } from 'services'
 import { AssetBalance } from 'graphql/schema'
 import { BalanceEntity } from 'orm'
@@ -16,26 +15,27 @@ export class AccountService {
     @InjectRepository(BalanceEntity) private readonly balanceRepo: Repository<BalanceEntity>,
   ) {}
 
-  async getBalance(address: string, token: string): Promise<string> {
+  async getBalance(address: string, token: string): Promise<AssetBalance> {
     if (token === 'uusd') {
       const coin = (await lcd.bank.balance(address)).get(token)
-      return coin.amount.toString()
+      return { token, balance: coin.amount.toString(), averagePrice: '0' }
     }
 
-    return getTokenBalance(token, address)
+    const balanceEntity = await this.getBalanceEntity({ address, token })
+    if (!balanceEntity)
+      return
+
+    return {
+      token,
+      balance: balanceEntity.balance,
+      averagePrice: balanceEntity.averagePrice,
+    }
   }
 
   async getBalances(address: string): Promise<AssetBalance[]> {
-    const balances = await bluebird.map(
-      this.assetService.getAll(), async (asset) => ({
-        token: asset.token,
-        balance: await this.getBalance(address, asset.token)
-      })
-    )
-    balances.push({
-      token: 'uusd',
-      balance: await this.getBalance(address, 'uusd')
-    })
+    const balances = await bluebird
+      .map(this.assetService.getAll(), (asset) => this.getBalance(address, asset.token))
+      .filter(Boolean)
 
     return balances.filter((balance) => num(balance.balance).isGreaterThan(0))
   }

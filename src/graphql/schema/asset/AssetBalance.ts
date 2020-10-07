@@ -7,4 +7,7 @@ export class AssetBalance {
 
   @Field()
   balance: string
+
+  @Field({ description: 'average purchase price'})
+  averagePrice: string
 }
