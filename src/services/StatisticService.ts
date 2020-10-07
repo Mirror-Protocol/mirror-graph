@@ -49,7 +49,7 @@ export class StatisticService {
       assetMarketCap: assetMarketCap.toFixed(0),
       totalValueLocked: totalValueLocked.toFixed(0),
       collateralRatio: totalValueLocked.dividedBy(assetMarketCap).multipliedBy(100).toFixed(2),
-      feeValue24h: feeRaw?.fee?.toFixed(0) || '0'
+      feeValue24h: feeRaw?.fee || '0'
     }
   }
 
