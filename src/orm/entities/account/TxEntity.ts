@@ -6,7 +6,7 @@ import { ContractEntity } from 'orm'
 import { HaveGovAndMaybeAsset } from '../Have'
 
 @Entity('tx')
-@Index('idx_tx_account_datetime_gov', ['account', 'datetime', 'gov'])
+@Index('idx_tx_address_datetime_gov', ['address', 'datetime', 'gov'])
 export class TxEntity extends HaveGovAndMaybeAsset {
   constructor(options: Partial<TxEntity>) {
     super()
