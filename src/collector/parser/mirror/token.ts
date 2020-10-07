@@ -33,7 +33,7 @@ export async function parseTransfer(
   const to = findAttribute(attributes, 'to')
   const amount = findAttribute(attributes, 'amount')
 
-  const tx = { height, txHash, account: sender, datetime, govId, token, contract }
+  const tx = { height, txHash, address: sender, datetime, govId, token, contract }
 
   const sendTx = new TxEntity({ ...tx, type: TxType.SEND, data: { from, to, amount } })
   const recvTx = new TxEntity({
