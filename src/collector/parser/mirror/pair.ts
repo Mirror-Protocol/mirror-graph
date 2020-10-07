@@ -31,8 +31,8 @@ export async function parse(
     const volume = type === TxType.BUY ? offerAmount : returnAmount
 
     const price = type === TxType.BUY
-      // buy price: offer / (return - commission)
-      ? num(offerAmount).dividedBy(num(returnAmount).minus(commissionAmount)).toString()
+      // buy price: offer / (return + commission)
+      ? num(offerAmount).dividedBy(num(returnAmount).plus(commissionAmount)).toString()
       // sell price: (return + commission) / offer
       : num(returnAmount).plus(commissionAmount).dividedBy(offerAmount).toString()
 
