@@ -1,15 +1,13 @@
-import { Container } from 'typedi'
 import { program } from 'commander'
-import { GovService } from 'services'
+import { govService, assetService } from 'services'
 import * as logger from 'lib/logger'
 import { TxWallet } from 'lib/terra'
 import { getKey } from 'lib/keystore'
+import { Assets } from 'types'
 import config from 'config'
-import { loadCodeIds, loadContracts, loadAssets } from './data'
+import { loadCodeIds, loadContracts, loadAssets, saveAssets } from './data'
 
 export function ownerCommands(): void {
-  const govService = Container.get(GovService)
-
   program
     .command('create')
     .description('create gov from json')
@@ -20,7 +18,7 @@ export function ownerCommands(): void {
       const contracts = loadContracts()
       const assets = loadAssets()
 
-      const gov = await govService.create(wallet, codeIds, contracts, assets)
+      const gov = await govService().create(wallet, codeIds, contracts, assets)
 
       logger.info(`mirror contracts loaded. gov id: ${gov.id}`)
     })
@@ -28,14 +26,29 @@ export function ownerCommands(): void {
   program
     .command('update-code-ids')
     .description('update codeIds from json')
-    .action(async ({ password }) => {
+    .action(async () => {
       const codeIds = loadCodeIds()
 
-      const gov = govService.get()
+      const gov = govService().get()
       gov.codeIds = codeIds
 
-      await govService.update(gov)
+      await govService().update(gov)
 
       logger.info(`codeIds updated. gov id: ${gov.id}`)
+    })
+
+  program
+    .command('export-assets')
+    .description('export assets.json')
+    .action(async () => {
+      const assetList = await assetService().getAll({ where: { isListed: true }})
+      const assets: Assets = {}
+
+      assetList.map((asset) => {
+        const { symbol, name, token, pair, lpToken } = asset
+        assets[asset.token] = { symbol, name, token, pair, lpToken }
+      })
+
+      saveAssets(assets)
     })
 }

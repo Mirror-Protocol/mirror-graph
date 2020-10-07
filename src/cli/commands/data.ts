@@ -1,5 +1,6 @@
 import * as fs from 'fs'
 import { CodeIds, Contracts, Asset, Assets, Whitelist } from 'types'
+import * as logger from 'lib/logger'
 
 const CODE_IDS_PATH = './data/codeIds.json'
 const WHITELIST_PATH = './data/whitelist.json'
@@ -12,6 +13,15 @@ function loadJSON(path: string): unknown {
     return data
   } catch (error) {
     throw new Error(`not provided ${path}`)
+  }
+}
+
+function saveJSON(path: string, data: unknown): void {
+  try {
+    fs.writeFileSync(path, JSON.stringify(data))
+    logger.error(`${path} saved`)
+  } catch (error) {
+    throw new Error(`${path} save failed`)
   }
 }
 
@@ -36,4 +46,8 @@ export function getAsset(symbol: string): Asset {
   const token = Object.keys(assets).find(token => assets[token].symbol === symbol)
 
   return assets[token]
+}
+
+export function saveAssets(assets: Assets): void {
+  saveJSON(ASSETS_PATH, assets)
 }

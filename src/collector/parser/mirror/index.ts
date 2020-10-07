@@ -11,6 +11,7 @@ import * as pair from './pair'
 import * as token from './token'
 import * as mint from './mint'
 import * as staking from './staking'
+import * as gov from './gov'
 
 export async function parseMirrorMsg(
   manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog
@@ -35,6 +36,9 @@ export async function parseMirrorMsg(
   }
 
   switch (contract.type) {
+    case ContractType.GOV:
+      return gov.parse(args)
+
     case ContractType.FACTORY:
       return factory.parse(args)
 

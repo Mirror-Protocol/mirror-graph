@@ -83,6 +83,26 @@ export class GovService {
     })
   }
 
+  whitelisting(
+    govId: number, symbol: string, name: string, token: string, pair: string, lpToken: string
+  ): unknown[] {
+    if (!token || !pair || !lpToken) {
+      throw new Error(`whitelisting failed. token(${token}), lpToken(${lpToken}), pair(${pair})`)
+    }
+
+    const asset = new AssetEntity({ govId, symbol, name, token, pair, lpToken })
+    const entities = [
+      asset,
+      new ContractEntity({ address: token, type: ContractType.TOKEN, govId, asset }),
+      new ContractEntity({ address: pair, type: ContractType.PAIR, govId, asset }),
+      new ContractEntity({ address: lpToken, type: ContractType.LP_TOKEN, govId, asset }),
+    ]
+
+    logger.info(`whitelisting: ${symbol}`)
+
+    return entities
+  }
+
   async update(gov: GovEntity): Promise<GovEntity> {
     this.gov = gov
 
