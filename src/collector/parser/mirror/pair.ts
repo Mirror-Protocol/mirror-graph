@@ -25,20 +25,37 @@ export async function parse(
     const taxAmount = findAttribute(attributes, 'tax_amount')
     const spreadAmount = findAttribute(attributes, 'spread_amount')
     const commissionAmount = findAttribute(attributes, 'commission_amount')
-    const recvAmount = num(returnAmount).minus(taxAmount).toString()
 
     const type = offerAsset === 'uusd' ? TxType.BUY : TxType.SELL
-    const volume = type === TxType.BUY ? offerAmount : returnAmount
+    const poolChanged = num(returnAmount).plus(commissionAmount).times(-1).toString()
+    const recvAmount = num(returnAmount).minus(taxAmount).toString()
 
+    const volume = type === TxType.BUY
+      ? offerAmount
+      : num(returnAmount).plus(spreadAmount).plus(commissionAmount).toString()
+
+    // buy price: offer / (return + commission)
+    // sell price: (return + commission) / offer
     const price = type === TxType.BUY
-      // buy price: offer / (return + commission)
       ? num(offerAmount).dividedBy(num(returnAmount).plus(commissionAmount)).toString()
-      // sell price: (return + commission) / offer
       : num(returnAmount).plus(commissionAmount).dividedBy(offerAmount).toString()
 
     const feeValue = type === TxType.BUY
       ? num(price).multipliedBy(commissionAmount).toString()
       : commissionAmount
+
+    // add asset's pool position, account balance
+    if (type === TxType.BUY) {
+      positions = await assetService().addPoolPosition(token, poolChanged, offerAmount, positionsRepo)
+      await accountService().addBalance(sender, token, price, recvAmount, balanceRepo)
+    } else {
+      positions = await assetService().addPoolPosition(token, offerAmount, poolChanged, positionsRepo)
+      await accountService().removeBalance(sender, token, offerAmount, balanceRepo)
+    }
+
+    // add daily trading volume
+    const dailyStatRepo = manager.getRepository(DailyStatisticEntity)
+    await statisticService().addDailyTradingVolume(datetime.getTime(), volume, dailyStatRepo)
 
     parsed = {
       type,
@@ -55,25 +72,6 @@ export async function parse(
       feeValue,
       volume
     }
-
-    // add asset's pool position
-    positions = await assetService().addPoolPosition(
-      token,
-      type === TxType.BUY ? `-${returnAmount}` : offerAmount,
-      type === TxType.BUY ? offerAmount : `-${returnAmount}`,
-      positionsRepo
-    )
-
-    // add account balance
-    if (type === TxType.BUY) {
-      await accountService().addBalance(sender, token, price, recvAmount, balanceRepo)
-    } else {
-      await accountService().removeBalance(sender, token, offerAmount, balanceRepo)
-    }
-
-    // add daily trading volume
-    const dailyStatRepo = manager.getRepository(DailyStatisticEntity)
-    await statisticService().addDailyTradingVolume(datetime.getTime(), volume, dailyStatRepo)
   } else if (msg['provide_liquidity']) {
     const assets = findAttribute(attributes, 'assets')
     const liquidities = assets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
