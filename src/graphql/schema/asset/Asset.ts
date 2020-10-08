@@ -10,10 +10,13 @@ export class Asset {
   name: string
 
   @Field()
-  lpToken: string
+  token: string
 
   @Field()
   pair: string
+
+  @Field()
+  lpToken: string
 
   @Field((type) => AssetPositions)
   positions: AssetPositions

@@ -9,5 +9,14 @@ export class AssetPositions {
   liquidity: string
 
   @Field()
+  uusdLiquidity: string
+
+  @Field()
+  pool: string
+
+  @Field()
+  uusdPool: string
+
+  @Field()
   asCollateral: string
 }
