@@ -1,5 +1,5 @@
 import { ObjectType, Field } from 'type-graphql'
-import { HistoryValue } from './'
+import { ValueAt } from './'
 
 @ObjectType({ simpleResolvers: true })
 export class Statistic {
@@ -15,9 +15,9 @@ export class Statistic {
   @Field()
   feeValue24h: string
 
-  @Field((type) => [HistoryValue], { nullable: true })
-  liquidityHistory: HistoryValue[]
+  @Field((type) => [ValueAt], { nullable: true })
+  liquidityHistory: ValueAt[]
 
-  @Field((type) => [HistoryValue], { nullable: true })
-  tradingHistory: HistoryValue[]
+  @Field((type) => [ValueAt], { nullable: true })
+  tradingHistory: ValueAt[]
 }

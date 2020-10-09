@@ -6,7 +6,7 @@ import { Container, Service, Inject } from 'typedi'
 import { num } from 'lib/num'
 import { AssetService, OracleService, govService } from 'services'
 import { DailyStatisticEntity, TxEntity } from 'orm'
-import { Statistic, HistoryValue } from 'graphql/schema'
+import { Statistic, ValueAt } from 'graphql/schema'
 
 @Service()
 export class StatisticService {
@@ -96,7 +96,7 @@ export class StatisticService {
     return repo.save(daily)
   }
 
-  async getLiquidityHistory(from: number, to: number): Promise<HistoryValue[]> {
+  async getLiquidityHistory(from: number, to: number): Promise<ValueAt[]> {
     return this.dailyRepo
       .createQueryBuilder()
       .select('datetime', 'timestamp')
@@ -105,7 +105,7 @@ export class StatisticService {
       .getRawMany()
   }
 
-  async getTradingVolumeHistory(from: number, to: number): Promise<HistoryValue[]> {
+  async getTradingVolumeHistory(from: number, to: number): Promise<ValueAt[]> {
     return this.dailyRepo
       .createQueryBuilder()
       .select('datetime', 'timestamp')

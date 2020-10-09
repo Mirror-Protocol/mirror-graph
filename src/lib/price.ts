@@ -1,6 +1,4 @@
 import { Repository } from 'typeorm'
-import { getHistoryRangeValues } from 'lib/time'
-import { HistoryRanges } from 'types'
 import { AssetOHLC, PriceAt } from 'graphql/schema'
 
 export async function getOHLC<T>(repo: Repository<T>, token: string, from: number, to: number): Promise<AssetOHLC> {
@@ -17,19 +15,17 @@ export async function getOHLC<T>(repo: Repository<T>, token: string, from: numbe
   return new AssetOHLC({ ...ohlc, from, to })
 }
 
-export async function getHistory<T>(repo: Repository<T>, token: string, range: HistoryRanges): Promise<PriceAt[]> {
-  const to = Date.now()
-  const { from, interval } = getHistoryRangeValues(to, range)
-
-  const prices = await repo
+export async function getHistory<T>(
+  repo: Repository<T>, token: string | string[], from: number, to: number, interval: number
+): Promise<PriceAt[]> {
+  return repo
     .createQueryBuilder()
-    .select(['datetime', 'close'])
-    .where('token = :token', { token })
+    .select('token')
+    .addSelect('datetime', 'timestamp')
+    .addSelect('close', 'price')
+    .where(Array.isArray(token) ? 'token = ANY(:token)' : 'token = :token', { token })
     .andWhere('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
     .andWhere("int4(date_part('minute', datetime)) % :interval = 0", { interval })
+    .orderBy('datetime', 'ASC')
     .getRawMany()
-
-  return prices.map((price) => ({
-    timestamp: new Date(price.datetime).getTime(), price: price.close
-  }))
 }

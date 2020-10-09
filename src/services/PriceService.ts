@@ -5,7 +5,6 @@ import { num } from 'lib/num'
 import { getOHLC, getHistory } from 'lib/price'
 import { getPairPrice } from 'lib/mirror'
 import { PriceEntity } from 'orm'
-import { HistoryRanges } from 'types'
 import { AssetOHLC, PriceAt } from 'graphql/schema'
 
 @Service()
@@ -56,8 +55,10 @@ export class PriceService {
     return getOHLC<PriceEntity>(repo, token, from, to)
   }
 
-  async getHistory(token: string, range: HistoryRanges, repo = this.repo): Promise<PriceAt[]> {
-    return getHistory<PriceEntity>(repo, token, range)
+  async getHistory(
+    token: string | string[], from: number, to: number, interval: number, repo = this.repo
+  ): Promise<PriceAt[]> {
+    return getHistory<PriceEntity>(repo, token, from, to, interval)
   }
 }
 

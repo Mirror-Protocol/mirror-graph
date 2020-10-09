@@ -1,14 +1,16 @@
-import { Repository, FindConditions, FindOneOptions } from 'typeorm'
+import { Repository, FindConditions, FindOneOptions, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { Container, Service } from 'typedi'
+import { Container, Service, Inject } from 'typedi'
 import { lcd } from 'lib/terra'
 import { num } from 'lib/num'
-import { AssetBalance } from 'graphql/schema'
+import { PriceService } from 'services'
+import { AssetBalance, ValueAt } from 'graphql/schema'
 import { BalanceEntity } from 'orm'
 
 @Service()
 export class AccountService {
   constructor(
+    @Inject((type) => PriceService) private readonly priceService: PriceService,
     @InjectRepository(BalanceEntity) private readonly balanceRepo: Repository<BalanceEntity>,
   ) {}
 
@@ -46,6 +48,13 @@ export class AccountService {
     })
 
     return balances
+  }
+
+  async getBalanceHistory(address: string, from: number, to: number, interval: number): Promise<ValueAt[]> {
+    return getConnection().query(
+      'SELECT * FROM public.balanceHistory($1, $2, $3, $4)',
+      [address, new Date(from), new Date(to), interval]
+    )
   }
 
   async addBalance(

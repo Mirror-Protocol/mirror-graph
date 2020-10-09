@@ -1,2 +1,2 @@
 export * from './Statistic'
-export * from './HistoryValue'
+export * from './ValueAt'
