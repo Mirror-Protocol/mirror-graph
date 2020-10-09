@@ -36,7 +36,6 @@ typings/
 .env
 
 # report
-data/*.json
 !data/.gitkeep
 
 .envrc
