@@ -24,11 +24,11 @@ export async function parse(
     const returnAmount = findAttribute(attributes, 'return_amount')
     const taxAmount = findAttribute(attributes, 'tax_amount')
     const spreadAmount = findAttribute(attributes, 'spread_amount')
-    const commissionAmount = findAttribute(attributes, 'commission_amount')
+    const lpCommissionAmount = findAttribute(attributes, 'lp_commission_amount')
+    const ownerCommissionAmount = findAttribute(attributes, 'owner_commission_amount')
+    const commissionAmount = num(lpCommissionAmount).plus(ownerCommissionAmount).toString()
 
     const type = offerAsset === 'uusd' ? TxType.BUY : TxType.SELL
-    const poolChanged = num(returnAmount).plus(commissionAmount).times(-1).toString()
-    const recvAmount = num(returnAmount).minus(taxAmount).toString()
 
     const volume = type === TxType.BUY
       ? offerAmount
@@ -40,9 +40,15 @@ export async function parse(
       ? num(offerAmount).dividedBy(num(returnAmount).plus(commissionAmount)).toString()
       : num(returnAmount).plus(commissionAmount).dividedBy(offerAmount).toString()
 
+    // buy fee: pool price * commission
     const feeValue = type === TxType.BUY
-      ? num(price).multipliedBy(commissionAmount).toString()
+      ? num(offerAmount)
+          .dividedBy(num(returnAmount).plus(spreadAmount).plus(commissionAmount))
+          .multipliedBy(commissionAmount).toString()
       : commissionAmount
+
+    const recvAmount = num(returnAmount).minus(taxAmount).toString()
+    const poolChanged = num(returnAmount).plus(ownerCommissionAmount).multipliedBy(-1).toString()
 
     // add asset's pool position, account balance
     if (type === TxType.BUY) {
@@ -67,7 +73,10 @@ export async function parse(
         taxAmount,
         spreadAmount,
         commissionAmount,
+        lpCommissionAmount,
+        ownerCommissionAmount,
         recvAmount,
+        price,
       },
       feeValue,
       volume

@@ -15,6 +15,9 @@ export class Statistic {
   @Field()
   feeValue24h: string
 
+  @Field()
+  tradingVolume24h: string
+
   @Field((type) => [ValueAt], { nullable: true })
   liquidityHistory: ValueAt[]
 
