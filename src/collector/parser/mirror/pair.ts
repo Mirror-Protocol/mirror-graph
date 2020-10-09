@@ -48,14 +48,25 @@ export async function parse(
       : commissionAmount
 
     const recvAmount = num(returnAmount).minus(taxAmount).toString()
-    const poolChanged = num(returnAmount).plus(ownerCommissionAmount).multipliedBy(-1).toString()
 
     // add asset's pool position, account balance
     if (type === TxType.BUY) {
-      positions = await assetService().addPoolPosition(token, poolChanged, offerAmount, positionsRepo)
+      const assetPoolChanged = num(returnAmount).plus(ownerCommissionAmount).multipliedBy(-1).toString()
+
+      positions = await assetService().addPoolPosition(token, assetPoolChanged, offerAmount, positionsRepo)
       await accountService().addBalance(sender, token, price, recvAmount, balanceRepo)
     } else {
-      positions = await assetService().addPoolPosition(token, offerAmount, poolChanged, positionsRepo)
+      const transferTax = splitTokenAmount(findAttributes(log.events, 'transfer')[2].value).amount
+      const transferOwnerTax = splitTokenAmount(findAttributes(log.events, 'transfer')[8].value).amount
+      const realTax = num(taxAmount).minus(transferTax).plus(num(ownerCommissionAmount).minus(transferOwnerTax))
+
+      const uusdPoolChanged = num(returnAmount)
+        .plus(ownerCommissionAmount)
+        .minus(realTax)
+        .multipliedBy(-1)
+        .toString()
+
+      positions = await assetService().addPoolPosition(token, offerAmount, uusdPoolChanged, positionsRepo)
       await accountService().removeBalance(sender, token, offerAmount, balanceRepo)
     }
 
