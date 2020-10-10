@@ -1,4 +1,6 @@
 import 'reflect-metadata'
+import { program } from 'commander'
+import * as promptly from 'promptly'
 import * as bluebird from 'bluebird'
 import { Container } from 'typedi'
 import { initORM } from 'orm'
@@ -6,23 +8,13 @@ import { init as initErrorHandler, errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { initMirror } from 'loaders'
 import { validateConfig } from 'config'
-import { collect } from './collect'
+import { createJobs } from './jobs'
 
 bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
 global.Promise = bluebird as any // eslint-disable-line
 
-async function loop(): Promise<void> {
-  for (;;) {
-    const now = Date.now()
-
-    await collect(now)
-
-    await bluebird.delay(100)
-  }
-}
-
 async function main(): Promise<void> {
-  logger.info('initialize collector')
+  logger.info('initialize bot')
 
   initErrorHandler({ sentryDsn: process.env.SENTRY_COLLECTOR })
 
@@ -32,7 +24,20 @@ async function main(): Promise<void> {
 
   await initMirror()
 
-  await loop()
+  program
+    .option('-p, --password <password>', 'bot key password')
+    .action(async (options) => {
+      const password =
+        options?.password ||
+        (await promptly.password(`Enter bot passphrase:`, { replace: `*` }))
+      if (!password) {
+        throw new Error('bot password is missing')
+      }
+
+      await createJobs(password)
+    })
+
+  await program.parseAsync(process.argv)
 }
 
 if (require.main === module) {

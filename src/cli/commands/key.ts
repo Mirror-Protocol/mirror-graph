@@ -14,7 +14,7 @@ export function key(): void {
     .action(async () => updateKey(config.KEYSTORE_PATH, config.ORACLE_KEY))
 
   program
-    .command('update-lp-key')
-    .description('update LP(liquidity provider) key')
-    .action(async () => updateKey(config.KEYSTORE_PATH, config.LP_KEY))
+    .command('update-bot-key')
+    .description('bot key')
+    .action(async () => updateKey(config.KEYSTORE_PATH, config.BOT_KEY))
 }

@@ -102,12 +102,6 @@ export class GovService {
 
     return entities
   }
-
-  async update(gov: GovEntity): Promise<GovEntity> {
-    this.gov = gov
-
-    return this.govRepo.save(gov)
-  }
 }
 
 export function govService(): GovService {

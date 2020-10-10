@@ -20,7 +20,7 @@ const config = {
   KEYSTORE_PATH: KEYSTORE_PATH || './keystore.json',
   OWNER_KEY: 'owner',
   ORACLE_KEY: 'oracle',
-  LP_KEY: 'lp',
+  BOT_KEY: 'bot',
   // mirror config
   DECIMALS: 6,
   MIRROR_TOKEN_SYMBOL: 'MIR',
