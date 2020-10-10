@@ -50,6 +50,13 @@ export class StatisticService {
       .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
       .getRawOne()
 
+    const mir24h = await this.txRepo
+      .createQueryBuilder()
+      .select('sum(volume)', 'volume')
+      .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .andWhere('token = :token', { token: this.govService.get().mirrorToken })
+      .getRawOne()
+
     return {
       assetMarketCap: assetMarketCap.toFixed(0),
       totalValueLocked: totalValueLocked.toFixed(0),
@@ -57,6 +64,7 @@ export class StatisticService {
       transactions24h: txs24h?.count || '0',
       feeValue24h: txs24h?.fee || '0',
       tradingVolume24h: txs24h?.volume || '0',
+      mirVolume24h: mir24h?.volume || '0',
     }
   }
 
