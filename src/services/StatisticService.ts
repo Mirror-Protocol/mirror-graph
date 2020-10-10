@@ -117,6 +117,20 @@ export class StatisticService {
       .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
       .getRawMany()
   }
+
+  async getAssetTradingVolume24h(token: string): Promise<string> {
+    const to = Date.now()
+    const from = addDays(to, -1).getTime()
+
+    const txs24h = await this.txRepo
+      .createQueryBuilder()
+      .select('sum(volume)', 'volume')
+      .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .andWhere('token = :token', { token })
+      .getRawOne()
+
+    return txs24h?.volume || '0'
+  }
 }
 
 export function statisticService(): StatisticService {

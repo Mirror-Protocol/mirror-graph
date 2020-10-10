@@ -21,4 +21,9 @@ export class AssetResolver {
   async prices(@Root() asset: AssetEntity): Promise<AssetEntity> {
     return asset
   }
+
+  @FieldResolver()
+  async statistic(@Root() asset: AssetEntity): Promise<AssetEntity> {
+    return asset
+  }
 }
