@@ -13,6 +13,9 @@ export class Statistic {
   collateralRatio: string
 
   @Field()
+  transactions24h: string
+
+  @Field()
   feeValue24h: string
 
   @Field()
