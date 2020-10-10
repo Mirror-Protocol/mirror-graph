@@ -94,32 +94,29 @@ export async function parse(
     }
   } else if (msg['provide_liquidity']) {
     const assets = findAttribute(attributes, 'assets')
+    const share = findAttribute(attributes, 'share')
     const liquidities = assets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
     const assetToken = liquidities[0]
     const uusdToken = liquidities[1]
-
-    parsed = {
-      type: TxType.PROVIDE_LIQUIDITY,
-      data: { assets, share: findAttribute(attributes, 'share') }
-    }
 
     // remove account balance
     await accountService().removeBalance(sender, token, assetToken.amount, balanceRepo)
 
     // add asset's liquidity position
     positions = await assetService().addLiquidityPosition(
-      assetToken.token, assetToken.amount, uusdToken.amount, positionsRepo
+      assetToken.token, assetToken.amount, uusdToken.amount, share, positionsRepo
     )
+
+    parsed = {
+      type: TxType.PROVIDE_LIQUIDITY,
+      data: { assets, share }
+    }
   } else if (msg['withdraw_liquidity']) {
     const refundAssets = findAttribute(attributes, 'refund_assets')
+    const withdrawnShare = findAttribute(attributes, 'withdrawn_share')
     const liquidities = refundAssets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
     const assetToken = liquidities[1]
     const uusdToken = liquidities[0]
-
-    parsed = {
-      type: TxType.WITHDRAW_LIQUIDITY,
-      data: { refundAssets, withdrawnShare: findAttribute(attributes, 'withdrawn_share') }
-    }
 
     // add account balance
     const price = await priceService().getPrice(token, datetime.getTime(), manager.getRepository(PriceEntity))
@@ -127,8 +124,13 @@ export async function parse(
 
     // remove asset's liquidity position
     positions = await assetService().addLiquidityPosition(
-      assetToken.token, `-${assetToken.amount}`, `-${uusdToken.amount}`, positionsRepo
+      assetToken.token, `-${assetToken.amount}`, `-${uusdToken.amount}`, `-${withdrawnShare}`, positionsRepo
     )
+
+    parsed = {
+      type: TxType.WITHDRAW_LIQUIDITY,
+      data: { refundAssets, withdrawnShare }
+    }
   } else {
     return
   }

@@ -39,10 +39,10 @@ export class AssetService {
     return repo.save(positions)
   }
 
-  async addLiquidityPosition(token: string, amount: string, uusdAmount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
+  async addLiquidityPosition(token: string, amount: string, uusdAmount: string, lpShares: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions(
       { token },
-      { select: ['token', 'liquidity', 'uusdLiquidity', 'pool', 'uusdPool'] },
+      { select: ['token', 'liquidity', 'uusdLiquidity', 'pool', 'uusdPool', 'lpShares'] },
       repo
     )
 
@@ -51,6 +51,8 @@ export class AssetService {
 
     positions.pool = num(positions.pool).plus(amount).toString()
     positions.uusdPool = num(positions.uusdPool).plus(uusdAmount).toString()
+
+    positions.lpShares = num(positions.lpShares).plus(lpShares).toString()
 
     return repo.save(positions)
   }
@@ -77,6 +79,17 @@ export class AssetService {
 
     return repo.save(positions)
   }
+
+  async addStakePosition(token: string, stakeAmount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
+    const positions = await this.getPositions(
+      { token }, { select: ['token', 'lpStaked'] }, repo
+    )
+
+    positions.lpStaked = num(positions.lpStaked).plus(stakeAmount).toString()
+
+    return repo.save(positions)
+  }
+
 }
 
 export function assetService(): AssetService {

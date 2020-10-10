@@ -42,6 +42,12 @@ export class AssetPositionsEntity {
   @Column('numeric', { precision: 40, default: 0, comment: 'total used as collateral amount' })
   asCollateral: string
 
+  @Column('numeric', { precision: 40, default: 0, comment: 'total lp token supply' })
+  lpShares: string
+
+  @Column('numeric', { precision: 40, default: 0, comment: 'staked lp token amount' })
+  lpStaked: string
+
   @OneToOne((type) => AssetEntity, (asset) => asset.positions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'token' })
   asset: AssetEntity
