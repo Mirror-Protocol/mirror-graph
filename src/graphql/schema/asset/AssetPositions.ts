@@ -19,4 +19,10 @@ export class AssetPositions {
 
   @Field()
   asCollateral: string
+
+  @Field()
+  lpShares: string
+
+  @Field()
+  lpStaked: string
 }

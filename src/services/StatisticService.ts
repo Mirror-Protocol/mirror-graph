@@ -4,17 +4,20 @@ import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { num } from 'lib/num'
-import { AssetService, OracleService, govService } from 'services'
-import { DailyStatisticEntity, TxEntity } from 'orm'
+import { GovService, AssetService, PriceService, OracleService, govService } from 'services'
+import { DailyStatisticEntity, TxEntity, RewardEntity } from 'orm'
 import { Statistic, ValueAt } from 'graphql/schema'
 
 @Service()
 export class StatisticService {
   constructor(
+    @Inject((type) => GovService) private readonly govService: GovService,
     @Inject((type) => AssetService) private readonly assetService: AssetService,
+    @Inject((type) => PriceService) private readonly priceService: PriceService,
     @Inject((type) => OracleService) private readonly oracleService: OracleService,
     @InjectRepository(DailyStatisticEntity) private readonly dailyRepo: Repository<DailyStatisticEntity>,
     @InjectRepository(TxEntity) private readonly txRepo: Repository<TxEntity>,
+    @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>,
   ) {}
 
   async statistic(): Promise<Partial<Statistic>> {
@@ -130,6 +133,36 @@ export class StatisticService {
       .getRawOne()
 
     return txs24h?.volume || '0'
+  }
+
+  async getAssetAPR(token: string): Promise<string> {
+    const asset = await this.assetService.get({ token })
+
+    const to = Date.now()
+    const from = addDays(to, -1).getTime()
+
+    const price = await this.priceService.getPrice(token)
+    const mirPrice = await this.priceService.getPrice(this.govService.get().mirrorToken)
+    const reward24h = (await this.rewardRepo
+      .createQueryBuilder()
+      .select('sum(amount)', 'amount')
+      .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .andWhere('token = :token', { token })
+      .getRawOne())?.amount
+    const liquidityValue = num(asset.positions.liquidity)
+      .multipliedBy(price)
+      .plus(asset.positions.uusdLiquidity)
+
+    if (!reward24h || !mirPrice || !price)
+      return '0'
+
+    const mirValue = num(reward24h).multipliedBy(mirPrice).multipliedBy(365)
+    const poolValue = liquidityValue.multipliedBy(num(asset.positions.lpStaked).dividedBy(asset.positions.lpShares))
+
+    // (24h MIR reward * MIR price * 365) / (liquidity value * (staked lp share/total lp share))
+    const apr = mirValue.dividedBy(poolValue)
+
+    return apr.isNaN() ? '0' : apr.toString()
   }
 }
 

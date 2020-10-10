@@ -13,4 +13,9 @@ export class AssetStatisticResolver {
   async volume24h(@Root() asset: AssetEntity): Promise<string> {
     return this.statisticService.getAssetTradingVolume24h(asset.token)
   }
+
+  @FieldResolver()
+  async apr(@Root() asset: AssetEntity): Promise<string> {
+    return this.statisticService.getAssetAPR(asset.token)
+  }
 }
