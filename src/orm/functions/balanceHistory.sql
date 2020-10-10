@@ -13,7 +13,7 @@ BEGIN
     timeIteratorNext := timeIterator + (_interval * interval '1 minute');
 
     RETURN QUERY
-    SELECT timeIterator as "timestamp", sum(pb.price*pb.balance) as "value" FROM (
+    SELECT timeIterator as "timestamp", coalesce(sum(pb.price*pb.balance), 0) as "value" FROM (
       SELECT
         (SELECT p.close FROM price p
           WHERE p.token = b.token AND p.datetime <= timeIteratorNext
