@@ -117,6 +117,7 @@ export class StatisticService {
       .select('datetime', 'timestamp')
       .addSelect('cumulative_liquidity', 'value')
       .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .orderBy('datetime', 'ASC')
       .getRawMany()
   }
 
@@ -126,6 +127,7 @@ export class StatisticService {
       .select('datetime', 'timestamp')
       .addSelect('trading_volume', 'value')
       .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .orderBy('datetime', 'ASC')
       .getRawMany()
   }
 
