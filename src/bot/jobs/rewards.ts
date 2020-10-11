@@ -25,7 +25,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
     .map(assets, async (asset) => {
       const balance = await getTokenBalance(asset.token, collector)
 
-      if (num(balance).isGreaterThan(0)) {
+      if (num(balance).isGreaterThan(10000)) {
         return new MsgExecuteContract(
           sender, collector, toSnakeCase({ convert: { assetToken: asset.token } }), new Coins([])
         )
