@@ -1,5 +1,5 @@
 import { findAttributes, findAttribute } from 'lib/terra'
-import { assetService } from 'services'
+import { assetService, govService } from 'services'
 import { TxEntity, AssetPositionsEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
@@ -24,6 +24,13 @@ export async function parse(
       type,
       data: { assetToken, amount },
       token: assetToken,
+    }
+  } else if (msg['withdraw']) {
+    const amount = findAttribute(attributes, 'amount')
+    parsed = {
+      type: TxType.WITHDRAW_REWARDS,
+      data: { amount },
+      token: govService().get().mirrorToken,
     }
   } else {
     return
