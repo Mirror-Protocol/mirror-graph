@@ -2,6 +2,24 @@ import { ObjectType, Field } from 'type-graphql'
 import { ValueAt } from './'
 
 @ObjectType({ simpleResolvers: true })
+export class Latest24h {
+  @Field()
+  transactions: string
+
+  @Field()
+  volume: string
+
+  @Field()
+  volumeChanged: string
+
+  @Field()
+  feeVolume: string
+
+  @Field()
+  mirVolume: string
+}
+
+@ObjectType({ simpleResolvers: true })
 export class Statistic {
   @Field()
   assetMarketCap: string
@@ -13,16 +31,7 @@ export class Statistic {
   collateralRatio: string
 
   @Field()
-  transactions24h: string
-
-  @Field()
-  feeValue24h: string
-
-  @Field()
-  tradingVolume24h: string
-
-  @Field()
-  mirVolume24h: string
+  latest24h: Latest24h
 
   @Field((type) => [ValueAt], { nullable: true })
   liquidityHistory: ValueAt[]

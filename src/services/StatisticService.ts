@@ -6,7 +6,7 @@ import { Container, Service, Inject } from 'typedi'
 import { num } from 'lib/num'
 import { GovService, AssetService, PriceService, OracleService, govService } from 'services'
 import { DailyStatisticEntity, TxEntity, RewardEntity } from 'orm'
-import { Statistic, ValueAt } from 'graphql/schema'
+import { Statistic, Latest24h, ValueAt } from 'graphql/schema'
 
 @Service()
 export class StatisticService {
@@ -39,32 +39,50 @@ export class StatisticService {
       totalValueLocked = totalValueLocked.plus(num(asset.positions.asCollateral).multipliedBy(price))
     })
 
-    const to = Date.now()
-    const from = addDays(to, -1).getTime()
-
-    const txs24h = await this.txRepo
-      .createQueryBuilder()
-      .select('count(id)', 'count')
-      .addSelect('sum(fee_value)', 'fee')
-      .addSelect('sum(volume)', 'volume')
-      .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
-      .getRawOne()
-
-    const mir24h = await this.txRepo
-      .createQueryBuilder()
-      .select('sum(volume)', 'volume')
-      .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
-      .andWhere('token = :token', { token: this.govService.get().mirrorToken })
-      .getRawOne()
-
     return {
       assetMarketCap: assetMarketCap.toFixed(0),
       totalValueLocked: totalValueLocked.toFixed(0),
       collateralRatio: totalValueLocked.dividedBy(assetMarketCap).multipliedBy(100).toFixed(2),
-      transactions24h: txs24h?.count || '0',
-      feeValue24h: txs24h?.fee || '0',
-      tradingVolume24h: txs24h?.volume || '0',
-      mirVolume24h: mir24h?.volume || '0',
+    }
+  }
+
+  async latest24h(): Promise<Latest24h> {
+    const now = Date.now()
+    const before24h = addDays(now, -1).getTime()
+    const before48h = addDays(now, -2).getTime()
+
+    const txs = await this.txRepo
+      .createQueryBuilder()
+      .select('count(id)', 'count')
+      .addSelect('sum(fee_value)', 'fee')
+      .addSelect('sum(volume)', 'volume')
+      .where('datetime BETWEEN :from AND :to', { from: new Date(before24h), to: new Date(now) })
+      .getRawOne()
+
+    const mir = await this.txRepo
+      .createQueryBuilder()
+      .select('sum(volume)', 'volume')
+      .where('datetime BETWEEN :from AND :to', { from: new Date(before24h), to: new Date(now) })
+      .andWhere('token = :token', { token: this.govService.get().mirrorToken })
+      .getRawOne()
+
+    const volume48h = (await this.txRepo
+      .createQueryBuilder()
+      .select('sum(volume)', 'volume')
+      .where('datetime BETWEEN :from AND :to', { from: new Date(before48h), to: new Date(before24h) })
+      .getRawOne())?.volume || '0'
+
+    const volume = txs?.volume || '0'
+    const volumeChanged = (volume48h !== '0' && volume !== '0')
+      ? num(volume48h).dividedBy(volume).minus(1).multipliedBy(100).toFixed(2)
+      : '0'
+
+    return {
+      transactions: txs?.count || '0',
+      volume,
+      volumeChanged,
+      feeVolume: txs?.fee || '0',
+      mirVolume: mir?.volume || '0',
     }
   }
 
