@@ -12,6 +12,7 @@ import * as token from './token'
 import * as mint from './mint'
 import * as staking from './staking'
 import * as gov from './gov'
+import * as collector from './collector'
 
 export async function parseMirrorMsg(
   manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog
@@ -57,5 +58,8 @@ export async function parseMirrorMsg(
 
     case ContractType.STAKING:
       return staking.parse(args)
+
+    case ContractType.COLLECTOR:
+      return collector.parse(args)
   }
 }

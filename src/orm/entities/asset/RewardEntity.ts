@@ -26,6 +26,9 @@ export class RewardEntity extends HaveAsset {
   @Column('numeric', { precision: 40, default: 0, comment: 'minted reward amount' })
   amount: string
 
+  @Column({ default: false })
+  isGovReward: boolean
+
   @Column()
   @Index()
   datetime: Date

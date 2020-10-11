@@ -10,5 +10,5 @@ export function createJobs(botPassword: string): void {
   // min hour day month dayofweek
 
   // every 1hour
-  nodeCron.schedule('*/10 * * * *', () => distributeRewards(wallet))
+  nodeCron.schedule('* */1 * * *', () => distributeRewards(wallet))
 }

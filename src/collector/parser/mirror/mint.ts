@@ -33,10 +33,11 @@ export async function parse(
     // create cdp
     cdp = new CdpEntity({
       id: positionIdx,
+      address: sender,
+      token: mint.token,
       mintAmount: mint.amount,
       collateralToken: collateral.token,
       collateralAmount: collateral.amount,
-      token: mint.token,
     })
 
     // add mint/asCollateral position

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { num } from 'lib/num'
+import { getTokenBalance } from 'lib/mirror'
 import { GovService, AssetService, PriceService, OracleService, govService } from 'services'
 import { DailyStatisticEntity, TxEntity, RewardEntity } from 'orm'
 import { Statistic, Latest24h, ValueAt } from 'graphql/schema'
@@ -77,12 +78,25 @@ export class StatisticService {
       ? num(volume48h).dividedBy(volume).minus(1).multipliedBy(100).toFixed(2)
       : '0'
 
+    // gov stake reward = (24h reward amount) / (staked to gov MIR amount)
+    const govEntity = this.govService.get()
+    const govReward24h = (await this.rewardRepo
+      .createQueryBuilder()
+      .select('sum(amount)', 'amount')
+      .where('datetime BETWEEN :from AND :to', { from: new Date(before24h), to: new Date(now) })
+      .andWhere('token = :token', { token: govEntity.mirrorToken })
+      .andWhere('is_gov_reward = true')
+      .getRawOne())?.amount
+    const govStakedMir = await getTokenBalance(govEntity.mirrorToken, govEntity.gov)
+    const govAPR = num(govReward24h).dividedBy(govStakedMir).multipliedBy(100)
+
     return {
       transactions: txs?.count || '0',
       volume,
       volumeChanged,
       feeVolume: txs?.fee || '0',
       mirVolume: mir?.volume || '0',
+      govAPR: !govAPR.isNaN() ? govAPR.toString() : '0',
     }
   }
 
@@ -176,6 +190,7 @@ export class StatisticService {
       .select('sum(amount)', 'amount')
       .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
       .andWhere('token = :token', { token })
+      .andWhere('is_gov_reward = false')
       .getRawOne())?.amount
     const liquidityValue = num(asset.positions.liquidity)
       .multipliedBy(price)

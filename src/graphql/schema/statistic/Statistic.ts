@@ -17,6 +17,9 @@ export class Latest24h {
 
   @Field()
   mirVolume: string
+
+  @Field()
+  govAPR: string
 }
 
 @ObjectType({ simpleResolvers: true })

@@ -1,4 +1,3 @@
-export * from './account/AccountEntity'
 export * from './account/BalanceEntity'
 export * from './account/TxEntity'
 export * from './asset/AssetEntity'
