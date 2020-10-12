@@ -38,3 +38,8 @@ export async function getTokenBalance(token: string, address: string): Promise<s
 
   return balance
 }
+
+export async function getStakingPool(staking: string, token: string):
+  Promise<{ assetToken: string; stakingToken: string; totalBondAmount: string; rewardIndex: string }> {
+  return getContractStore(staking, { poolInfo: { assetToken: token } })
+}
