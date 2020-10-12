@@ -3,19 +3,27 @@ import { Coins, MsgExecuteContract } from '@terra-money/terra.js'
 import { TxWallet } from 'lib/terra'
 import { toSnakeCase } from 'lib/caseStyles'
 import * as logger from 'lib/logger'
-import { getTokenBalance } from 'lib/mirror'
+import { getTokenBalance, getStakingPool } from 'lib/mirror'
 import { govService, assetService } from 'services'
 import { num } from 'lib/num'
 
 export async function distributeRewards(wallet: TxWallet): Promise<void> {
-  const { factory, collector } = govService().get()
+  const { factory, collector, staking } = govService().get()
   const assets = await assetService().getAll({ where: { isListed: true }})
   const sender = wallet.key.accAddress
   
   // MIR inflation
-  const msgs = assets.map((asset) => new MsgExecuteContract(
-    sender, factory, toSnakeCase({ mint: { assetToken: asset.token } }), new Coins([])
-  ))
+  const msgs = await bluebird
+    .map(assets, async (asset) => {
+      const pool = await getStakingPool(staking, asset.token)
+
+      if (num(pool.totalBondAmount).isGreaterThan(0)) {
+        return new MsgExecuteContract(
+          sender, factory, toSnakeCase({ mint: { assetToken: asset.token } }), new Coins([])
+        )
+      }
+    })
+    .filter(Boolean)
 
   // execute distribute inflation
   await wallet.executeMsgs(msgs)
