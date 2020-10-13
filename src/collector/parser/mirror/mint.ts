@@ -58,7 +58,7 @@ export async function parse(
     const deposit = splitTokenAmount(depositAmount)
 
     // add cdp collateral
-    cdp = await cdpService().get({ id: positionIdx }, cdpRepo)
+    cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).plus(deposit.amount).toString()
 
     // add asset's asCollateral position
@@ -74,7 +74,7 @@ export async function parse(
     const withdraw = splitTokenAmount(withdrawAmount)
 
     // remove cdp collateral
-    cdp = await cdpService().get({ id: positionIdx }, cdpRepo)
+    cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).minus(withdraw.amount).toString()
 
     // remove asset's asCollateral position
@@ -94,7 +94,7 @@ export async function parse(
     const mint = splitTokenAmount(mintAmount)
 
     // add cdp mint
-    cdp = await cdpService().get({ id: positionIdx }, cdpRepo)
+    cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).plus(mint.amount).toString()
 
     // add asset's mint position
@@ -114,7 +114,7 @@ export async function parse(
     const burn = splitTokenAmount(burnAmount)
 
     // remove cdp mint
-    cdp = await cdpService().get({ id: positionIdx }, cdpRepo)
+    cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).minus(burn.amount).toString()
 
     // remove asset's mint position
@@ -130,6 +130,21 @@ export async function parse(
     }
   } else {
     return
+  }
+
+  // calculate collateral ratio
+  const { token, collateralToken } = cdp
+  const tokenPrice = await oracleService().getPrice(token, datetime.getTime(), oracleRepo)
+  const collateralPrice = collateralToken !== 'uusd'
+    ? await oracleService().getPrice(collateralToken, datetime.getTime(), oracleRepo)
+    : '1'
+
+  if (tokenPrice && collateralPrice) {
+    const { mintAmount, collateralAmount } = cdp
+    const mintValue = num(tokenPrice).multipliedBy(mintAmount)
+    const collateralValue = num(collateralPrice).multipliedBy(collateralAmount)
+
+    cdp.collateralRatio = collateralValue.dividedBy(mintValue).toString()
   }
 
   const txEntity = new TxEntity({

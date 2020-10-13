@@ -1,6 +1,7 @@
 import { Container, Service } from 'typedi'
-import { Repository, FindConditions, LessThanOrEqual } from 'typeorm'
+import { Repository, FindConditions, LessThanOrEqual, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
+import { transform } from 'lodash'
 import { num } from 'lib/num'
 import { getOHLC, getHistory } from 'lib/price'
 import { getOraclePrice } from 'lib/mirror'
@@ -27,6 +28,16 @@ export class OracleService {
       }
     )
     return price?.close
+  }
+
+  async getLatestPrices(timestamp: number): Promise<{ [token: string]: string}> {
+    const prices = await getConnection().query(
+      'SELECT token, price FROM public.latestOraclePrices($1)', [new Date(timestamp)]
+    )
+
+    return transform(prices, (result, value) => {
+      if (value?.price) result[value.token] = value.price
+    }, {})
   }
 
   async getContractPrice(token: string): Promise<string> {

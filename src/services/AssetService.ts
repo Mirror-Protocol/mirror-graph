@@ -1,5 +1,5 @@
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { Repository, FindConditions, FindOneOptions } from 'typeorm'
+import { Repository, FindConditions, FindOneOptions, FindManyOptions } from 'typeorm'
 import { Container, Service } from 'typedi'
 import { num } from 'lib/num'
 import { AssetEntity, AssetPositionsEntity } from 'orm'
@@ -19,7 +19,7 @@ export class AssetService {
     return repo.findOne(conditions, options)
   }
 
-  async getAll(options?: FindOneOptions<AssetEntity>, repo = this.repo): Promise<AssetEntity[]> {
+  async getAll(options?: FindManyOptions<AssetEntity>, repo = this.repo): Promise<AssetEntity[]> {
     return repo.find(options)
   }
 

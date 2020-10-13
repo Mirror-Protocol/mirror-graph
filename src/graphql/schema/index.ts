@@ -1,4 +1,4 @@
 export * from './account'
 export * from './asset'
-export * from './price'
+export * from './common'
 export * from './statistic'

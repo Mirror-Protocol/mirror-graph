@@ -37,4 +37,7 @@ export class CdpEntity extends HaveAsset {
 
   @Column('numeric', { precision: 40, default: 0 })
   collateralAmount: string
+
+  @Column('decimal', { precision: 40, scale: 6, default: 0 })
+  collateralRatio: string
 }

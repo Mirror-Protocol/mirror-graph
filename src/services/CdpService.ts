@@ -1,20 +1,22 @@
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { Repository, FindConditions } from 'typeorm'
-import { Container, Service } from 'typedi'
+import { Repository, FindConditions, FindOneOptions, FindManyOptions } from 'typeorm'
+import { Container, Service, Inject } from 'typedi'
+import { OracleService } from 'services'
 import { CdpEntity } from 'orm'
 
 @Service()
 export class CdpService {
   constructor(
+    @Inject((type) => OracleService) private readonly oracleService: OracleService,
     @InjectRepository(CdpEntity) private readonly repo: Repository<CdpEntity>,
   ) {}
 
-  async get(conditions: FindConditions<CdpEntity>, repo = this.repo): Promise<CdpEntity> {
-    return repo.findOne(conditions)
+  async get(conditions: FindConditions<CdpEntity>, options?: FindOneOptions<CdpEntity>, repo = this.repo): Promise<CdpEntity> {
+    return repo.findOne(conditions, options)
   }
 
-  async getAll(repo = this.repo): Promise<CdpEntity[]> {
-    return repo.find()
+  async getAll(options?: FindManyOptions<CdpEntity>, repo = this.repo): Promise<CdpEntity[]> {
+    return repo.find(options)
   }
 }
 
