@@ -14,7 +14,7 @@ BEGIN
       WHERE p.token = a.token AND p.datetime <= "timestamp"
       ORDER BY p.datetime DESC LIMIT 1) as price
   FROM asset as a
-  WHERE is_listed=true
+  WHERE is_listed=true;
 
 END;
 $BODY$;

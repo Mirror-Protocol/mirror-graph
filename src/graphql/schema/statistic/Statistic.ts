@@ -1,5 +1,5 @@
 import { ObjectType, Field } from 'type-graphql'
-import { ValueAt } from './'
+import { ValueAt } from '../'
 
 @ObjectType({ simpleResolvers: true })
 export class Latest24h {
