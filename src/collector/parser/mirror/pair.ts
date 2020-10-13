@@ -34,17 +34,15 @@ export async function parse(
       ? offerAmount
       : num(returnAmount).plus(spreadAmount).plus(commissionAmount).toString()
 
-    // buy price: offer / (return + commission)
-    // sell price: (return + commission) / offer
+    // buy price: offer / return
+    // sell price: return / offer
     const price = type === TxType.BUY
-      ? num(offerAmount).dividedBy(num(returnAmount).plus(commissionAmount)).toString()
-      : num(returnAmount).plus(commissionAmount).dividedBy(offerAmount).toString()
+      ? num(offerAmount).dividedBy(returnAmount).toString()
+      : num(returnAmount).dividedBy(offerAmount).toString()
 
-    // buy fee: pool price * commission
+    // buy fee: buy price * commission
     const feeValue = type === TxType.BUY
-      ? num(offerAmount)
-          .dividedBy(num(returnAmount).plus(spreadAmount).plus(commissionAmount))
-          .multipliedBy(commissionAmount).toString()
+      ? num(price).multipliedBy(commissionAmount).toString()
       : commissionAmount
 
     const recvAmount = num(returnAmount).minus(taxAmount).toString()
