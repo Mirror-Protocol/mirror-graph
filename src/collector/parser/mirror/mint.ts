@@ -144,7 +144,9 @@ export async function parse(
     const mintValue = num(tokenPrice).multipliedBy(mintAmount)
     const collateralValue = num(collateralPrice).multipliedBy(collateralAmount)
 
-    cdp.collateralRatio = collateralValue.dividedBy(mintValue).toString()
+    cdp.collateralRatio = (mintValue.isGreaterThan(0) && collateralValue.isGreaterThan(0))
+      ? collateralValue.dividedBy(mintValue).toString()
+      : '0'
   }
 
   const txEntity = new TxEntity({
