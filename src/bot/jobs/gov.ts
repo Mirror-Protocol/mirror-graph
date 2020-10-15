@@ -2,14 +2,13 @@ import { Coins, MsgExecuteContract } from '@terra-money/terra.js'
 import { TxWallet, getLatestBlockHeight } from 'lib/terra'
 import { getGovPolls, getGovConfig } from 'lib/mirror'
 import { toSnakeCase } from 'lib/caseStyles'
-import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { govService } from 'services'
 
 export async function updatePolls(wallet: TxWallet): Promise<void> {
   const { gov } = govService().get()
   const sender = wallet.key.accAddress
-  const latestHeight = await getLatestBlockHeight().catch(errorHandler)
+  const latestHeight = await getLatestBlockHeight()
   const { effectiveDelay } = await getGovConfig(gov)
   const msgs = []
 
@@ -28,7 +27,9 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
   // collect execute needed
   polls = await getGovPolls(gov, 'passed', 100)
   polls.map((poll) => {
-    if (latestHeight > poll.endHeight + effectiveDelay) {
+    const executeHeight = poll.endHeight + effectiveDelay
+    // try execute only 1 hour(600 blocks)
+    if (latestHeight - executeHeight > 0 && latestHeight - executeHeight < 10 * 60 ) {
       msgs.push(new MsgExecuteContract(
         sender, gov, toSnakeCase({ executePoll: { pollId: poll.id } }), new Coins([])
       ))

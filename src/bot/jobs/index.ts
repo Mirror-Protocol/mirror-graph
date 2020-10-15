@@ -1,6 +1,7 @@
 import * as nodeCron from 'node-cron'
 import { TxWallet } from 'lib/terra'
 import { getKey } from 'lib/keystore'
+import { errorHandler } from 'lib/error'
 import config from 'config'
 import { distributeRewards } from './rewards'
 import { updateCdps } from './cdp'
@@ -14,16 +15,16 @@ export function createJobs(botPassword: string): void {
 
   // every 1hour
   nodeCron.schedule('0 * * * *', async() => {
-    await distributeRewards(wallet)
+    await distributeRewards(wallet).catch(errorHandler)
   })
 
   // every 1minute
   nodeCron.schedule('*/1 * * * *', async () => {
-    await updateCdps()
+    await updateCdps().catch(errorHandler)
   })
 
   // every 5minutes
   nodeCron.schedule('*/5 * * * *', async () => {
-    await updatePolls(wallet)
+    await updatePolls(wallet).catch(errorHandler)
   })
 }
