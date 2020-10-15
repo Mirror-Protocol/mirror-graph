@@ -1,5 +1,5 @@
 export interface OraclePrice {
+  assetToken: string
   price: string
-  priceMultiplier: string
   lastUpdateTime: number
 }

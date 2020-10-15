@@ -30,7 +30,7 @@ export async function getOraclePrice(oracle: string, token: string): Promise<str
   if (!oraclePrice)
     return undefined
 
-  return num(oraclePrice.price).multipliedBy(oraclePrice.priceMultiplier).toString()
+  return num(oraclePrice.price).toString()
 }
 
 export async function getTokenBalance(token: string, address: string): Promise<string> {
