@@ -1,6 +1,6 @@
 import { getContractStore } from 'lib/terra'
 import { num } from 'lib/num'
-import { PairPool, OraclePrice } from 'types'
+import { PairPool, OraclePrice, GovConfig, GovPoll } from 'types'
 
 export async function getPairPool(pair: string):
   Promise<{assetAmount: string; collateralAmount: string; totalShare: string}> {
@@ -42,4 +42,14 @@ export async function getTokenBalance(token: string, address: string): Promise<s
 export async function getStakingPool(staking: string, token: string):
   Promise<{ assetToken: string; stakingToken: string; totalBondAmount: string; rewardIndex: string }> {
   return getContractStore(staking, { poolInfo: { assetToken: token } })
+}
+
+export async function getGovConfig(gov: string): Promise<GovConfig> {
+  return getContractStore(gov, { config: {} })
+}
+
+export async function getGovPolls(gov: string, filter: string, limit: number): Promise<GovPoll[]> {
+  const { polls } = await getContractStore(gov, { polls: { filter, limit } })
+
+  return polls
 }
