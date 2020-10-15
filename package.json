@@ -27,6 +27,7 @@
     "commander": "^6",
     "crypto-js": "^4.0.0",
     "date-fns": "^2.16.0",
+    "date-fns-timezone": "^0.1.4",
     "form-data": "^3.0.0",
     "graphql": "^15",
     "graphql-request": "^3.1.0",
