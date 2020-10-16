@@ -1,13 +1,11 @@
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions, FindOneOptions, FindManyOptions } from 'typeorm'
-import { Container, Service, Inject } from 'typedi'
-import { OracleService } from 'services'
+import { Container, Service } from 'typedi'
 import { CdpEntity } from 'orm'
 
 @Service()
 export class CdpService {
   constructor(
-    @Inject((type) => OracleService) private readonly oracleService: OracleService,
     @InjectRepository(CdpEntity) private readonly repo: Repository<CdpEntity>,
   ) {}
 

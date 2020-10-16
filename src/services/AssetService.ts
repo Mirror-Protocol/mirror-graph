@@ -31,7 +31,9 @@ export class AssetService {
     return repo.findOne(conditions, options)
   }
 
-  async addMintPosition(token: string, amount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
+  async addMintPosition(
+    token: string, amount: string, repo = this.positionsRepo
+  ): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions({ token }, { select: ['token', 'mint'] }, repo)
 
     positions.mint = num(positions.mint).plus(amount).toString()
@@ -39,7 +41,9 @@ export class AssetService {
     return repo.save(positions)
   }
 
-  async addLiquidityPosition(token: string, amount: string, uusdAmount: string, lpShares: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
+  async addLiquidityPosition(
+    token: string, amount: string, uusdAmount: string, lpShares: string, repo = this.positionsRepo
+  ): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions(
       { token },
       { select: ['token', 'liquidity', 'uusdLiquidity', 'pool', 'uusdPool', 'lpShares'] },
@@ -57,7 +61,9 @@ export class AssetService {
     return repo.save(positions)
   }
 
-  async addPoolPosition(token: string, amount: string, uusdAmount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
+  async addPoolPosition(
+    token: string, amount: string, uusdAmount: string, repo = this.positionsRepo
+  ): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions(
       { token }, { select: ['token', 'pool', 'uusdPool']}, repo
     )
@@ -68,7 +74,9 @@ export class AssetService {
     return repo.save(positions)
   }
 
-  async addAsCollateralPosition(token: string, amount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
+  async addAsCollateralPosition(
+    token: string, amount: string, repo = this.positionsRepo
+  ): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions(
       { token },
       { select: ['token', 'asCollateral'] },
@@ -80,7 +88,9 @@ export class AssetService {
     return repo.save(positions)
   }
 
-  async addStakePosition(token: string, stakeAmount: string, repo = this.positionsRepo): Promise<AssetPositionsEntity> {
+  async addStakePosition(
+    token: string, stakeAmount: string, repo = this.positionsRepo
+  ): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions(
       { token }, { select: ['token', 'lpStaked'] }, repo
     )
