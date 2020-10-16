@@ -1,12 +1,13 @@
 import { findAttributes, findAttribute } from 'lib/terra'
 import { num } from 'lib/num'
-import { ParseArgs } from './parseArgs'
-import { govService } from 'services'
+import { govService, assetService, contractService } from 'services'
 import { RewardEntity } from 'orm'
+import { ParseArgs } from './parseArgs'
+import * as pair from './pair'
 
-export async function parse(
-  { manager, height, txHash, timestamp, msg, log, contract }: ParseArgs
-): Promise<void> {
+export async function parse(args: ParseArgs): Promise<void> {
+  const { manager, height, txHash, timestamp, msg, log, contract } = args
+
   if (msg['send']) {
     const datetime = new Date(timestamp)
     const attributes = findAttributes(log.events, 'from_contract')
@@ -20,5 +21,14 @@ export async function parse(
       })
       await manager.save(entity)
     }
+  } else if (msg['convert']) {
+    const { pair: pairContract } = await assetService().get({ token: msg['convert']['asset_token'] })
+
+    return pair.parse({
+      ...args,
+      sender: contract.address,
+      msg: { 'swap': {} },
+      contract: await contractService().get({ address: pairContract })
+    })
   }
 }

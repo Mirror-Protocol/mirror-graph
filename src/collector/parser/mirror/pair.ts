@@ -9,7 +9,7 @@ import { ParseArgs } from './parseArgs'
 export async function parse(
   { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
 ): Promise<void> {
-  const { token, govId } = contract
+  const { address, token, govId } = contract
   const datetime = new Date(timestamp)
   const attributes = findAttributes(log.events, 'from_contract')
   const positionsRepo = manager.getRepository(AssetPositionsEntity)
@@ -47,31 +47,6 @@ export async function parse(
 
     const recvAmount = num(returnAmount).minus(taxAmount).toString()
 
-    // add asset's pool position, account balance
-    if (type === TxType.BUY) {
-      const assetPoolChanged = num(returnAmount).plus(ownerCommissionAmount).multipliedBy(-1).toString()
-
-      positions = await assetService().addPoolPosition(token, assetPoolChanged, offerAmount, positionsRepo)
-      await accountService().addBalance(sender, token, price, recvAmount, balanceRepo)
-    } else {
-      const transferTax = splitTokenAmount(findAttributes(log.events, 'transfer')[2].value).amount
-      const transferOwnerTax = splitTokenAmount(findAttributes(log.events, 'transfer')[8].value).amount
-      const realTax = num(taxAmount).minus(transferTax).plus(num(ownerCommissionAmount).minus(transferOwnerTax))
-
-      const uusdPoolChanged = num(returnAmount)
-        .plus(ownerCommissionAmount)
-        .minus(realTax)
-        .multipliedBy(-1)
-        .toString()
-
-      positions = await assetService().addPoolPosition(token, offerAmount, uusdPoolChanged, positionsRepo)
-      await accountService().removeBalance(sender, token, offerAmount, balanceRepo)
-    }
-
-    // add daily trading volume
-    const dailyStatRepo = manager.getRepository(DailyStatisticEntity)
-    await statisticService().addDailyTradingVolume(datetime.getTime(), volume, dailyStatRepo)
-
     parsed = {
       type,
       data: {
@@ -90,6 +65,33 @@ export async function parse(
       feeValue,
       volume
     }
+
+    // add asset's pool position, account balance
+    if (type === TxType.BUY) {
+      const assetPoolChanged = num(returnAmount).plus(ownerCommissionAmount).multipliedBy(-1).toString()
+
+      positions = await assetService().addPoolPosition(token, assetPoolChanged, offerAmount, positionsRepo)
+      await accountService().addBalance(sender, token, price, recvAmount, balanceRepo)
+    } else {
+      const { transfer } = log.eventsByType
+
+      let uusdAmountNum = num(0)
+      for (let index = 0; index < transfer['sender'].length; index += 1) {
+        const tokenAmount = splitTokenAmount(transfer['amount'][index])
+        if (transfer['sender'][index] === address && tokenAmount.token === 'uusd') {
+          uusdAmountNum = uusdAmountNum.minus(tokenAmount.amount)
+        }
+      }
+      const uusdPoolChanged = uusdAmountNum.toString()
+
+      positions = await assetService().addPoolPosition(token, offerAmount, uusdPoolChanged, positionsRepo)
+      await accountService().removeBalance(sender, token, offerAmount, balanceRepo)
+    }
+
+    // add daily trading volume
+    const dailyStatRepo = manager.getRepository(DailyStatisticEntity)
+    await statisticService().addDailyTradingVolume(datetime.getTime(), volume, dailyStatRepo)
+
   } else if (msg['provide_liquidity']) {
     const assets = findAttribute(attributes, 'assets')
     const share = findAttribute(attributes, 'share')
