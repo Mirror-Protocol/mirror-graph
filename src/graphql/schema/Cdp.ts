@@ -9,6 +9,9 @@ export class Cdp {
   address: string
 
   @Field()
+  token: string
+
+  @Field()
   mintAmount: string
 
   @Field()
