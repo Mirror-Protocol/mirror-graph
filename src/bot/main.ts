@@ -8,7 +8,7 @@ import { init as initErrorHandler, errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { initMirror } from 'loaders'
 import { validateConfig } from 'config'
-import { createJobs } from './jobs'
+import { createJobs } from './createJobs'
 
 bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
 global.Promise = bluebird as any // eslint-disable-line

@@ -2,7 +2,7 @@ import { getContractStore } from 'lib/terra'
 import { num } from 'lib/num'
 import {
   PairPool, OraclePrice, GovConfig, GovPoll, MintAssetConfig, StakingPool
-} from 'types'
+} from './types'
 
 export async function getPairPool(pair: string):
   Promise<{assetAmount: string; collateralAmount: string; totalShare: string}> {
