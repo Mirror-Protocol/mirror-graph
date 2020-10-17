@@ -16,7 +16,7 @@ global.Promise = bluebird as any // eslint-disable-line
 async function main(): Promise<void> {
   logger.info('initialize bot')
 
-  initErrorHandler({ sentryDsn: process.env.SENTRY_COLLECTOR })
+  initErrorHandler({ sentryDsn: process.env.SENTRY_BOT })
 
   validateConfig()
 
