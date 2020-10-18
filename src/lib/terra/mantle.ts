@@ -6,7 +6,7 @@ import { toSnakeCase, toCamelCase } from 'lib/caseStyles'
 export let mantle: GraphQLClient
 
 export function initMantle(URL: string): GraphQLClient {
-  mantle = new GraphQLClient(URL)
+  mantle = new GraphQLClient(URL, { timeout: 60000, keepalive: true })
 
   return mantle
 }
