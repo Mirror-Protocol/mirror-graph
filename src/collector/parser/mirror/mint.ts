@@ -128,6 +128,34 @@ export async function parse(
       data: { positionIdx, burnAmount },
       token: burn.token,
     }
+  } else if (msg['auction']) {
+    const liquidatedAmount = findAttribute(attributes, 'liquidated_amount')
+    const returnCollateralAmount = findAttribute(attributes, 'return_collateral_amount')
+    const taxAmount = findAttribute(attributes, 'tax_amount')
+
+    const liquidated = splitTokenAmount(liquidatedAmount)
+    const returnCollateral = splitTokenAmount(returnCollateralAmount)
+
+    cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
+    cdp.mintAmount = num(cdp.mintAmount).minus(liquidated.amount).toString()
+    cdp.collateralAmount = num(cdp.collateralAmount).minus(returnCollateral.amount).toString()
+
+    // remove asset's mint position
+    await assetService().addMintPosition(liquidated.token, `-${liquidated.amount}`, positionsRepo)
+
+    // remove asset's asCollateral position
+    await assetService().addAsCollateralPosition(returnCollateral.token, `-${returnCollateral.amount}`, positionsRepo)
+
+    // remove account balance
+    await accountService().removeBalance(sender, liquidated.token, liquidated.amount, balanceRepo)
+
+    console.log(JSON.stringify(log))
+
+    tx = {
+      type: TxType.AUCTION,
+      data: { liquidatedAmount, returnCollateralAmount, taxAmount },
+      token: liquidated.token,
+    }
   } else {
     return
   }
