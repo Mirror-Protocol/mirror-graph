@@ -9,11 +9,6 @@ export function key(): void {
     .action(async () => updateKey(config.KEYSTORE_PATH, config.OWNER_KEY))
 
   program
-    .command('update-oracle-key')
-    .description('update oracle key')
-    .action(async () => updateKey(config.KEYSTORE_PATH, config.ORACLE_KEY))
-
-  program
     .command('update-bot-key')
     .description('bot key')
     .action(async () => updateKey(config.KEYSTORE_PATH, config.BOT_KEY))

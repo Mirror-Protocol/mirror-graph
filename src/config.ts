@@ -19,7 +19,6 @@ const config = {
   // keys
   KEYSTORE_PATH: KEYSTORE_PATH || './keystore.json',
   OWNER_KEY: 'owner',
-  ORACLE_KEY: 'oracle',
   BOT_KEY: 'bot',
   // mirror config
   DECIMALS: 6,

@@ -1,5 +1,5 @@
 {
-  "name": "asset-server",
+  "name": "mirror-graph",
   "version": "0.1.0",
   "main": "src/main.ts",
   "license": "MIT",
