@@ -3,7 +3,7 @@ import { TxWallet } from 'lib/terra'
 import { getKey } from 'lib/keystore'
 import { errorHandler } from 'lib/error'
 import config from 'config'
-import { distributeRewards, updateCdps, updatePolls } from './jobs'
+import { distributeRewards, updateCdps, updatePolls, adjustPool } from './jobs'
 
 // node cron schedule option
 // second(option) min hour dayofmonth month dayofweek
@@ -24,5 +24,6 @@ export function createJobs(botPassword: string): void {
   // every 5minutes
   nodeCron.schedule('*/5 * * * *', async () => {
     await updatePolls(wallet).catch(errorHandler)
+    await adjustPool().catch(errorHandler)
   })
 }
