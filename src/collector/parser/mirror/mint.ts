@@ -132,6 +132,7 @@ export async function parse(
     const liquidatedAmount = findAttribute(attributes, 'liquidated_amount')
     const returnCollateralAmount = findAttribute(attributes, 'return_collateral_amount')
     const taxAmount = findAttribute(attributes, 'tax_amount')
+    const owner = findAttribute(attributes, 'owner')
 
     const liquidated = splitTokenAmount(liquidatedAmount)
     const returnCollateral = splitTokenAmount(returnCollateralAmount)
@@ -140,20 +141,32 @@ export async function parse(
     cdp.mintAmount = num(cdp.mintAmount).minus(liquidated.amount).toString()
     cdp.collateralAmount = num(cdp.collateralAmount).minus(returnCollateral.amount).toString()
 
-    // remove asset's mint position
-    await assetService().addMintPosition(liquidated.token, `-${liquidated.amount}`, positionsRepo)
+    if (cdp.mintAmount === '0' || cdp.collateralAmount === '0') {
+      // remove asset's mint position
+      await assetService().addMintPosition(liquidated.token, `-${cdp.mintAmount}`, positionsRepo)
 
-    // remove asset's asCollateral position
-    await assetService().addAsCollateralPosition(returnCollateral.token, `-${returnCollateral.amount}`, positionsRepo)
+      // remove asset's asCollateral position
+      await assetService().addAsCollateralPosition(returnCollateral.token, `-${cdp.collateralAmount}`, positionsRepo)
+
+      cdp.mintAmount = '0'
+      cdp.collateralAmount = '0'
+      cdp.collateralRatio = '0'
+    } else {
+      // remove asset's mint position
+      await assetService().addMintPosition(liquidated.token, `-${liquidated.amount}`, positionsRepo)
+
+      // remove asset's asCollateral position
+      await assetService().addAsCollateralPosition(returnCollateral.token, `-${returnCollateral.amount}`, positionsRepo)
+    }
 
     // remove account balance
-    await accountService().removeBalance(sender, liquidated.token, liquidated.amount, balanceRepo)
+    await accountService().removeBalance(owner, liquidated.token, liquidated.amount, balanceRepo)
 
     console.log(JSON.stringify(log))
 
     tx = {
       type: TxType.AUCTION,
-      data: { liquidatedAmount, returnCollateralAmount, taxAmount },
+      data: { positionIdx, liquidatedAmount, returnCollateralAmount, taxAmount },
       token: liquidated.token,
     }
   } else {
