@@ -3,7 +3,7 @@ import { Repository, FindConditions, LessThanOrEqual, getConnection } from 'type
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { transform } from 'lodash'
 import { num } from 'lib/num'
-import { getOHLC, getHistory } from 'lib/price'
+import { getOHLC } from 'lib/price'
 import { getOraclePrice } from 'lib/mirror'
 import { OraclePriceEntity } from 'orm'
 import { AssetOHLC, PriceAt } from 'graphql/schema'
@@ -70,7 +70,10 @@ export class OracleService {
   async getHistory(
     token: string, from: number, to: number, interval: number, repo = this.repo
   ): Promise<PriceAt[]> {
-    return getHistory<OraclePriceEntity>(repo, token, from, to, interval)
+    return getConnection().query(
+      'SELECT * FROM public.oracleHistory($1, $2, $3, $4)',
+      [token, new Date(from), new Date(to), interval]
+    )
   }
 }
 
