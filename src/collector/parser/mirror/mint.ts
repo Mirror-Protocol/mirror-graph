@@ -132,7 +132,6 @@ export async function parse(
     const liquidatedAmount = findAttribute(attributes, 'liquidated_amount')
     const returnCollateralAmount = findAttribute(attributes, 'return_collateral_amount')
     const taxAmount = findAttribute(attributes, 'tax_amount')
-    const owner = findAttribute(attributes, 'owner')
 
     const liquidated = splitTokenAmount(liquidatedAmount)
     const returnCollateral = splitTokenAmount(returnCollateralAmount)
@@ -160,9 +159,7 @@ export async function parse(
     }
 
     // remove account balance
-    await accountService().removeBalance(owner, liquidated.token, liquidated.amount, balanceRepo)
-
-    console.log(JSON.stringify(log))
+    await accountService().removeBalance(sender, liquidated.token, liquidated.amount, balanceRepo)
 
     tx = {
       type: TxType.AUCTION,
