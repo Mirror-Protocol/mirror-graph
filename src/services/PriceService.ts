@@ -1,5 +1,5 @@
 import { Container, Service } from 'typedi'
-import { Repository, FindConditions, LessThanOrEqual } from 'typeorm'
+import { Repository, FindConditions, FindOneOptions, LessThanOrEqual } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
 import { getOHLC, getHistory } from 'lib/price'
@@ -13,8 +13,12 @@ export class PriceService {
     @InjectRepository(PriceEntity) private readonly repo: Repository<PriceEntity>,
   ) {}
 
-  async get(conditions: FindConditions<PriceEntity>, repo = this.repo): Promise<PriceEntity> {
-    return repo.findOne(conditions)
+  async get(
+    conditions: FindConditions<PriceEntity>,
+    options?: FindOneOptions<PriceEntity>,
+    repo = this.repo
+  ): Promise<PriceEntity> {
+    return repo.findOne(conditions, options)
   }
 
   async getPrice(token: string, timestamp: number = Date.now(), repo = this.repo): Promise<string> {
