@@ -14,6 +14,7 @@ export function createJobs(botPassword: string): void {
   // every 1hour
   nodeCron.schedule('0 * * * *', async() => {
     await distributeRewards(wallet).catch(errorHandler)
+    await updateNews().catch(errorHandler)
   })
 
   // every 1minute
@@ -25,10 +26,5 @@ export function createJobs(botPassword: string): void {
   nodeCron.schedule('*/5 * * * *', async () => {
     await updatePolls(wallet).catch(errorHandler)
     await adjustPool().catch(errorHandler)
-  })
-
-  // every 1hour
-  nodeCron.schedule('* */1 * * *', async () => {
-    await updateNews().catch(errorHandler)
   })
 }

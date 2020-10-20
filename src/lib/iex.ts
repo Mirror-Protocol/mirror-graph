@@ -28,7 +28,7 @@ interface News {
 }
 
 export async function fetchNews(ticker: string, from: number): Promise<News[]> {
-  const response = await nodeFetch(`${url}/stock/${ticker}/news/last/1000?token=${apiKey}`)
+  const response = await nodeFetch(`${url}/stock/${ticker}/news/last/100?token=${apiKey}`)
     .then((res) => res.json())
   const since = new Date('2020-06-01').getTime()
 
