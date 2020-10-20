@@ -17,7 +17,9 @@ export async function updateNews(): Promise<void> {
       { token }, { order: { datetime: 'DESC' } }
     )
 
-    const newsList = (await fetchNews(symbol.substring(1), latestNews?.datetime.getTime() || 0))
+    const newsList = (await fetchNews(
+      symbol.substring(1), latestNews?.datetime.getTime() || 0, latestNews ? 50 : 1000)
+    )
       .map((news => ({ ...news, token })))
 
     await getRepository(AssetNewsEntity).save(newsList)
