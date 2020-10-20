@@ -5,7 +5,8 @@ import * as bluebird from 'bluebird'
 import * as logger from 'lib/logger'
 import { fetchAggregates, TimeSpan } from 'lib/polygon'
 import { assetService, priceService } from 'services'
-import { PriceEntity } from 'orm'
+import { PriceEntity, AssetEntity } from 'orm'
+import { loadDescriptions } from 'lib/data'
 
 async function collectPrice(
   symbol: string, token: string, timespan: TimeSpan, from: number, to: number, useOnlyDay = false
@@ -49,11 +50,24 @@ async function fillPriceHistory(): Promise<void> {
   })
 }
 
-export function priceCommands(): void {
+export function fillCommands(): void {
   program
     .command('fill-price-history')
     .action(async () => {
       await fillPriceHistory()
+
+      logger.info('completed')
+    })
+
+  program
+    .command('fill-description')
+    .action(async () => {
+      const descriptions = loadDescriptions()
+
+      await bluebird.map(Object.keys(descriptions), async (symbol) => {
+        await getRepository(AssetEntity)
+          .update({ symbol: `m${symbol}` }, { description: descriptions[symbol] })
+      })
 
       logger.info('completed')
     })

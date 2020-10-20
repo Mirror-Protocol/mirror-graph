@@ -4,6 +4,7 @@ import { Container, Service } from 'typedi'
 import { GovEntity, ContractEntity, AssetEntity } from 'orm'
 import { Contracts, Assets, ContractType } from 'types'
 import { TxWallet } from 'lib/terra'
+import { loadDescriptions } from 'lib/data'
 import * as logger from 'lib/logger'
 import config from 'config'
 
@@ -89,8 +90,10 @@ export class GovService {
     if (!token || !pair || !lpToken) {
       throw new Error(`whitelisting failed. token(${token}), lpToken(${lpToken}), pair(${pair})`)
     }
+    const descriptions = loadDescriptions()
+    const description = descriptions[symbol.substring(1)]
 
-    const asset = new AssetEntity({ govId, symbol, name, token, pair, lpToken })
+    const asset = new AssetEntity({ govId, symbol, name, description, token, pair, lpToken })
     const entities = [
       asset,
       new ContractEntity({ address: token, type: ContractType.TOKEN, govId, asset }),

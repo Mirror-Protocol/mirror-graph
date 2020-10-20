@@ -5,7 +5,8 @@ import { TxWallet } from 'lib/terra'
 import { getKey } from 'lib/keystore'
 import { Assets } from 'types'
 import config from 'config'
-import { loadContracts, loadAssets, saveAssets } from './data'
+import { loadContracts, loadAssets, saveAssets } from 'lib/data'
+import { fetchNews } from 'lib/iex'
 
 export function ownerCommands(): void {
   program
@@ -35,5 +36,15 @@ export function ownerCommands(): void {
       })
 
       saveAssets(assets)
+    })
+
+  program
+    .command('news')
+    .action(async () => {
+      const assetList = await assetService().getAll({ where: { isListed: true }})
+      assetList.map(async (asset) => {
+        const { symbol } = asset
+        await fetchNews(symbol.substring(1), 2000)
+      })
     })
 }

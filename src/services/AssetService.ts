@@ -2,13 +2,14 @@ import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions, FindOneOptions, FindManyOptions } from 'typeorm'
 import { Container, Service } from 'typedi'
 import { num } from 'lib/num'
-import { AssetEntity, AssetPositionsEntity } from 'orm'
+import { AssetEntity, AssetPositionsEntity, AssetNewsEntity } from 'orm'
 
 @Service()
 export class AssetService {
   constructor(
     @InjectRepository(AssetEntity) private readonly repo: Repository<AssetEntity>,
     @InjectRepository(AssetPositionsEntity) private readonly positionsRepo: Repository<AssetPositionsEntity>,
+    @InjectRepository(AssetNewsEntity) private readonly newsRepo: Repository<AssetNewsEntity>,
   ) {}
 
   async get(
@@ -29,6 +30,10 @@ export class AssetService {
     repo = this.positionsRepo
   ): Promise<AssetPositionsEntity> {
     return repo.findOne(conditions, options)
+  }
+
+  async getNews(token: string): Promise<AssetNewsEntity[]> {
+    return this.newsRepo.find({ order: { datetime: 'DESC' }, take: 10 })
   }
 
   async addMintPosition(

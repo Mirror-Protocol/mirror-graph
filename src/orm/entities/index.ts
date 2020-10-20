@@ -1,6 +1,7 @@
 export * from './account/BalanceEntity'
 export * from './account/TxEntity'
 export * from './asset/AssetEntity'
+export * from './asset/AssetNewsEntity'
 export * from './asset/AssetPositionsEntity'
 export * from './asset/CdpEntity'
 export * from './asset/DailyStatisticEntity'
