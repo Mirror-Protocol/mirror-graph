@@ -33,7 +33,7 @@ export class AssetService {
   }
 
   async getNews(token: string): Promise<AssetNewsEntity[]> {
-    return this.newsRepo.find({ order: { datetime: 'DESC' }, take: 10 })
+    return this.newsRepo.find({ where: { token }, order: { datetime: 'DESC' }, take: 10 })
   }
 
   async addMintPosition(
