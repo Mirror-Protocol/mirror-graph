@@ -166,7 +166,7 @@ export async function parse(
     })
 
     // add transfer balance
-    await bluebird.mapSeries(contractActions.transfer, async (action) => {
+    Array.isArray(contractActions.transfer) && await bluebird.mapSeries(contractActions.transfer, async (action) => {
       if (action.from === contract.address) {
         const price = await oracleService().getPrice(action.contract, datetime.getTime(), oracleRepo)
         await accountService().addBalance(action.to, action.contract, price, action.amount, datetime, balanceRepo)
