@@ -30,7 +30,7 @@ export async function parse(args: ParseArgs): Promise<void> {
     const amount = findAttribute(attributes, 'amount')
 
     await accountService().removeBalance(
-      sender, mirrorToken, amount, manager.getRepository(BalanceEntity)
+      sender, mirrorToken, amount, datetime, manager.getRepository(BalanceEntity)
     )
 
     parsed = {
@@ -47,7 +47,7 @@ export async function parse(args: ParseArgs): Promise<void> {
       const to = findAttribute(attributes, 'to')
       const price = await priceService().getPrice(mirrorToken, datetime.getTime(), manager.getRepository(PriceEntity))
       await accountService().addBalance(
-        to, mirrorToken, price || '0', amount, manager.getRepository(BalanceEntity)
+        to, mirrorToken, price || '0', amount, datetime, manager.getRepository(BalanceEntity)
       )
     }
 
@@ -69,7 +69,7 @@ export async function parse(args: ParseArgs): Promise<void> {
     const share = findAttribute(attributes, 'share')
 
     await accountService().removeBalance(
-      sender, mirrorToken, amount, manager.getRepository(BalanceEntity)
+      sender, mirrorToken, amount, datetime, manager.getRepository(BalanceEntity)
     )
 
     parsed = {
@@ -82,7 +82,7 @@ export async function parse(args: ParseArgs): Promise<void> {
 
     const price = await priceService().getPrice(mirrorToken, datetime.getTime(), manager.getRepository(PriceEntity))
     await accountService().addBalance(
-      sender, mirrorToken, price || '0', amount, manager.getRepository(BalanceEntity)
+      sender, mirrorToken, price || '0', amount, datetime, manager.getRepository(BalanceEntity)
     )
 
     parsed = {

@@ -47,9 +47,9 @@ export async function parseTransfer(
   const balanceRepo = manager.getRepository(BalanceEntity)
   const price = await priceService().getPrice(token, datetime.getTime(), manager.getRepository(PriceEntity))
   // remove send account balance
-  await accountService().removeBalance(from, token, amount, balanceRepo)
+  await accountService().removeBalance(from, token, amount, datetime, balanceRepo)
   // add recv account balance
-  await accountService().addBalance(to, token, price, amount, balanceRepo)
+  await accountService().addBalance(to, token, price, amount, datetime, balanceRepo)
 
   await manager.save([sendTx, recvTx])
 }

@@ -71,7 +71,7 @@ export async function parse(
       const assetPoolChanged = num(returnAmount).plus(ownerCommissionAmount).multipliedBy(-1).toString()
 
       positions = await assetService().addPoolPosition(token, assetPoolChanged, offerAmount, positionsRepo)
-      await accountService().addBalance(sender, token, price, recvAmount, balanceRepo)
+      await accountService().addBalance(sender, token, price, recvAmount, datetime, balanceRepo)
     } else {
       const { transfer } = log.eventsByType
 
@@ -85,7 +85,7 @@ export async function parse(
       const uusdPoolChanged = uusdAmountNum.toString()
 
       positions = await assetService().addPoolPosition(token, offerAmount, uusdPoolChanged, positionsRepo)
-      await accountService().removeBalance(sender, token, offerAmount, balanceRepo)
+      await accountService().removeBalance(sender, token, offerAmount, datetime, balanceRepo)
     }
 
     // add daily trading volume
@@ -100,7 +100,7 @@ export async function parse(
     const uusdToken = liquidities[1]
 
     // remove account balance
-    await accountService().removeBalance(sender, token, assetToken.amount, balanceRepo)
+    await accountService().removeBalance(sender, token, assetToken.amount, datetime, balanceRepo)
 
     // add asset's liquidity position
     positions = await assetService().addLiquidityPosition(
@@ -120,7 +120,7 @@ export async function parse(
 
     // add account balance
     const price = await priceService().getPrice(token, datetime.getTime(), manager.getRepository(PriceEntity))
-    await accountService().addBalance(sender, token, price, assetToken.amount, balanceRepo)
+    await accountService().addBalance(sender, token, price, assetToken.amount, datetime, balanceRepo)
 
     // remove asset's liquidity position
     positions = await assetService().addLiquidityPosition(

@@ -26,13 +26,13 @@ export async function parse(
     if (assetToken === mirrorToken) {
       if (type === TxType.STAKE) {
         await accountService().removeBalance(
-          sender, mirrorToken, amount, manager.getRepository(BalanceEntity)
+          sender, mirrorToken, amount, datetime, manager.getRepository(BalanceEntity)
         )
       } else {
         const price = await priceService().getPrice(mirrorToken, datetime.getTime(), manager.getRepository(PriceEntity))
 
         await accountService().addBalance(
-          sender, mirrorToken, price || '0', amount, manager.getRepository(BalanceEntity)
+          sender, mirrorToken, price || '0', amount, datetime, manager.getRepository(BalanceEntity)
         )
       }
     }
@@ -48,7 +48,7 @@ export async function parse(
     const token = govService().get().mirrorToken
     const balanceRepo = manager.getRepository(BalanceEntity)
     const price = await priceService().getPrice(token, datetime.getTime(), manager.getRepository(PriceEntity))
-    await accountService().addBalance(sender, token, price || '0', amount, balanceRepo)
+    await accountService().addBalance(sender, token, price || '0', amount, datetime, balanceRepo)
 
     parsed = {
       type: TxType.WITHDRAW_REWARDS,

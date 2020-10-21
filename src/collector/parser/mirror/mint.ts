@@ -47,7 +47,7 @@ export async function parse(
 
     // add account balance
     const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
-    await accountService().addBalance(sender, mint.token, price, mint.amount, balanceRepo)
+    await accountService().addBalance(sender, mint.token, price, mint.amount, datetime, balanceRepo)
 
     tx = {
       type: TxType.OPEN_POSITION,
@@ -103,7 +103,7 @@ export async function parse(
 
     // add account balance
     const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
-    await accountService().addBalance(sender, mint.token, price, mint.amount, balanceRepo)
+    await accountService().addBalance(sender, mint.token, price, mint.amount, datetime, balanceRepo)
 
     tx = {
       type: TxType.MINT,
@@ -122,7 +122,7 @@ export async function parse(
     await assetService().addMintPosition(burn.token, `-${burn.amount}`, positionsRepo)
 
     // remove account balance
-    await accountService().removeBalance(sender, burn.token, burn.amount, balanceRepo)
+    await accountService().removeBalance(sender, burn.token, burn.amount, datetime, balanceRepo)
 
     tx = {
       type: TxType.BURN,
@@ -162,14 +162,14 @@ export async function parse(
 
     // remove send balance
     await bluebird.mapSeries(contractActions.send, async (action) => {
-      await accountService().removeBalance(action.from, action.contract, action.amount, balanceRepo)
+      await accountService().removeBalance(action.from, action.contract, action.amount, datetime, balanceRepo)
     })
 
     // add transfer balance
     await bluebird.mapSeries(contractActions.transfer, async (action) => {
       if (action.from === contract.address) {
         const price = await oracleService().getPrice(action.contract, datetime.getTime(), oracleRepo)
-        await accountService().addBalance(action.to, action.contract, price, action.amount, balanceRepo)
+        await accountService().addBalance(action.to, action.contract, price, action.amount, datetime, balanceRepo)
       }
     })
 

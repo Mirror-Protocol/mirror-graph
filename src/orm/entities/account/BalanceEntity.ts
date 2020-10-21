@@ -24,4 +24,8 @@ export class BalanceEntity extends HaveAsset {
 
   @Column('numeric', { precision: 40, default: 0 })
   balance: string
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
+  @Index()
+  datetime: Date
 }

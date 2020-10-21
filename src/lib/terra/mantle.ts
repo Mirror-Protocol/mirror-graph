@@ -47,7 +47,7 @@ export async function getContractStore<T>(address: string, query: unknown): Prom
 export async function getTxs(start: number, end: number, limit = 100): Promise<TxInfo[]> {
   const response = await mantle.request(
     gql`query($range: [Int!]!, $limit: Int) {
-      Blocks(Height_range: $range, Limit: $limit, Order: ASC, Success: true) {
+      Blocks(Height_range: $range, Limit: $limit, Order: ASC) {
         Txs {
           Height
           TxHash

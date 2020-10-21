@@ -29,7 +29,7 @@ export class AccountService {
     }
 
     const balanceEntity = await this.getBalanceEntity(
-      { address, token }, { select: ['balance', 'averagePrice']}
+      { address, token }, { select: ['balance', 'averagePrice'], order: { datetime: 'DESC' } }
     )
     if (!balanceEntity)
       return
@@ -42,12 +42,15 @@ export class AccountService {
   }
 
   async getBalances(address: string, repo = this.balanceRepo): Promise<AssetBalance[]> {
-    const balances = await repo.find({
-      select: ['token', 'balance', 'averagePrice'],
-      where: { address }
-    })
-
-    return balances
+    return repo
+      .createQueryBuilder()
+      .select('DISTINCT ON (token) token', 'token')
+      .addSelect('balance')
+      .addSelect('average_price', 'averagePrice')
+      .where('address = :address', { address })
+      .orderBy('token')
+      .addOrderBy('datetime', 'DESC')
+      .getRawMany()
   }
 
   async getBalanceHistory(address: string, from: number, to: number, interval: number): Promise<ValueAt[]> {
@@ -58,44 +61,55 @@ export class AccountService {
   }
 
   async addBalance(
-    address: string, token: string, price: string, amount: string, repo = this.balanceRepo
+    address: string, token: string, price: string, amount: string, datetime: Date, repo = this.balanceRepo
   ): Promise<BalanceEntity> {
-    const entity = await this.getBalanceEntity({ address, token }, undefined, repo)
+    const latest = await this.getBalanceEntity(
+      { address, token }, { order: { datetime: 'DESC' } }, repo
+    )
+    let entity
 
-    if (!entity) {
-      return repo.save({ address, token, averagePrice: price, balance: amount })
+    if (latest) {
+      entity = new BalanceEntity({
+        address, token, averagePrice: latest.averagePrice, balance: latest.balance, datetime
+      })
+
+      const totalBalance = num(entity.balance).plus(amount)
+
+      if (num(price).isGreaterThan(0)) {
+        // average = (last.avg_price*last.amount + current.avg_price*current.amount) / total_amount
+        const value = num(price).multipliedBy(amount)
+        const lastValue = num(entity.averagePrice).multipliedBy(entity.balance)
+
+        entity.averagePrice = lastValue.plus(value).dividedBy(totalBalance).toString()
+      }
+
+      entity.balance = totalBalance.toString()
+    } else {
+      entity = new BalanceEntity({
+        address, token, averagePrice: price, balance: amount, datetime
+      })
     }
-
-    const totalBalance = num(entity.balance).plus(amount)
-
-    if (num(price).isGreaterThan(0)) {
-      // average = (last.avg_price*last.amount + current.avg_price*current.amount) / total_amount
-      const value = num(price).multipliedBy(amount)
-      const lastValue = num(entity.averagePrice).multipliedBy(entity.balance)
-
-      entity.averagePrice = lastValue.plus(value).dividedBy(totalBalance).toString()
-    }
-
-    entity.balance = totalBalance.toString()
 
     return repo.save(entity)
   }
 
   async removeBalance(
-    address: string, token: string, amount: string, repo = this.balanceRepo
+    address: string, token: string, amount: string, datetime: Date, repo = this.balanceRepo
   ): Promise<BalanceEntity> {
-    const entity = await this.getBalanceEntity({ address, token }, undefined, repo)
-    if (!entity) {
+    const latest = await this.getBalanceEntity(
+      { address, token }, { order: { datetime: 'DESC' } }, repo
+    )
+    if (!latest) {
       return
     }
 
-    const totalBalance = num(entity.balance).minus(amount)
-    if (totalBalance.isLessThanOrEqualTo(0)) {
-      await repo.remove(entity)
-      return
-    }
-
-    entity.balance = totalBalance.toString()
+    const entity = new BalanceEntity({
+      address,
+      token,
+      averagePrice: latest.averagePrice,
+      balance: num(latest.balance).minus(amount).toString(),
+      datetime,
+    })
 
     return repo.save(entity)
   }
