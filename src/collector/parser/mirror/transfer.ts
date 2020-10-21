@@ -1,11 +1,13 @@
 import * as bluebird from 'bluebird'
 import { findAttributes, parseContractActions } from 'lib/terra'
+import { num } from 'lib/num'
 import { contractService, accountService, assetService, priceService } from 'services'
 import { BalanceEntity, AssetEntity, PriceEntity, ContractEntity } from 'orm'
+import { ContractType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
-  { manager, timestamp, log }: ParseArgs
+  { manager, contract, timestamp, msg, log }: ParseArgs
 ): Promise<void> {
   const attributes = findAttributes(log.events, 'from_contract')
   if (!attributes) {
@@ -31,7 +33,15 @@ export async function parse(
       if (await assetService().get({ token }, undefined, assetRepo) &&
         !(await contractService().get({ address: to }, undefined, contractRepo))
       ) {
-        const price = await priceService().getPrice(token, datetime.getTime(), manager.getRepository(PriceEntity))
+        let price = '0'
+        if (contract.type === ContractType.PAIR && msg['swap'] && contractActions?.swap[0]?.offerAsset === 'uusd') {
+          // calculate buy price when buying
+          const { offerAmount, returnAmount } = contractActions.swap[0]
+          price = num(offerAmount).dividedBy(returnAmount).toString()
+        } else {
+          price = await priceService().getPrice(token, datetime.getTime(), manager.getRepository(PriceEntity))
+        }
+
         await accountService().addBalance(to, token, price || '0', amount, datetime, balanceRepo)
       }
       await accountService().removeBalance(from, token, amount, datetime, balanceRepo)
