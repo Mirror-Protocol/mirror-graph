@@ -29,7 +29,7 @@ export class AccountService {
     }
 
     const balanceEntity = await this.getBalanceEntity(
-      { address, token }, { select: ['balance', 'averagePrice'], order: { datetime: 'DESC' } }
+      { address, token }, { select: ['balance', 'averagePrice'], order: { id: 'DESC' } }
     )
     if (!balanceEntity)
       return
@@ -49,7 +49,7 @@ export class AccountService {
       .addSelect('average_price', 'averagePrice')
       .where('address = :address', { address })
       .orderBy('token')
-      .addOrderBy('datetime', 'DESC')
+      .addOrderBy('id', 'DESC')
       .getRawMany()
   }
 
@@ -64,7 +64,7 @@ export class AccountService {
     address: string, token: string, price: string, amount: string, datetime: Date, repo = this.balanceRepo
   ): Promise<BalanceEntity> {
     const latest = await this.getBalanceEntity(
-      { address, token }, { order: { datetime: 'DESC' } }, repo
+      { address, token }, { order: { id: 'DESC' } }, repo
     )
     let entity
 
@@ -97,7 +97,7 @@ export class AccountService {
     address: string, token: string, amount: string, datetime: Date, repo = this.balanceRepo
   ): Promise<BalanceEntity> {
     const latest = await this.getBalanceEntity(
-      { address, token }, { order: { datetime: 'DESC' } }, repo
+      { address, token }, { order: { id: 'DESC' } }, repo
     )
     if (!latest) {
       return

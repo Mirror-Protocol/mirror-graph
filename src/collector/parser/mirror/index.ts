@@ -1,7 +1,6 @@
 import { TxInfo, MsgExecuteContract, TxLog } from '@terra-money/terra.js'
 import { EntityManager } from 'typeorm'
-import { Container } from 'typedi'
-import { ContractService } from 'services'
+import { contractService } from 'services'
 import { ContractType } from 'types'
 import { ContractEntity } from 'orm'
 import { ParseArgs } from './parseArgs'
@@ -13,14 +12,14 @@ import * as mint from './mint'
 import * as staking from './staking'
 import * as gov from './gov'
 import * as collector from './collector'
+import * as transfer from './transfer'
 
 export async function parseMirrorMsg(
   manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog
 ): Promise<void> {
-  const contractService = Container.get(ContractService)
-  const contract = await contractService.get(
-    { address: msg.contract }, undefined, manager.getRepository(ContractEntity)
-  )
+  const contractRepo = manager.getRepository(ContractEntity)
+  const contract = await contractService().get({ address: msg.contract }, undefined, contractRepo)
+
   if (!contract)
     return
 
@@ -38,28 +37,42 @@ export async function parseMirrorMsg(
 
   switch (contract.type) {
     case ContractType.GOV:
-      return gov.parse(args)
+      await gov.parse(args)
+      break
 
     case ContractType.FACTORY:
-      return factory.parse(args)
+      await factory.parse(args)
+      break
 
     case ContractType.ORACLE:
-      return oracle.parse(args)
+      await oracle.parse(args)
+      break
 
     case ContractType.PAIR:
-      return pair.parse(args)
+      await pair.parse(args)
+      break
 
     case ContractType.TOKEN:
     case ContractType.LP_TOKEN:
-      return token.parse(args)
+      await token.parse(args)
+      break
 
     case ContractType.MINT:
-      return mint.parse(args)
+      await mint.parse(args)
+      break
 
     case ContractType.STAKING:
-      return staking.parse(args)
+      await staking.parse(args)
+      break
 
     case ContractType.COLLECTOR:
-      return collector.parse(args)
+      await collector.parse(args)
+      break
+
+    default:
+      return
   }
+
+  // tracking token balance
+  await transfer.parse(args)
 }

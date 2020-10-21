@@ -1,6 +1,6 @@
 import { findAttributes, findAttribute } from 'lib/terra'
-import { assetService, govService, accountService, priceService } from 'services'
-import { TxEntity, AssetPositionsEntity, BalanceEntity, PriceEntity } from 'orm'
+import { assetService, govService } from 'services'
+import { TxEntity, AssetPositionsEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
@@ -22,21 +22,6 @@ export async function parse(
       assetToken, type === TxType.STAKE ? amount : `-${amount}`, positionsRepo
     )
 
-    const { mirrorToken } = govService().get()
-    if (assetToken === mirrorToken) {
-      if (type === TxType.STAKE) {
-        await accountService().removeBalance(
-          sender, mirrorToken, amount, datetime, manager.getRepository(BalanceEntity)
-        )
-      } else {
-        const price = await priceService().getPrice(mirrorToken, datetime.getTime(), manager.getRepository(PriceEntity))
-
-        await accountService().addBalance(
-          sender, mirrorToken, price || '0', amount, datetime, manager.getRepository(BalanceEntity)
-        )
-      }
-    }
-
     parsed = {
       type,
       data: { assetToken, amount },
@@ -44,11 +29,6 @@ export async function parse(
     }
   } else if (msg['withdraw']) {
     const amount = findAttribute(attributes, 'amount')
-
-    const token = govService().get().mirrorToken
-    const balanceRepo = manager.getRepository(BalanceEntity)
-    const price = await priceService().getPrice(token, datetime.getTime(), manager.getRepository(PriceEntity))
-    await accountService().addBalance(sender, token, price || '0', amount, datetime, balanceRepo)
 
     parsed = {
       type: TxType.WITHDRAW_REWARDS,

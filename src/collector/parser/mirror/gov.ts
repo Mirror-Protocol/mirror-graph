@@ -1,6 +1,6 @@
 import { findAttributes, findAttribute } from 'lib/terra'
-import { govService, accountService, priceService } from 'services'
-import { TxEntity, BalanceEntity, PriceEntity } from 'orm'
+import { govService } from 'services'
+import { TxEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
@@ -29,10 +29,6 @@ export async function parse(args: ParseArgs): Promise<void> {
     const pollId = findAttribute(attributes, 'poll_id')
     const amount = findAttribute(attributes, 'amount')
 
-    await accountService().removeBalance(
-      sender, mirrorToken, amount, datetime, manager.getRepository(BalanceEntity)
-    )
-
     parsed = {
       type: TxType.GOV_CREATE_POLL,
       data: { pollId, amount },
@@ -42,14 +38,6 @@ export async function parse(args: ParseArgs): Promise<void> {
     const pollId = findAttribute(attributes, 'poll_id')
     const passed = findAttribute(attributes, 'passed')
     const amount = findAttribute(attributes, 'amount')
-
-    if (passed === 'true') {
-      const to = findAttribute(attributes, 'to')
-      const price = await priceService().getPrice(mirrorToken, datetime.getTime(), manager.getRepository(PriceEntity))
-      await accountService().addBalance(
-        to, mirrorToken, price || '0', amount, datetime, manager.getRepository(BalanceEntity)
-      )
-    }
 
     parsed = {
       type: TxType.GOV_END_POLL,
@@ -68,10 +56,6 @@ export async function parse(args: ParseArgs): Promise<void> {
     const amount = findAttribute(attributes, 'amount')
     const share = findAttribute(attributes, 'share')
 
-    await accountService().removeBalance(
-      sender, mirrorToken, amount, datetime, manager.getRepository(BalanceEntity)
-    )
-
     parsed = {
       type: TxType.GOV_STAKE,
       data: { amount, share },
@@ -79,11 +63,6 @@ export async function parse(args: ParseArgs): Promise<void> {
     }
   } else if (msg['withdraw_voting_tokens']) {
     const amount = findAttribute(attributes, 'amount')
-
-    const price = await priceService().getPrice(mirrorToken, datetime.getTime(), manager.getRepository(PriceEntity))
-    await accountService().addBalance(
-      sender, mirrorToken, price || '0', amount, datetime, manager.getRepository(BalanceEntity)
-    )
 
     parsed = {
       type: TxType.GOV_UNSTAKE,

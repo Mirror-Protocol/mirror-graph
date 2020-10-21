@@ -45,7 +45,7 @@ export async function adjustBalance(): Promise<void> {
     .addSelect('balance')
     .orderBy('address')
     .addOrderBy('token')
-    .addOrderBy('datetime', 'DESC')
+    .addOrderBy('id', 'DESC')
     .getRawMany()
 
   await bluebird.mapSeries(balances, async (row) => {

@@ -1,5 +1,4 @@
-import * as bluebird from 'bluebird'
-import { findAttributes, findAttribute, parseContractActions } from 'lib/terra'
+import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { assetService, accountService, cdpService, oracleService } from 'services'
@@ -121,16 +120,12 @@ export async function parse(
     // remove asset's mint position
     await assetService().addMintPosition(burn.token, `-${burn.amount}`, positionsRepo)
 
-    // remove account balance
-    await accountService().removeBalance(sender, burn.token, burn.amount, datetime, balanceRepo)
-
     tx = {
       type: TxType.BURN,
       data: { positionIdx, burnAmount },
       token: burn.token,
     }
   } else if (msg['auction']) {
-    const contractActions = parseContractActions(attributes)
     const liquidatedAmount = findAttribute(attributes, 'liquidated_amount')
     const returnCollateralAmount = findAttribute(attributes, 'return_collateral_amount')
     const taxAmount = findAttribute(attributes, 'tax_amount')
@@ -159,19 +154,6 @@ export async function parse(
       // remove asset's asCollateral position
       await assetService().addAsCollateralPosition(returnCollateral.token, `-${returnCollateral.amount}`, positionsRepo)
     }
-
-    // remove send balance
-    await bluebird.mapSeries(contractActions.send, async (action) => {
-      await accountService().removeBalance(action.from, action.contract, action.amount, datetime, balanceRepo)
-    })
-
-    // add transfer balance
-    Array.isArray(contractActions.transfer) && await bluebird.mapSeries(contractActions.transfer, async (action) => {
-      if (action.from === contract.address) {
-        const price = await oracleService().getPrice(action.contract, datetime.getTime(), oracleRepo)
-        await accountService().addBalance(action.to, action.contract, price, action.amount, datetime, balanceRepo)
-      }
-    })
 
     tx = {
       type: TxType.AUCTION,

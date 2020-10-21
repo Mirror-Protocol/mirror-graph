@@ -22,7 +22,7 @@ BEGIN
         b.balance
         FROM balance b
         WHERE b.address=_address AND b.datetime <= timeIteratorNext
-        ORDER BY token, datetime DESC
+        ORDER BY token, id DESC
     ) as pb;
 
     EXIT WHEN timeIterator >= _to;

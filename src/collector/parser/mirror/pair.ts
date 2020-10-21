@@ -1,8 +1,8 @@
 import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
-import { assetService, accountService, priceService, statisticService } from 'services'
-import { TxEntity, AssetPositionsEntity, DailyStatisticEntity, PriceEntity, BalanceEntity } from 'orm'
+import { assetService, priceService, statisticService } from 'services'
+import { TxEntity, AssetPositionsEntity, DailyStatisticEntity, PriceEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
@@ -13,7 +13,6 @@ export async function parse(
   const datetime = new Date(timestamp)
   const attributes = findAttributes(log.events, 'from_contract')
   const positionsRepo = manager.getRepository(AssetPositionsEntity)
-  const balanceRepo = manager.getRepository(BalanceEntity)
   let parsed = {}
   let positions: AssetPositionsEntity
 
@@ -71,7 +70,6 @@ export async function parse(
       const assetPoolChanged = num(returnAmount).plus(ownerCommissionAmount).multipliedBy(-1).toString()
 
       positions = await assetService().addPoolPosition(token, assetPoolChanged, offerAmount, positionsRepo)
-      await accountService().addBalance(sender, token, price, recvAmount, datetime, balanceRepo)
     } else {
       const { transfer } = log.eventsByType
 
@@ -85,7 +83,6 @@ export async function parse(
       const uusdPoolChanged = uusdAmountNum.toString()
 
       positions = await assetService().addPoolPosition(token, offerAmount, uusdPoolChanged, positionsRepo)
-      await accountService().removeBalance(sender, token, offerAmount, datetime, balanceRepo)
     }
 
     // add daily trading volume
@@ -98,9 +95,6 @@ export async function parse(
     const liquidities = assets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
     const assetToken = liquidities[0]
     const uusdToken = liquidities[1]
-
-    // remove account balance
-    await accountService().removeBalance(sender, token, assetToken.amount, datetime, balanceRepo)
 
     // add asset's liquidity position
     positions = await assetService().addLiquidityPosition(
@@ -117,10 +111,6 @@ export async function parse(
     const liquidities = refundAssets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
     const assetToken = liquidities[1]
     const uusdToken = liquidities[0]
-
-    // add account balance
-    const price = await priceService().getPrice(token, datetime.getTime(), manager.getRepository(PriceEntity))
-    await accountService().addBalance(sender, token, price, assetToken.amount, datetime, balanceRepo)
 
     // remove asset's liquidity position
     positions = await assetService().addLiquidityPosition(
