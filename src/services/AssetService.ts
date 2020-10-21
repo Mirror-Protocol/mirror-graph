@@ -1,6 +1,7 @@
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { Repository, FindConditions, FindOneOptions, FindManyOptions } from 'typeorm'
+import { Repository, FindConditions, FindOneOptions, FindManyOptions, MoreThanOrEqual } from 'typeorm'
 import { Container, Service } from 'typedi'
+import { addMonths } from 'date-fns'
 import { num } from 'lib/num'
 import { AssetEntity, AssetPositionsEntity, AssetNewsEntity } from 'orm'
 
@@ -33,7 +34,11 @@ export class AssetService {
   }
 
   async getNews(token: string): Promise<AssetNewsEntity[]> {
-    return this.newsRepo.find({ where: { token }, order: { datetime: 'DESC' }, take: 10 })
+    return this.newsRepo.find({
+      where: { token, datetime: MoreThanOrEqual(addMonths(Date.now(), -1)) },
+      order: { datetime: 'DESC' },
+      take: 5
+    })
   }
 
   async addMintPosition(
