@@ -1,14 +1,36 @@
 import * as bluebird from 'bluebird'
-import { findAttributes, parseContractActions } from 'lib/terra'
+import { ContractActions, findAttributes, parseContractActions } from 'lib/terra'
 import { num } from 'lib/num'
 import { contractService, accountService, assetService, priceService } from 'services'
 import { BalanceEntity, AssetEntity, PriceEntity, ContractEntity } from 'orm'
 import { ContractType } from 'types'
 import { ParseArgs } from './parseArgs'
 
-export async function parse(
-  { manager, contract, timestamp, msg, log }: ParseArgs
-): Promise<void> {
+async function getBuyPrice(
+  token: string, contractActions: ContractActions, args: ParseArgs
+): Promise<string> {
+  const { manager, contract, timestamp, msg } = args
+
+  // calculate buy price when buying
+  if (contract.type === ContractType.PAIR &&
+    msg['swap'] &&
+    contractActions?.swap[0]?.offerAsset === 'uusd'
+  ) {
+    const { offerAmount, returnAmount } = contractActions.swap[0]
+
+    return (offerAmount !== '0' && returnAmount !== '0')
+      ? num(offerAmount).dividedBy(returnAmount).toString()
+      : '0'
+  }
+
+  const priceEntity = manager.getRepository(PriceEntity)
+  const datetime = new Date(timestamp)
+
+  return (await priceService().getPrice(token, datetime.getTime(), priceEntity)) || '0'
+}
+
+export async function parse(args: ParseArgs): Promise<void> {
+  const { manager, timestamp, log } = args
   const attributes = findAttributes(log.events, 'from_contract')
   if (!attributes) {
     return
@@ -24,6 +46,7 @@ export async function parse(
   Array.isArray(contractActions.send) && transfers.push(...contractActions.send)
   Array.isArray(contractActions.transfer) && transfers.push(...contractActions.transfer)
   Array.isArray(contractActions.transferFrom) && transfers.push(...contractActions.transferFrom)
+  Array.isArray(contractActions.sendFrom) && transfers.push(...contractActions.sendFrom)
 
   await bluebird.mapSeries(
     transfers,
@@ -33,17 +56,10 @@ export async function parse(
       if (await assetService().get({ token }, undefined, assetRepo) &&
         !(await contractService().get({ address: to }, undefined, contractRepo))
       ) {
-        let price = '0'
-        if (contract.type === ContractType.PAIR && msg['swap'] && contractActions?.swap[0]?.offerAsset === 'uusd') {
-          // calculate buy price when buying
-          const { offerAmount, returnAmount } = contractActions.swap[0]
-          price = num(offerAmount).dividedBy(returnAmount).toString()
-        } else {
-          price = await priceService().getPrice(token, datetime.getTime(), manager.getRepository(PriceEntity))
-        }
-
+        const price = await getBuyPrice(token, contractActions, args)
         await accountService().addBalance(to, token, price || '0', amount, datetime, balanceRepo)
       }
+
       await accountService().removeBalance(from, token, amount, datetime, balanceRepo)
     }
   )
