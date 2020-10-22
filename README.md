@@ -8,7 +8,7 @@
 * PostgreSQL v12 (https://www.postgresql.org/download/)
 * ormconfig.json on project root
 * .envrc on project root
-* address.json, assets.json, codeIds.json, contracts.json on project root/data
+* address.json, assets.json, codeIds.json, contracts.json, description.json on project root/data
 
 ## Install dependencies
 ```
@@ -24,6 +24,11 @@ export TERRA_CHAIN_ID='localterra'
 
 export KEYSTORE_PATH='./keystore.json'
 export CONTRACT_ID=-1
+
+export POLYGON_API_KEY='api-key'
+export IEX_CLOUD_API_KEY='api-key'
+
+export BOT_PASSWORD='bot-password'
 ```
 
 ## cli
@@ -48,11 +53,6 @@ $ yarn cli update-owner-key
 $ yarn cli update-bot-key
 ```
 
-## Create Gov from json
-```
-$ yarn cli create -p <owner-key-password>
-```
-
 ## Run Collector
 ```
 $ yarn collect
@@ -60,7 +60,7 @@ $ yarn collect
 
 ## Run Bot
 ```
-$ yarn bot -p <bot-key-password>
+$ yarn bot
 ```
 
 ## Run Graph Server

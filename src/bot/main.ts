@@ -25,11 +25,9 @@ async function main(): Promise<void> {
   await initMirror()
 
   program
-    .option('-p, --password <password>', 'bot key password')
     .action(async (options) => {
-      const password =
-        options?.password ||
-        (await promptly.password(`Enter bot passphrase:`, { replace: `*` }))
+      const password = process.env.BOT_PASSWORD
+        || (await promptly.password(`Enter bot passphrase:`, { replace: `*` }))
       if (!password) {
         throw new Error('bot password is missing')
       }
