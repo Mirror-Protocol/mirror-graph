@@ -42,7 +42,7 @@ export class AccountService {
   }
 
   async getBalances(address: string, repo = this.balanceRepo): Promise<AssetBalance[]> {
-    return repo
+    const balances = await repo
       .createQueryBuilder()
       .select('DISTINCT ON (token) token', 'token')
       .addSelect('balance')
@@ -51,6 +51,8 @@ export class AccountService {
       .orderBy('token')
       .addOrderBy('id', 'DESC')
       .getRawMany()
+
+    return balances.filter((row) => num(row.balance).isGreaterThan(0))
   }
 
   async getBalanceHistory(address: string, from: number, to: number, interval: number): Promise<ValueAt[]> {
@@ -103,11 +105,13 @@ export class AccountService {
       return
     }
 
+    const balance = num(latest.balance).minus(amount).toString()
+
     const entity = new BalanceEntity({
       address,
       token,
-      averagePrice: latest.averagePrice,
-      balance: num(latest.balance).minus(amount).toString(),
+      averagePrice: balance !== '0' ? latest.averagePrice : '0',
+      balance,
       datetime,
     })
 

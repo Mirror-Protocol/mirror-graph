@@ -57,7 +57,7 @@ export async function parse(args: ParseArgs): Promise<void> {
         !(await contractService().get({ address: to }, undefined, contractRepo))
       ) {
         const price = await getBuyPrice(token, contractActions, args)
-        await accountService().addBalance(to, token, price || '0', amount, datetime, balanceRepo)
+        await accountService().addBalance(to, token, price, amount, datetime, balanceRepo)
       }
 
       await accountService().removeBalance(from, token, amount, datetime, balanceRepo)
