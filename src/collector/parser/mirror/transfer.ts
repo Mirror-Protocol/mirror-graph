@@ -2,8 +2,8 @@ import * as bluebird from 'bluebird'
 import { ContractActions, findAttributes, parseContractActions } from 'lib/terra'
 import { num } from 'lib/num'
 import { contractService, accountService, assetService, priceService } from 'services'
-import { BalanceEntity, AssetEntity, PriceEntity, ContractEntity } from 'orm'
-import { ContractType } from 'types'
+import { BalanceEntity, AssetEntity, PriceEntity, ContractEntity, TxEntity } from 'orm'
+import { ContractType, TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 async function getBuyPrice(
@@ -30,7 +30,7 @@ async function getBuyPrice(
 }
 
 export async function parse(args: ParseArgs): Promise<void> {
-  const { manager, timestamp, log } = args
+  const { manager, contract, height, txHash, timestamp, msg, log } = args
   const attributes = findAttributes(log.events, 'from_contract')
   if (!attributes) {
     return
@@ -48,6 +48,9 @@ export async function parse(args: ParseArgs): Promise<void> {
   Array.isArray(contractActions.transferFrom) && transfers.push(...contractActions.transferFrom)
   Array.isArray(contractActions.sendFrom) && transfers.push(...contractActions.sendFrom)
 
+  const needRecordTx = msg['transfer']
+    && (contract.type === ContractType.TOKEN || contract.type === ContractType.LP_TOKEN)
+
   await bluebird.mapSeries(
     transfers,
     async (action) => {
@@ -61,6 +64,19 @@ export async function parse(args: ParseArgs): Promise<void> {
       }
 
       await accountService().removeBalance(from, token, amount, datetime, balanceRepo)
+
+      // record tx entity
+      if (needRecordTx) {
+        const { govId } = contract
+
+        const tx = { height, txHash, datetime, govId, token, contract }
+        const data = { from, to, amount }
+
+        const sendTx = new TxEntity({ ...tx, address: from, type: TxType.SEND, data })
+        const recvTx = new TxEntity({ ...tx, address: to, type: TxType.RECEIVE, data })
+
+        await manager.save([sendTx, recvTx])
+      }
     }
   )
 }
