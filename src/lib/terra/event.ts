@@ -1,8 +1,15 @@
-import { Event, EventKV } from '@terra-money/terra.js'
+import { Event, EventKV, Coin } from '@terra-money/terra.js'
 import { toCamelCase } from 'lib/caseStyles'
 
 export interface ContractActions {
   [action: string]: { [key: string]: string }[]
+}
+
+export interface Transfer {
+  from: string
+  to: string
+  denom: string
+  amount: string
 }
 
 export function findAttributes(events: Event[], type: string): EventKV[] {
@@ -13,7 +20,12 @@ export function findAttribute(attributes: EventKV[], key: string): string {
   return attributes.find((attr) => attr.key === key)?.value
 }
 
-export function parseContractActions(attributes: EventKV[]): ContractActions {
+export function parseContractActions(events: Event[]): ContractActions {
+  const attributes = findAttributes(events, 'from_contract')
+  if (!attributes) {
+    return
+  }
+
   const contractActions: ContractActions = {}
   let contract
 
@@ -45,4 +57,24 @@ export function parseContractActions(attributes: EventKV[]): ContractActions {
   }
 
   return toCamelCase(contractActions)
+}
+
+export function parseTransfer(events: Event[]): Transfer[] {
+  const attributes = findAttributes(events, 'transfer')
+  if (!attributes) {
+    return
+  }
+
+  const transfers = []
+
+  for (let i = 0; i < attributes.length / 3; i += 1) {
+    const to = attributes[i * 3].value
+    const from = attributes[i * 3 + 1].value
+    const coin = Coin.fromString(attributes[i * 3 + 2].value)
+    const { denom, amount } = coin.toData()
+
+    transfers.push({ from, to, denom, amount })
+  }
+
+  return transfers
 }

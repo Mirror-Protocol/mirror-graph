@@ -36,7 +36,7 @@ export async function parse(args: ParseArgs): Promise<void> {
     return
   }
 
-  const contractActions = parseContractActions(attributes)
+  const contractActions = parseContractActions(log.events)
   const contractRepo = manager.getRepository(ContractEntity)
   const balanceRepo = manager.getRepository(BalanceEntity)
   const assetRepo = manager.getRepository(AssetEntity)

@@ -32,6 +32,7 @@
     "graphql": "^15",
     "graphql-request": "^3.1.0",
     "graphql-scalars": "^1.2.7",
+    "graphql-type-json": "^0.3.2",
     "koa": "^2.13.0",
     "koa-body": "^4.2.0",
     "koa-helmet": "^5.2.0",

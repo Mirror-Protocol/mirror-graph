@@ -1,16 +1,14 @@
 import { Repository, FindConditions, FindOneOptions, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { Container, Service, Inject } from 'typedi'
+import { Container, Service } from 'typedi'
 import { lcd } from 'lib/terra'
 import { num } from 'lib/num'
-import { PriceService } from 'services'
 import { AssetBalance, ValueAt } from 'graphql/schema'
 import { BalanceEntity } from 'orm'
 
 @Service()
 export class AccountService {
   constructor(
-    @Inject((type) => PriceService) private readonly priceService: PriceService,
     @InjectRepository(BalanceEntity) private readonly balanceRepo: Repository<BalanceEntity>,
   ) {}
 

@@ -1,10 +1,10 @@
+import { registerEnumType } from 'type-graphql'
+
 export enum TxType {
   BUY = 'BUY',
   SELL = 'SELL',
-
   SEND = 'SEND',
   RECEIVE = 'RECEIVE',
-  SWAP = 'SWAP',
 
   OPEN_POSITION = 'OPEN_POSITION',
   DEPOSIT_COLLATERAL = 'DEPOSIT_COLLATERAL',
@@ -22,4 +22,10 @@ export enum TxType {
   GOV_CREATE_POLL = 'GOV_CREATE_POLL',
   GOV_END_POLL = 'GOV_END_POLL',
   WITHDRAW_REWARDS = 'WITHDRAW_REWARDS',
+
+  TERRA_SWAP = 'TERRA_SWAP',
+  TERRA_SEND = 'TERRA_SEND',
+  TERRA_RECEIVE = 'TERRA_RECEIVE',
 }
+
+registerEnumType(TxType, { name: 'TxType' })

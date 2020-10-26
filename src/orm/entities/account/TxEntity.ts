@@ -43,10 +43,10 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   @Column()
   datetime: Date
 
-  @ManyToOne((type) => ContractEntity, { onDelete: 'CASCADE' })
+  @ManyToOne((type) => ContractEntity, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'contract_id' })
-  contract: ContractEntity
+  contract?: ContractEntity
 
-  @Column()
-  contractId: number
+  @Column({ nullable: true })
+  contractId?: number
 }
