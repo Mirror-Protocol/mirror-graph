@@ -2,13 +2,12 @@ FROM node:12-alpine
 
 WORKDIR /app
 
-COPY package.json package.json
-COPY yarn.lock yarn.lock
+COPY package*.json /app/
 
-RUN yarn
+RUN npm i
 
 COPY src src
-COPY jest.config.js jest.config.js
-COPY tsconfig.json tsconfig.json
+COPY jest.config.js /app/jest.config.js
+COPY tsconfig.json /app/tsconfig.json
 
-ENTRYPOINT ["yarn"]
+ENTRYPOINT ["npm"]
