@@ -72,10 +72,9 @@ export class StatisticService {
       .select('sum(volume)', 'volume')
       .where('datetime BETWEEN :from AND :to', { from: new Date(before48h), to: new Date(before24h) })
       .getRawOne())?.volume || '0'
-
     const volume = txs?.volume || '0'
     const volumeChanged = (volume48h !== '0' && volume !== '0')
-      ? num(volume48h).dividedBy(volume).minus(1).multipliedBy(100).toFixed(2)
+      ? num(volume).minus(volume48h).dividedBy(volume48h).multipliedBy(100).toFixed(2)
       : '0'
 
     // gov stake reward = (24h reward amount) / (staked to gov MIR amount)
