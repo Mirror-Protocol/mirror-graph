@@ -28,6 +28,7 @@ export async function parseMirrorMsg(
     height: txInfo.height,
     txHash: txInfo.txhash,
     timestamp: txInfo.timestamp,
+    fee: txInfo.tx.fee.amount.toString(),
     sender: msg.sender,
     coins: msg.coins,
     msg: msg.execute_msg,

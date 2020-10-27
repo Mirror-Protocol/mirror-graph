@@ -57,7 +57,7 @@ export class StatisticService {
     const txs = await this.txRepo
       .createQueryBuilder()
       .select('count(id)', 'count')
-      .addSelect('sum(fee_value)', 'fee')
+      .addSelect('sum(commission_value)', 'commission')
       .addSelect('sum(volume)', 'volume')
       .where('datetime BETWEEN :from AND :to', { from: new Date(before24h), to: new Date(now) })
       .getRawOne()
@@ -105,7 +105,7 @@ export class StatisticService {
       transactions: txs?.count || '0',
       volume,
       volumeChanged,
-      feeVolume: txs?.fee || '0',
+      feeVolume: txs?.commission || '0',
       mirVolume: mir?.volume || '0',
       govAPR: !govAPR.isNaN() ? govAPR.toString() : '0',
     }

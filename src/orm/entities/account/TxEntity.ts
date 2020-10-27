@@ -38,7 +38,10 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   volume: string
 
   @Column('numeric', { precision: 40, default: 0, comment: 'uusd fee value' })
-  feeValue: string
+  commissionValue: string
+
+  @Column({ default: '0uusd' })
+  fee: string
 
   @Column()
   datetime: Date

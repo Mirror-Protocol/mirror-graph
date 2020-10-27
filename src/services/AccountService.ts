@@ -9,7 +9,6 @@ import { BalanceEntity } from 'orm'
 @Service()
 export class AccountService {
   constructor(
-    @Inject((type) => PriceService) private readonly priceService: PriceService,
     @InjectRepository(BalanceEntity) private readonly balanceRepo: Repository<BalanceEntity>
   ) {}
 

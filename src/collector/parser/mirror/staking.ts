@@ -5,7 +5,7 @@ import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
+  { manager, height, txHash, timestamp, sender, msg, log, contract, fee }: ParseArgs
 ): Promise<void> {
   const attributes = findAttributes(log.events, 'from_contract')
   const { govId } = contract
@@ -40,7 +40,7 @@ export async function parse(
   }
 
   const tx = new TxEntity({
-    ...parsed, height, txHash, address: sender, datetime, govId, contract
+    ...parsed, height, txHash, address: sender, datetime, govId, contract, fee
   })
   await manager.save(tx)
 }

@@ -32,8 +32,9 @@ export async function parseTerraMsg(
       }
       const { from, to } = transfer
       const data = transfer
+      const fee = txInfo.tx.fee.amount.toString()
 
-      const sendTx = new TxEntity({ ...tx, address: from, type: TxType.TERRA_SEND, data })
+      const sendTx = new TxEntity({ ...tx, address: from, type: TxType.TERRA_SEND, data, fee })
       const recvTx = new TxEntity({ ...tx, address: to, type: TxType.TERRA_RECEIVE, data })
 
       await manager.save([sendTx, recvTx])
@@ -48,6 +49,7 @@ export async function parseTerraMsg(
       height: txInfo.height,
       txHash: txInfo.txhash,
       datetime: new Date(txInfo.timestamp),
+      fee: txInfo.tx.fee.amount.toString(),
       govId: govService().get().id,
       address: msg.trader,
       type: TxType.TERRA_SWAP,

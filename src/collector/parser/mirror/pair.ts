@@ -7,7 +7,7 @@ import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
+  { manager, height, txHash, timestamp, sender, msg, log, contract, fee }: ParseArgs
 ): Promise<void> {
   const { address, token, govId } = contract
   const datetime = new Date(timestamp)
@@ -40,7 +40,7 @@ export async function parse(
       : num(returnAmount).dividedBy(offerAmount).toString()
 
     // buy fee: buy price * commission
-    const feeValue = type === TxType.BUY
+    const commissionValue = type === TxType.BUY
       ? num(price).multipliedBy(commissionAmount).toString()
       : commissionAmount
 
@@ -61,7 +61,7 @@ export async function parse(
         recvAmount,
         price,
       },
-      feeValue,
+      feeValue: commissionValue,
       volume
     }
 
@@ -127,7 +127,7 @@ export async function parse(
 
   // set pool price ohlc
   const tx = new TxEntity({
-    ...parsed, height, txHash, address: sender, datetime, govId, token, contract
+    ...parsed, height, txHash, address: sender, datetime, govId, token, contract, fee
   })
 
   const price = await priceService().setOHLC(

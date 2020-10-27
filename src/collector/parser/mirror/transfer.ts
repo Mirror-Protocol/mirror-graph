@@ -30,7 +30,7 @@ async function getBuyPrice(
 }
 
 export async function parse(args: ParseArgs): Promise<void> {
-  const { manager, contract, height, txHash, timestamp, msg, log } = args
+  const { manager, contract, height, txHash, timestamp, msg, log, fee } = args
   const attributes = findAttributes(log.events, 'from_contract')
   if (!attributes) {
     return
@@ -72,7 +72,7 @@ export async function parse(args: ParseArgs): Promise<void> {
         const tx = { height, txHash, datetime, govId, token, contract }
         const data = { from, to, amount }
 
-        const sendTx = new TxEntity({ ...tx, address: from, type: TxType.SEND, data })
+        const sendTx = new TxEntity({ ...tx, address: from, type: TxType.SEND, data, fee })
         const recvTx = new TxEntity({ ...tx, address: to, type: TxType.RECEIVE, data })
 
         await manager.save([sendTx, recvTx])

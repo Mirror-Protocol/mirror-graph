@@ -18,7 +18,7 @@ export async function parseExecutePoll({ manager, log, contract }: ParseArgs): P
 }
 
 export async function parse(args: ParseArgs): Promise<void> {
-  const { manager, height, txHash, sender, msg, log, contract, timestamp } = args
+  const { manager, height, txHash, sender, msg, log, contract, timestamp, fee } = args
   const { mirrorToken } = govService().get()
   const { govId } = contract
   const datetime = new Date(timestamp)
@@ -74,7 +74,7 @@ export async function parse(args: ParseArgs): Promise<void> {
   }
 
   const tx = new TxEntity({
-    ...parsed, height, txHash, address: sender, datetime, govId, contract
+    ...parsed, height, txHash, address: sender, datetime, govId, contract, fee
   })
   await manager.save(tx)
 }
