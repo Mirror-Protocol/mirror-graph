@@ -30,4 +30,7 @@ export class Tx {
 
   @Field()
   datetime: Date
+
+  @Field()
+  fee: string
 }
