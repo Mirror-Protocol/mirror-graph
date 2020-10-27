@@ -16,9 +16,10 @@ export class StatisticService {
     @Inject((type) => AssetService) private readonly assetService: AssetService,
     @Inject((type) => PriceService) private readonly priceService: PriceService,
     @Inject((type) => OracleService) private readonly oracleService: OracleService,
-    @InjectRepository(DailyStatisticEntity) private readonly dailyRepo: Repository<DailyStatisticEntity>,
+    @InjectRepository(DailyStatisticEntity)
+    private readonly dailyRepo: Repository<DailyStatisticEntity>,
     @InjectRepository(TxEntity) private readonly txRepo: Repository<TxEntity>,
-    @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>,
+    @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>
   ) {}
 
   async statistic(): Promise<Partial<Statistic>> {
@@ -33,11 +34,12 @@ export class StatisticService {
       }
 
       const price = await this.oracleService.getPrice(asset.token)
-      if (!price)
-        return
+      if (!price) return
 
       assetMarketCap = assetMarketCap.plus(num(asset.positions.mint).multipliedBy(price))
-      totalValueLocked = totalValueLocked.plus(num(asset.positions.asCollateral).multipliedBy(price))
+      totalValueLocked = totalValueLocked.plus(
+        num(asset.positions.asCollateral).multipliedBy(price)
+      )
     })
 
     return {
@@ -67,25 +69,35 @@ export class StatisticService {
       .andWhere('token = :token', { token: this.govService.get().mirrorToken })
       .getRawOne()
 
-    const volume48h = (await this.txRepo
-      .createQueryBuilder()
-      .select('sum(volume)', 'volume')
-      .where('datetime BETWEEN :from AND :to', { from: new Date(before48h), to: new Date(before24h) })
-      .getRawOne())?.volume || '0'
+    const volume48h =
+      (
+        await this.txRepo
+          .createQueryBuilder()
+          .select('sum(volume)', 'volume')
+          .where('datetime BETWEEN :from AND :to', {
+            from: new Date(before48h),
+            to: new Date(before24h),
+          })
+          .getRawOne()
+      )?.volume || '0'
+
     const volume = txs?.volume || '0'
-    const volumeChanged = (volume48h !== '0' && volume !== '0')
-      ? num(volume).minus(volume48h).dividedBy(volume48h).multipliedBy(100).toFixed(2)
-      : '0'
+    const volumeChanged =
+      volume48h !== '0' && volume !== '0'
+        ? num(volume48h).dividedBy(volume).minus(1).multipliedBy(100).toFixed(2)
+        : '0'
 
     // gov stake reward = (24h reward amount) / (staked to gov MIR amount)
     const govEntity = this.govService.get()
-    const govReward24h = (await this.rewardRepo
-      .createQueryBuilder()
-      .select('sum(amount)', 'amount')
-      .where('datetime BETWEEN :from AND :to', { from: new Date(before24h), to: new Date(now) })
-      .andWhere('token = :token', { token: govEntity.mirrorToken })
-      .andWhere('is_gov_reward = true')
-      .getRawOne())?.amount
+    const govReward24h = (
+      await this.rewardRepo
+        .createQueryBuilder()
+        .select('sum(amount)', 'amount')
+        .where('datetime BETWEEN :from AND :to', { from: new Date(before24h), to: new Date(now) })
+        .andWhere('token = :token', { token: govEntity.mirrorToken })
+        .andWhere('is_gov_reward = true')
+        .getRawOne()
+    )?.amount
     const govStakedMir = await getTokenBalance(govEntity.mirrorToken, govEntity.gov)
     const govAPR = num(govReward24h).dividedBy(govStakedMir).multipliedBy(100)
 
@@ -100,7 +112,9 @@ export class StatisticService {
   }
 
   async addDailyTradingVolume(
-    timestamp: number, volume: string, repo = this.dailyRepo
+    timestamp: number,
+    volume: string,
+    repo = this.dailyRepo
   ): Promise<DailyStatisticEntity> {
     const datetime = new Date(timestamp - (timestamp % 86400000))
     let daily = await repo.findOne({ datetime })
@@ -109,14 +123,19 @@ export class StatisticService {
       daily.tradingVolume = num(daily.tradingVolume).plus(volume).toString()
     } else {
       daily = new DailyStatisticEntity({
-        gov: govService().get(), datetime, tradingVolume: volume
+        gov: govService().get(),
+        datetime,
+        tradingVolume: volume,
       })
     }
 
     return repo.save(daily)
   }
 
-  async calculateDailyCumulativeLiquidity(timestamp: number, repo = this.dailyRepo): Promise<DailyStatisticEntity> {
+  async calculateDailyCumulativeLiquidity(
+    timestamp: number,
+    repo = this.dailyRepo
+  ): Promise<DailyStatisticEntity> {
     const datetime = new Date(timestamp - (timestamp % 86400000))
     const assets = await this.assetService.getAll()
     let liquidityValue = num(0)
@@ -125,8 +144,7 @@ export class StatisticService {
       assets.filter((asset) => asset.token !== 'uusd'),
       async (asset) => {
         const price = await this.oracleService.getPrice(asset.token)
-        if (!price)
-          return
+        if (!price) return
 
         liquidityValue = liquidityValue
           .plus(num(asset.positions.liquidity).multipliedBy(price))
@@ -134,8 +152,9 @@ export class StatisticService {
       }
     )
 
-    const daily = (await repo.findOne({ datetime }))
-      || new DailyStatisticEntity({ gov: govService().get(), datetime })
+    const daily =
+      (await repo.findOne({ datetime })) ||
+      new DailyStatisticEntity({ gov: govService().get(), datetime })
 
     daily.cumulativeLiquidity = liquidityValue.toString()
 
@@ -184,22 +203,25 @@ export class StatisticService {
 
     const price = await this.priceService.getPrice(token)
     const mirPrice = await this.priceService.getPrice(this.govService.get().mirrorToken)
-    const reward24h = (await this.rewardRepo
-      .createQueryBuilder()
-      .select('sum(amount)', 'amount')
-      .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
-      .andWhere('token = :token', { token })
-      .andWhere('is_gov_reward = false')
-      .getRawOne())?.amount
+    const reward24h = (
+      await this.rewardRepo
+        .createQueryBuilder()
+        .select('sum(amount)', 'amount')
+        .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+        .andWhere('token = :token', { token })
+        .andWhere('is_gov_reward = false')
+        .getRawOne()
+    )?.amount
     const liquidityValue = num(asset.positions.liquidity)
       .multipliedBy(price)
       .plus(asset.positions.uusdLiquidity)
 
-    if (!reward24h || !mirPrice || !price)
-      return '0'
+    if (!reward24h || !mirPrice || !price) return '0'
 
     const mirValue = num(reward24h).multipliedBy(mirPrice).multipliedBy(365)
-    const poolValue = liquidityValue.multipliedBy(num(asset.positions.lpStaked).dividedBy(asset.positions.lpShares))
+    const poolValue = liquidityValue.multipliedBy(
+      num(asset.positions.lpStaked).dividedBy(asset.positions.lpShares)
+    )
 
     // (24h MIR reward * MIR price * 365) / (liquidity value * (staked lp share/total lp share))
     const apr = mirValue.dividedBy(poolValue)

@@ -12,7 +12,7 @@ export function createJobs(botPassword: string): void {
   const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.BOT_KEY, botPassword))
 
   // every 1hour
-  nodeCron.schedule('0 * * * *', async() => {
+  nodeCron.schedule('0 * * * *', async () => {
     await distributeRewards(wallet).catch(errorHandler)
     await updateNews().catch(errorHandler)
   })

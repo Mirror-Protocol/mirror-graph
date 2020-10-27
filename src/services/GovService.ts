@@ -12,9 +12,7 @@ import config from 'config'
 export class GovService {
   private gov: GovEntity
 
-  constructor(
-    @InjectRepository(GovEntity) private readonly govRepo: Repository<GovEntity>,
-  ) {}
+  constructor(@InjectRepository(GovEntity) private readonly govRepo: Repository<GovEntity>) {}
 
   get(): GovEntity {
     if (!this.gov) {
@@ -43,14 +41,30 @@ export class GovService {
       const owner = wallet.key.accAddress
 
       const {
-        gov, mirrorToken, factory, oracle, mint, staking, tokenFactory, collector
+        gov,
+        mirrorToken,
+        factory,
+        oracle,
+        mint,
+        staking,
+        tokenFactory,
+        collector,
       } = contracts
 
       const entities = []
 
       // create gov entity
       const govEntity = new GovEntity({
-        owner, chainId, gov, mirrorToken, factory, oracle, mint, staking, tokenFactory, collector
+        owner,
+        chainId,
+        gov,
+        mirrorToken,
+        factory,
+        oracle,
+        mint,
+        staking,
+        tokenFactory,
+        collector,
       })
       entities.push(govEntity)
 
@@ -59,19 +73,36 @@ export class GovService {
         .filter((type) => type !== 'mirrorToken')
         .map((type) => {
           entities.push(
-            new ContractEntity({ address: contracts[type], type: type as ContractType, gov: govEntity })
+            new ContractEntity({
+              address: contracts[type],
+              type: type as ContractType,
+              gov: govEntity,
+            })
           )
         })
 
       // create mirror asset, contract entities
       const { symbol, name, token, pair, lpToken } = assets[mirrorToken]
       const asset = new AssetEntity({
-        gov: govEntity, symbol, name, token, pair, lpToken
+        gov: govEntity,
+        symbol,
+        name,
+        token,
+        pair,
+        lpToken,
       })
 
       entities.push(
         asset,
-        new AssetEntity({ gov: govEntity, symbol: 'uusd', name: 'uusd', token: 'uusd', pair: 'uusd', lpToken: 'uusd', isListed: false }),
+        new AssetEntity({
+          gov: govEntity,
+          symbol: 'uusd',
+          name: 'uusd',
+          token: 'uusd',
+          pair: 'uusd',
+          lpToken: 'uusd',
+          isListed: false,
+        }),
         new ContractEntity({ address: token, type: ContractType.TOKEN, gov: govEntity, asset }),
         new ContractEntity({ address: pair, type: ContractType.PAIR, gov: govEntity, asset }),
         new ContractEntity({ address: lpToken, type: ContractType.LP_TOKEN, gov: govEntity, asset })
@@ -85,7 +116,12 @@ export class GovService {
   }
 
   whitelisting(
-    govId: number, symbol: string, name: string, token: string, pair: string, lpToken: string
+    govId: number,
+    symbol: string,
+    name: string,
+    token: string,
+    pair: string,
+    lpToken: string
   ): unknown[] {
     if (!token || !pair || !lpToken) {
       throw new Error(`whitelisting failed. token(${token}), lpToken(${lpToken}), pair(${pair})`)

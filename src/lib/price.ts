@@ -1,7 +1,12 @@
 import { Repository } from 'typeorm'
 import { AssetOHLC, PriceAt } from 'graphql/schema'
 
-export async function getOHLC<T>(repo: Repository<T>, token: string, from: number, to: number): Promise<AssetOHLC> {
+export async function getOHLC<T>(
+  repo: Repository<T>,
+  token: string,
+  from: number,
+  to: number
+): Promise<AssetOHLC> {
   const ohlc = await repo
     .createQueryBuilder()
     .select('(array_agg(open ORDER BY datetime ASC))[1]', 'open')
@@ -16,7 +21,11 @@ export async function getOHLC<T>(repo: Repository<T>, token: string, from: numbe
 }
 
 export async function getHistory<T>(
-  repo: Repository<T>, token: string | string[], from: number, to: number, interval: number
+  repo: Repository<T>,
+  token: string | string[],
+  from: number,
+  to: number,
+  interval: number
 ): Promise<PriceAt[]> {
   return repo
     .createQueryBuilder()

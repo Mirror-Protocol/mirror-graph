@@ -24,16 +24,16 @@ async function main(): Promise<void> {
 
   await initMirror()
 
-  program
-    .action(async (options) => {
-      const password = process.env.BOT_PASSWORD
-        || (await promptly.password(`Enter bot passphrase:`, { replace: `*` }))
-      if (!password) {
-        throw new Error('bot password is missing')
-      }
+  program.action(async (options) => {
+    const password =
+      process.env.BOT_PASSWORD ||
+      (await promptly.password(`Enter bot passphrase:`, { replace: `*` }))
+    if (!password) {
+      throw new Error('bot password is missing')
+    }
 
-      await createJobs(password)
-    })
+    await createJobs(password)
+  })
 
   await program.parseAsync(process.argv)
 }

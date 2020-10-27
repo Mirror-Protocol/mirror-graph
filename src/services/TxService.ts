@@ -5,12 +5,12 @@ import { TxEntity } from 'orm'
 
 @Service()
 export class TxService {
-  constructor(
-    @InjectRepository(TxEntity) private readonly repo: Repository<TxEntity>,
-  ) {}
+  constructor(@InjectRepository(TxEntity) private readonly repo: Repository<TxEntity>) {}
 
   async get(
-    conditions: FindConditions<TxEntity>, options?: FindOneOptions<TxEntity>, repo = this.repo
+    conditions: FindConditions<TxEntity>,
+    options?: FindOneOptions<TxEntity>,
+    repo = this.repo
   ): Promise<TxEntity> {
     return repo.findOne(conditions, options)
   }

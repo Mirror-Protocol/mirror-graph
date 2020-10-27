@@ -12,10 +12,13 @@ import { govService } from 'services'
 @Service()
 export class OracleService {
   constructor(
-    @InjectRepository(OraclePriceEntity) private readonly repo: Repository<OraclePriceEntity>,
+    @InjectRepository(OraclePriceEntity) private readonly repo: Repository<OraclePriceEntity>
   ) {}
 
-  async get(conditions: FindConditions<OraclePriceEntity>, repo = this.repo): Promise<OraclePriceEntity> {
+  async get(
+    conditions: FindConditions<OraclePriceEntity>,
+    repo = this.repo
+  ): Promise<OraclePriceEntity> {
     return repo.findOne(conditions)
   }
 
@@ -24,20 +27,25 @@ export class OracleService {
       { token, datetime: LessThanOrEqual(new Date(timestamp)) },
       {
         select: ['close', 'datetime'],
-        order: { datetime: 'DESC' }
+        order: { datetime: 'DESC' },
       }
     )
     return price?.close
   }
 
-  async getLatestPrices(timestamp: number): Promise<{ [token: string]: string}> {
+  async getLatestPrices(timestamp: number): Promise<{ [token: string]: string }> {
     const prices = await getConnection().query(
-      'SELECT token, price FROM public.latestOraclePrices($1)', [new Date(timestamp)]
+      'SELECT token, price FROM public.latestOraclePrices($1)',
+      [new Date(timestamp)]
     )
 
-    return transform(prices, (result, value) => {
-      if (value?.price) result[value.token] = value.price
-    }, {})
+    return transform(
+      prices,
+      (result, value) => {
+        if (value?.price) result[value.token] = value.price
+      },
+      {}
+    )
   }
 
   async getContractPrice(token: string): Promise<string> {
@@ -45,7 +53,11 @@ export class OracleService {
   }
 
   async setOHLC(
-    token: string, timestamp: number, price: string, repo = this.repo, needSave = true
+    token: string,
+    timestamp: number,
+    price: string,
+    repo = this.repo,
+    needSave = true
   ): Promise<OraclePriceEntity> {
     const datetime = new Date(timestamp - (timestamp % 60000))
     let priceEntity = await repo.findOne({ token, datetime })
@@ -56,7 +68,12 @@ export class OracleService {
       priceEntity.close = price
     } else {
       priceEntity = new OraclePriceEntity({
-        token, open: price, high: price, low: price, close: price, datetime
+        token,
+        open: price,
+        high: price,
+        low: price,
+        close: price,
+        datetime,
       })
     }
 
@@ -68,12 +85,18 @@ export class OracleService {
   }
 
   async getHistory(
-    token: string, from: number, to: number, interval: number, repo = this.repo
+    token: string,
+    from: number,
+    to: number,
+    interval: number,
+    repo = this.repo
   ): Promise<PriceAt[]> {
-    return getConnection().query(
-      'SELECT * FROM public.oracleHistory($1, $2, $3, $4)',
-      [token, new Date(from), new Date(to), interval]
-    )
+    return getConnection().query('SELECT * FROM public.oracleHistory($1, $2, $3, $4)', [
+      token,
+      new Date(from),
+      new Date(to),
+      interval,
+    ])
   }
 }
 

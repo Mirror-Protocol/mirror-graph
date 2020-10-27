@@ -5,11 +5,13 @@ import { CdpEntity } from 'orm'
 
 @Service()
 export class CdpService {
-  constructor(
-    @InjectRepository(CdpEntity) private readonly repo: Repository<CdpEntity>,
-  ) {}
+  constructor(@InjectRepository(CdpEntity) private readonly repo: Repository<CdpEntity>) {}
 
-  async get(conditions: FindConditions<CdpEntity>, options?: FindOneOptions<CdpEntity>, repo = this.repo): Promise<CdpEntity> {
+  async get(
+    conditions: FindConditions<CdpEntity>,
+    options?: FindOneOptions<CdpEntity>,
+    repo = this.repo
+  ): Promise<CdpEntity> {
     return repo.findOne(conditions, options)
   }
 
