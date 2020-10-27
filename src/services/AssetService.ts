@@ -1,5 +1,11 @@
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { Repository, FindConditions, FindOneOptions, FindManyOptions, MoreThanOrEqual } from 'typeorm'
+import {
+  Repository,
+  FindConditions,
+  FindOneOptions,
+  FindManyOptions,
+  MoreThanOrEqual,
+} from 'typeorm'
 import { Container, Service } from 'typedi'
 import { addMonths } from 'date-fns'
 import { num } from 'lib/num'
@@ -9,8 +15,9 @@ import { AssetEntity, AssetPositionsEntity, AssetNewsEntity } from 'orm'
 export class AssetService {
   constructor(
     @InjectRepository(AssetEntity) private readonly repo: Repository<AssetEntity>,
-    @InjectRepository(AssetPositionsEntity) private readonly positionsRepo: Repository<AssetPositionsEntity>,
-    @InjectRepository(AssetNewsEntity) private readonly newsRepo: Repository<AssetNewsEntity>,
+    @InjectRepository(AssetPositionsEntity)
+    private readonly positionsRepo: Repository<AssetPositionsEntity>,
+    @InjectRepository(AssetNewsEntity) private readonly newsRepo: Repository<AssetNewsEntity>
   ) {}
 
   async get(
@@ -37,12 +44,14 @@ export class AssetService {
     return this.newsRepo.find({
       where: { token, datetime: MoreThanOrEqual(addMonths(Date.now(), -1)) },
       order: { datetime: 'DESC' },
-      take: 5
+      take: 5,
     })
   }
 
   async addMintPosition(
-    token: string, amount: string, repo = this.positionsRepo
+    token: string,
+    amount: string,
+    repo = this.positionsRepo
   ): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions({ token }, { select: ['token', 'mint'] }, repo)
 
@@ -52,7 +61,11 @@ export class AssetService {
   }
 
   async addLiquidityPosition(
-    token: string, amount: string, uusdAmount: string, lpShares: string, repo = this.positionsRepo
+    token: string,
+    amount: string,
+    uusdAmount: string,
+    lpShares: string,
+    repo = this.positionsRepo
   ): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions(
       { token },
@@ -72,10 +85,15 @@ export class AssetService {
   }
 
   async addPoolPosition(
-    token: string, amount: string, uusdAmount: string, repo = this.positionsRepo
+    token: string,
+    amount: string,
+    uusdAmount: string,
+    repo = this.positionsRepo
   ): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions(
-      { token }, { select: ['token', 'pool', 'uusdPool']}, repo
+      { token },
+      { select: ['token', 'pool', 'uusdPool'] },
+      repo
     )
 
     positions.pool = num(positions.pool).plus(amount).toString()
@@ -85,7 +103,9 @@ export class AssetService {
   }
 
   async addAsCollateralPosition(
-    token: string, amount: string, repo = this.positionsRepo
+    token: string,
+    amount: string,
+    repo = this.positionsRepo
   ): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions(
       { token },
@@ -99,17 +119,16 @@ export class AssetService {
   }
 
   async addStakePosition(
-    token: string, stakeAmount: string, repo = this.positionsRepo
+    token: string,
+    stakeAmount: string,
+    repo = this.positionsRepo
   ): Promise<AssetPositionsEntity> {
-    const positions = await this.getPositions(
-      { token }, { select: ['token', 'lpStaked'] }, repo
-    )
+    const positions = await this.getPositions({ token }, { select: ['token', 'lpStaked'] }, repo)
 
     positions.lpStaked = num(positions.lpStaked).plus(stakeAmount).toString()
 
     return repo.save(positions)
   }
-
 }
 
 export function assetService(): AssetService {

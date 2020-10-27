@@ -48,7 +48,7 @@ export function loadDescriptions(): { [symbol: string]: string } | undefined {
 
 export function getAsset(symbol: string): Asset {
   const assets = loadAssets()
-  const token = Object.keys(assets).find(token => assets[token].symbol === symbol)
+  const token = Object.keys(assets).find((token) => assets[token].symbol === symbol)
 
   return assets[token]
 }

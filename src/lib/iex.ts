@@ -27,17 +27,20 @@ interface News {
   summary: string
 }
 
-export async function fetchNews(ticker: string, from: number, limit=100): Promise<News[]> {
-  const response = await nodeFetch(`${url}/stock/${ticker}/news/last/${limit}?token=${apiKey}`)
-    .then((res) => res.json())
+export async function fetchNews(ticker: string, from: number, limit = 100): Promise<News[]> {
+  const response = await nodeFetch(
+    `${url}/stock/${ticker}/news/last/${limit}?token=${apiKey}`
+  ).then((res) => res.json())
   const since = new Date('2020-06-01').getTime()
 
   return uniqBy(
     response
-      .filter((news) => news.lang === 'en'
-        && news.datetime > from
-        && news.datetime > since
-        && whitelist.includes(news.source)
+      .filter(
+        (news) =>
+          news.lang === 'en' &&
+          news.datetime > from &&
+          news.datetime > since &&
+          whitelist.includes(news.source)
       )
       .map((news) => ({
         datetime: new Date(news.datetime),
