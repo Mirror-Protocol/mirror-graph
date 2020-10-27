@@ -2,24 +2,24 @@ import * as bluebird from 'bluebird'
 import { TxInfo, TxLog, MsgSend, MsgMultiSend, MsgSwap, MsgSwapSend } from '@terra-money/terra.js'
 import { EntityManager } from 'typeorm'
 import { parseTransfer } from 'lib/terra'
-import { govService } from 'services'
+import { govService, txService } from 'services'
 import { TxType } from 'types'
-import { TxEntity } from 'orm'
+import { AccountEntity } from 'orm'
 
 type AllowMsgs = MsgSend | MsgMultiSend | MsgSwap | MsgSwapSend
 
 export async function parseTerraMsg(
   manager: EntityManager, txInfo: TxInfo, msg: AllowMsgs, log: TxLog
 ): Promise<void> {
-  const txRepo = manager.getRepository(TxEntity)
+  const accountRepo = manager.getRepository(AccountEntity)
 
   if (msg instanceof MsgSend) {
     const transfers = parseTransfer(log.events)
 
     await bluebird.mapSeries(transfers, async (transfer) => {
       // only tx exists address
-      if (!(await txRepo.findOne({
-        select: ['id'], where: [{ address: transfer.from }, { address: transfer.to }]
+      if (!(await accountRepo.findOne({
+        select: ['address'], where: [{ address: transfer.from }, { address: transfer.to }]
       }))) {
         return
       }
@@ -34,18 +34,16 @@ export async function parseTerraMsg(
       const data = transfer
       const fee = txInfo.tx.fee.amount.toString()
 
-      const sendTx = new TxEntity({ ...tx, address: from, type: TxType.TERRA_SEND, data, fee })
-      const recvTx = new TxEntity({ ...tx, address: to, type: TxType.TERRA_RECEIVE, data })
-
-      await manager.save([sendTx, recvTx])
+      await txService().newTx(manager, { ...tx, address: from, type: TxType.TERRA_SEND, data, fee })
+      await txService().newTx(manager, { ...tx, address: to, type: TxType.TERRA_RECEIVE, data })
     })
   } else if (msg instanceof MsgSwap) {
     // only tx exists address
-    if (!(await txRepo.findOne({ select: ['id'], where: { address: msg.trader } }))) {
+    if (!(await accountRepo.findOne({ select: ['address'], where: { address: msg.trader } }))) {
       return
     }
 
-    const tx = new TxEntity({
+    await txService().newTx(manager, {
       height: txInfo.height,
       txHash: txInfo.txhash,
       datetime: new Date(txInfo.timestamp),
@@ -55,7 +53,5 @@ export async function parseTerraMsg(
       type: TxType.TERRA_SWAP,
       data: msg.toData(),
     })
-
-    await manager.save(tx)
   }
 }

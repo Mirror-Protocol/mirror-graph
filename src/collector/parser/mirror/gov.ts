@@ -1,6 +1,5 @@
 import { findAttributes, findAttribute } from 'lib/terra'
-import { govService } from 'services'
-import { TxEntity } from 'orm'
+import { govService, txService } from 'services'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
@@ -73,8 +72,7 @@ export async function parse(args: ParseArgs): Promise<void> {
     return
   }
 
-  const tx = new TxEntity({
+  await txService().newTx(manager, {
     ...parsed, height, txHash, address: sender, datetime, govId, contract, fee
   })
-  await manager.save(tx)
 }

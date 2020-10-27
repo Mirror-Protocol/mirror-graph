@@ -1,8 +1,8 @@
 import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
-import { assetService, priceService, statisticService } from 'services'
-import { TxEntity, AssetPositionsEntity, DailyStatisticEntity, PriceEntity } from 'orm'
+import { assetService, priceService, statisticService, txService } from 'services'
+import { AssetPositionsEntity, DailyStatisticEntity, PriceEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
@@ -126,10 +126,6 @@ export async function parse(
   }
 
   // set pool price ohlc
-  const tx = new TxEntity({
-    ...parsed, height, txHash, address: sender, datetime, govId, token, contract, fee
-  })
-
   const price = await priceService().setOHLC(
     token,
     datetime.getTime(),
@@ -137,6 +133,9 @@ export async function parse(
     manager.getRepository(PriceEntity),
     false
   )
+  await manager.save(price)
 
-  await manager.save([tx, price])
+  await txService().newTx(manager, {
+    ...parsed, height, txHash, address: sender, datetime, govId, token, contract, fee
+  })
 }

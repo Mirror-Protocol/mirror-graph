@@ -1,8 +1,8 @@
 import * as bluebird from 'bluebird'
 import { ContractActions, findAttributes, parseContractActions } from 'lib/terra'
 import { num } from 'lib/num'
-import { contractService, accountService, assetService, priceService } from 'services'
-import { BalanceEntity, AssetEntity, PriceEntity, ContractEntity, TxEntity } from 'orm'
+import { contractService, accountService, assetService, priceService, txService } from 'services'
+import { BalanceEntity, AssetEntity, PriceEntity, ContractEntity } from 'orm'
 import { ContractType, TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
@@ -72,10 +72,8 @@ export async function parse(args: ParseArgs): Promise<void> {
         const tx = { height, txHash, datetime, govId, token, contract }
         const data = { from, to, amount }
 
-        const sendTx = new TxEntity({ ...tx, address: from, type: TxType.SEND, data, fee })
-        const recvTx = new TxEntity({ ...tx, address: to, type: TxType.RECEIVE, data })
-
-        await manager.save([sendTx, recvTx])
+        await txService().newTx(manager, { ...tx, address: from, type: TxType.SEND, data, fee })
+        await txService().newTx(manager, { ...tx, address: to, type: TxType.RECEIVE, data })
       }
     }
   )

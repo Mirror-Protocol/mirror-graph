@@ -1,8 +1,8 @@
 import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
-import { assetService, accountService, cdpService, oracleService } from 'services'
-import { TxEntity, CdpEntity, AssetPositionsEntity, BalanceEntity, OraclePriceEntity } from 'orm'
+import { assetService, accountService, cdpService, oracleService, txService } from 'services'
+import { CdpEntity, AssetPositionsEntity, BalanceEntity, OraclePriceEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
@@ -181,8 +181,9 @@ export async function parse(
       : '0'
   }
 
-  const txEntity = new TxEntity({
+  await manager.save(cdp)
+
+  await txService().newTx(manager, {
     ...tx, height, txHash, address: sender, datetime, govId, contract, fee
   })
-  await manager.save([cdp, txEntity])
 }

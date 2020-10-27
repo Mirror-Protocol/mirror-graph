@@ -1,11 +1,12 @@
-import { Resolver, Query, Arg } from 'type-graphql'
-import { AccountService } from 'services'
+import { Resolver, Query, Mutation, Arg } from 'type-graphql'
+import { AccountService, GovService } from 'services'
 import { Account, AssetBalance, ValueAt } from 'graphql/schema'
 
 @Resolver((of) => Account)
 export class AccountResolver {
   constructor(
     private readonly accountService: AccountService,
+    private readonly govService: GovService,
   ) {}
 
   @Query((returns) => AssetBalance, { nullable: true })
@@ -28,5 +29,10 @@ export class AccountResolver {
     @Arg('interval', { description: 'unit is minute' }) interval: number,
   ): Promise<ValueAt[]> {
     return this.accountService.getBalanceHistory(address, from, to, interval)
+  }
+
+  @Mutation((returns) => Account)
+  async newAccount(@Arg('address') address: string): Promise<Account> {
+    return this.accountService.newAccount({ address, govId: this.govService.get().id })
   }
 }
