@@ -33,4 +33,7 @@ export class Tx {
 
   @Field()
   fee: string
+
+  @Field({ nullable: true })
+  memo?: string
 }

@@ -33,9 +33,10 @@ export async function parseTerraMsg(
       const { from, to } = transfer
       const data = transfer
       const fee = txInfo.tx.fee.amount.toString()
+      const memo = txInfo.tx.memo
 
-      await txService().newTx(manager, { ...tx, address: from, type: TxType.TERRA_SEND, data, fee })
-      await txService().newTx(manager, { ...tx, address: to, type: TxType.TERRA_RECEIVE, data })
+      await txService().newTx(manager, { ...tx, address: from, type: TxType.TERRA_SEND, data, fee, memo })
+      await txService().newTx(manager, { ...tx, address: to, type: TxType.TERRA_RECEIVE, data, memo })
     })
   } else if (msg instanceof MsgSwap) {
     // only tx exists address

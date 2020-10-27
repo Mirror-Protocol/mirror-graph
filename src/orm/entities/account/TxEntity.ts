@@ -43,6 +43,9 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   @Column({ default: '0uusd' })
   fee: string
 
+  @Column({ nullable: true, default: null })
+  memo?: string
+
   @Column()
   datetime: Date
 
