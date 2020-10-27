@@ -13,12 +13,17 @@ export class AccountService {
     @InjectRepository(BalanceEntity) private readonly balanceRepo: Repository<BalanceEntity>
   ) {}
 
-  async newAccount(account: Partial<AccountEntity>, repo = this.repo): Promise<AccountEntity> {
-    if (await this.get({ address: account.address }, undefined, repo)) {
-      return
+  async newAccount(account: Partial<AccountEntity>, repo = this.repo): Promise<AccountEntity | undefined> {
+    const accountEntity = await this.get({ address: account.address }, undefined, repo)
+    if (accountEntity) {
+      return accountEntity
     }
 
     return repo.save(account)
+  }
+
+  async haveBalanceHistory(account: string): Promise<boolean> {
+    return (await this.balanceRepo.findOne({ address: account })) ? true : false
   }
 
   async get(

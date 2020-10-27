@@ -6,6 +6,9 @@ export class Account {
   @Field()
   address: string
 
+  @Field({ nullable: true })
+  haveBalanceHistory?: boolean
+
   @Field((type) => String, { nullable: true, description: 'balance of specific symbol' })
   balance?: string
 
