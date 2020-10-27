@@ -28,6 +28,7 @@ export CONTRACT_ID=-1
 export POLYGON_API_KEY='api-key'
 export IEX_CLOUD_API_KEY='api-key'
 
+export OWNER_PASSWORD='owner-password'
 export BOT_PASSWORD='bot-password'
 ```
 
