@@ -38,7 +38,7 @@ export class AccountResolver {
   }
 
   @Mutation((returns) => Account, { nullable: true })
-  async newAccount(@Arg('address') address: string): Promise<Account | null> {
+  async connect(@Arg('address') address: string): Promise<Account | null> {
     return this.accountService.newAccount({ address, govId: this.govService.get().id })
   }
 
