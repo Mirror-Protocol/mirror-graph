@@ -1,7 +1,7 @@
 import * as bluebird from 'bluebird'
 import { TxInfo, TxLog, MsgSend, MsgMultiSend, MsgSwap, MsgSwapSend } from '@terra-money/terra.js'
 import { EntityManager } from 'typeorm'
-import { parseTransfer } from 'lib/terra'
+import { parseTransfer, findAttributes, findAttribute } from 'lib/terra'
 import { govService, txService } from 'services'
 import { TxType } from 'types'
 import { AccountEntity } from 'orm'
@@ -44,6 +44,8 @@ export async function parseTerraMsg(
       return
     }
 
+    const attributes = findAttributes(log.events, 'swap')
+
     await txService().newTx(manager, {
       height: txInfo.height,
       txHash: txInfo.txhash,
@@ -52,7 +54,13 @@ export async function parseTerraMsg(
       govId: govService().get().id,
       address: msg.trader,
       type: TxType.TERRA_SWAP,
-      data: msg.toData(),
+      data: {
+        offer: findAttribute(attributes, 'offer'),
+        trader: findAttribute(attributes, 'trader'),
+        recipient: findAttribute(attributes, 'recipient'),
+        swapCoin: findAttribute(attributes, 'swap_coin'),
+        swapFee: findAttribute(attributes, 'swap_fee'),
+      },
     })
   }
 }
