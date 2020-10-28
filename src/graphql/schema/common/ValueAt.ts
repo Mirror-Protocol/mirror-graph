@@ -7,7 +7,4 @@ export class ValueAt {
 
   @Field()
   value: string
-
-  @Field({ nullable: true })
-  investedValue?: string
 }
