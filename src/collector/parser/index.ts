@@ -1,5 +1,5 @@
 import {
-  TxInfo, Msg, TxLog, MsgSend, MsgMultiSend, MsgSwap, MsgSwapSend, MsgExecuteContract
+  TxInfo, Msg, TxLog, MsgSend, MsgSwap, MsgSwapSend, MsgExecuteContract
 } from '@terra-money/terra.js'
 import { isSameDay } from 'date-fns'
 import * as bluebird from 'bluebird'
@@ -14,15 +14,10 @@ let lastTick = 0
 async function parseMsg(
   manager: EntityManager, txInfo: TxInfo, msg: Msg, log: TxLog
 ): Promise<void> {
-  if (
-    msg instanceof MsgSend ||
-    msg instanceof MsgMultiSend ||
-    msg instanceof MsgSwap ||
-    msg instanceof MsgSwapSend
-  ) {
-    return parseTerraMsg(manager, txInfo, msg, log)
-  } else if (msg instanceof MsgExecuteContract) {
+  if (msg instanceof MsgExecuteContract) {
     return parseMirrorMsg(manager, txInfo, msg, log)
+  } else if (msg instanceof MsgSend || msg instanceof MsgSwap || msg instanceof MsgSwapSend) {
+    return parseTerraMsg(manager, txInfo, msg, log)
   }
 }
 
