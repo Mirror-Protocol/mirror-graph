@@ -14,5 +14,5 @@ WORKDIR /app
 COPY --from=builder /app .
 COPY . .
 
-ENTRYPOINT ["npm"]
+ENTRYPOINT ["npm", "run"]
 CMD ["start"]
