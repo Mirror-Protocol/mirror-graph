@@ -46,3 +46,4 @@ keystore-local.json
 *ormconfig.json
 environment/*
 mirror-graph.json
+data/
