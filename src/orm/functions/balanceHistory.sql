@@ -1,4 +1,4 @@
-drop function public.balanceHistory;
+DROP FUNCTION public.balanceHistory;
 
 CREATE OR REPLACE FUNCTION public.balanceHistory(_address varchar, _from timestamp, _to timestamp, _interval integer)
   RETURNS TABLE ("timestamp" timestamp, "assetValue" numeric, "investedValue" numeric)

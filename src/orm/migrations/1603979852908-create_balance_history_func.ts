@@ -3,8 +3,6 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 export class CreateBalanceHistoryFunc1603979852908 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(`
-drop function public.balanceHistory;
-
 CREATE OR REPLACE FUNCTION public.balanceHistory(_address varchar, _from timestamp, _to timestamp, _interval integer)
   RETURNS TABLE ("timestamp" timestamp, "assetValue" numeric, "investedValue" numeric)
   LANGUAGE 'plpgsql'
@@ -49,6 +47,6 @@ $BODY$;
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query('drop function public.balanceHistory;')
+    await queryRunner.query('DROP FUNCTION public.balanceHistory;')
   }
 }

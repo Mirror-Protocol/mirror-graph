@@ -1,4 +1,4 @@
-drop function public.priceHistory;
+DROP FUNCTION public.priceHistory;
 
 CREATE OR REPLACE FUNCTION public.priceHistory(_token varchar, _from timestamp, _to timestamp, _interval integer)
   RETURNS TABLE ("timestamp" timestamp, "price" numeric)

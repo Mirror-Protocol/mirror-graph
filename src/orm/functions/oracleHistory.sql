@@ -1,4 +1,4 @@
-drop function public.oracleHistory;
+DROP FUNCTION public.oracleHistory;
 
 CREATE OR REPLACE FUNCTION public.oracleHistory(_token varchar, _from timestamp, _to timestamp, _interval integer)
   RETURNS TABLE ("timestamp" timestamp, "price" numeric)

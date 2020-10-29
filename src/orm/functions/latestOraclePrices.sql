@@ -1,4 +1,4 @@
-drop function public.latestOraclePrices;
+DROP FUNCTION public.latestOraclePrices;
 
 CREATE OR REPLACE FUNCTION public.latestOraclePrices("timestamp" timestamp)
   RETURNS TABLE ("token" varchar, "price" numeric)

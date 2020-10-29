@@ -3,8 +3,6 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 export class CreateLatestOraclePrices1603979983323 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(`
-drop function public.latestOraclePrices;
-
 CREATE OR REPLACE FUNCTION public.latestOraclePrices("timestamp" timestamp)
   RETURNS TABLE ("token" varchar, "price" numeric)
   LANGUAGE 'plpgsql'
@@ -27,6 +25,6 @@ $BODY$;
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query('drop function public.latestOraclePrices;')
+    await queryRunner.query('DROP FUNCTION public.latestOraclePrices;')
   }
 }

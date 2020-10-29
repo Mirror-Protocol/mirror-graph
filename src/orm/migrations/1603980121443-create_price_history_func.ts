@@ -3,8 +3,6 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 export class CreatePriceHistory1603980121443 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(`
-drop function public.priceHistory;
-
 CREATE OR REPLACE FUNCTION public.priceHistory(_token varchar, _from timestamp, _to timestamp, _interval integer)
   RETURNS TABLE ("timestamp" timestamp, "price" numeric)
   LANGUAGE 'plpgsql'
@@ -36,6 +34,6 @@ $BODY$;
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query('drop function public.priceHistory;')
+    await queryRunner.query('DROP FUNCTION public.priceHistory;')
   }
 }
