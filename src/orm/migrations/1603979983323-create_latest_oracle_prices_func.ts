@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class CreateLatestOraclePrices1603979983323 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
@@ -23,10 +23,10 @@ BEGIN
 
 END;
 $BODY$;
-`);
+`)
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query('drop function public.latestOraclePrices;');
+    await queryRunner.query('drop function public.latestOraclePrices;')
   }
 }

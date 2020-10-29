@@ -4,7 +4,6 @@
 * Node.js v12
 * TypeScript v3.8
 * GraphQL v15
-* yarn (https://yarnpkg.com/)
 * PostgreSQL v12 (https://www.postgresql.org/download/)
 * ormconfig.json on project root
 * .envrc on project root
@@ -12,7 +11,7 @@
 
 ## Install dependencies
 ```
-$ yarn
+$ npm install
 ```
 
 ## Setup process.env (.envrc sample)
@@ -39,8 +38,8 @@ export START_BLOCK_HEIGHT=0
 
 ## cli
 ```
-$ yarn cli
-Usage: yarn cli [options] [command]
+$ npm run cli
+Usage: npm run cli [options] [command]
 
 Options:
   -V, --version      output the version number
@@ -55,21 +54,21 @@ Commands:
 
 ## Setup wallet keys using cli
 ```
-$ yarn cli update-owner-key
-$ yarn cli update-bot-key
+$ npm run cli -- update-owner-key
+$ npm run cli -- update-bot-key
 ```
 
 ## Run Collector
 ```
-$ yarn collect
+$ npm run collect
 ```
 
 ## Run Bot
 ```
-$ yarn bot
+$ npm run bot
 ```
 
 ## Run Graph Server
 ```
-$ yarn start
+$ npm run start
 ```

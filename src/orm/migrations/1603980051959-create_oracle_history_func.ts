@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class CreateOracleHistory1603980051959 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
@@ -32,10 +32,10 @@ BEGIN
 
 END;
 $BODY$;
-`);
+`)
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query('drop function public.oracleHistory;');
+    await queryRunner.query('drop function public.oracleHistory;')
   }
 }
