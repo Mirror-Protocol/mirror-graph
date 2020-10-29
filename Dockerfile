@@ -1,14 +1,18 @@
-FROM node:12-alpine
+FROM node:lts-alpine as builder
 
 WORKDIR /app
 
-COPY package*.json /app/
+RUN apk add --no-cache make gcc g++ python3
+COPY package.json package-lock.json ./
 
-RUN npm i
+RUN npm ci --prod
 
-COPY src src
-COPY jest.config.js /app/jest.config.js
-COPY tsconfig.json /app/tsconfig.json
-COPY whitelist.json whitelist.json
+FROM node:lts-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app .
+COPY . .
 
 ENTRYPOINT ["npm"]
+CMD ["start"]
