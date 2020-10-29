@@ -31,6 +31,8 @@ export IEX_CLOUD_API_KEY='api-key'
 export KEYSTORE_PATH='./mirror-graph.json'
 export OWNER_PASSWORD='owner-password'
 export BOT_PASSWORD='bot-password'
+
+export START_BLOCK_HEIGHT=0
 ```
 
 ## cli
