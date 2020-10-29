@@ -46,3 +46,4 @@ keystore-local.json
 *.envrc
 *ormconfig.json
 environment/*
+mirror-graph.json
