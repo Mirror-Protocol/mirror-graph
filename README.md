@@ -17,6 +17,9 @@ $ yarn
 
 ## Setup process.env (.envrc sample)
 ```
+export SENTRY='<sentry url for graphql server>'
+export SENTRY_BOT='<sentry url for bot>'
+export SENTRY_COLLECTOR='<sentry url for collector>'
 export SERVER_PORT=3858
 export ORM='default'
 export TERRA_LCD='http://localhost:1317/'
