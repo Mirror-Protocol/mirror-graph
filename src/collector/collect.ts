@@ -1,4 +1,4 @@
-import { format } from 'date-fns'
+import { formatToTimeZone } from 'date-fns-timezone'
 import { getManager, EntityManager } from 'typeorm'
 import { getLatestBlockHeight, getTxs } from 'lib/terra'
 import * as logger from 'lib/logger'
@@ -28,9 +28,13 @@ export async function collect(now: number): Promise<void> {
       await manager.save(await updateBlock(lastTx.height))
     })
     .then(() => {
+      const txDate = formatToTimeZone(new Date(lastTx.timestamp), 'YYYY-MM-DD HH:mm:ss', {
+        timeZone: 'Asia/Seoul',
+      })
+
       logger.info(
         `collected: ${config.TERRA_CHAIN_ID}, ${firstTx.height}-${lastTx.height},`,
-        `${format(new Date(lastTx.timestamp), 'yyyy-MM-dd HH:mm:ss')}, ${txs.length} txs`
+        `${txDate}, ${txs.length} txs`
       )
     })
 }

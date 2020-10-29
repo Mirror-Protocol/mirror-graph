@@ -34,6 +34,9 @@ export class AssetEntity extends HaveGov {
   @Column()
   name: string
 
+  @Column({ default: '' })
+  description: string
+
   @Column()
   lpToken: string // lpToken address
 

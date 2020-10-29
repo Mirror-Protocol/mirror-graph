@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Column,
+  Index,
 } from 'typeorm'
 import { HaveAsset } from '../Have'
 
@@ -24,6 +25,10 @@ export class CdpEntity extends HaveAsset {
   @PrimaryColumn('numeric', { precision: 40, default: 0 })
   id: string
 
+  @Column()
+  @Index()
+  address: string
+
   @Column('numeric', { precision: 40, default: 0 })
   mintAmount: string
 
@@ -32,4 +37,7 @@ export class CdpEntity extends HaveAsset {
 
   @Column('numeric', { precision: 40, default: 0 })
   collateralAmount: string
+
+  @Column('decimal', { precision: 40, scale: 6, default: 0 })
+  collateralRatio: string
 }

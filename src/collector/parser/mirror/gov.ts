@@ -1,5 +1,6 @@
 import { findAttributes, findAttribute } from 'lib/terra'
-import { govService } from 'services'
+import { govService, txService } from 'services'
+import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parseExecutePoll({ manager, log, contract }: ParseArgs): Promise<void> {
@@ -16,13 +17,62 @@ export async function parseExecutePoll({ manager, log, contract }: ParseArgs): P
 }
 
 export async function parse(args: ParseArgs): Promise<void> {
-  const { msg, log } = args
+  const { manager, height, txHash, sender, msg, log, contract, timestamp, fee } = args
+  const { mirrorToken } = govService().get()
+  const { govId } = contract
+  const datetime = new Date(timestamp)
+  const attributes = findAttributes(log.events, 'from_contract')
+  let parsed = {}
 
-  if (msg['execute_poll']) {
+  if (msg['create_poll']) {
+    const pollId = findAttribute(attributes, 'poll_id')
+    const amount = findAttribute(attributes, 'amount')
+
+    parsed = {
+      type: TxType.GOV_CREATE_POLL,
+      data: { pollId, amount },
+      token: mirrorToken,
+    }
+  } else if (msg['end_poll']) {
+    const pollId = findAttribute(attributes, 'poll_id')
+    const passed = findAttribute(attributes, 'passed')
+    const amount = findAttribute(attributes, 'amount')
+
+    parsed = {
+      type: TxType.GOV_END_POLL,
+      data: { pollId, amount, passed },
+      token: mirrorToken,
+    }
+  } else if (msg['execute_poll']) {
     const { from_contract: { action } } = log.eventsByType
 
     if (action.includes('whitelist')) {
       return parseExecutePoll(args)
     }
+
+    return
+  } else if (msg['stake_voting_tokens']) {
+    const amount = findAttribute(attributes, 'amount')
+    const share = findAttribute(attributes, 'share')
+
+    parsed = {
+      type: TxType.GOV_STAKE,
+      data: { amount, share },
+      token: mirrorToken,
+    }
+  } else if (msg['withdraw_voting_tokens']) {
+    const amount = findAttribute(attributes, 'amount')
+
+    parsed = {
+      type: TxType.GOV_UNSTAKE,
+      data: { amount },
+      token: mirrorToken,
+    }
+  } else {
+    return
   }
+
+  await txService().newTx(manager, {
+    ...parsed, height, txHash, address: sender, datetime, govId, contract, fee
+  })
 }

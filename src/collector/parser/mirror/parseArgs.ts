@@ -7,6 +7,7 @@ export interface ParseArgs {
   height: number
   txHash: string
   timestamp: string
+  fee: string
   sender: string
   coins: Coins
   msg: unknown

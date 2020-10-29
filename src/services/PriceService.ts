@@ -1,20 +1,22 @@
 import { Container, Service } from 'typedi'
-import { Repository, FindConditions, LessThanOrEqual } from 'typeorm'
+import { Repository, FindConditions, FindOneOptions, LessThanOrEqual, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { num } from 'lib/num'
-import { getOHLC, getHistory } from 'lib/price'
+import { getOHLC } from 'lib/price'
 import { getPairPrice } from 'lib/mirror'
 import { PriceEntity } from 'orm'
 import { AssetOHLC, PriceAt } from 'graphql/schema'
 
 @Service()
 export class PriceService {
-  constructor(
-    @InjectRepository(PriceEntity) private readonly repo: Repository<PriceEntity>,
-  ) {}
+  constructor(@InjectRepository(PriceEntity) private readonly repo: Repository<PriceEntity>) {}
 
-  async get(conditions: FindConditions<PriceEntity>, repo = this.repo): Promise<PriceEntity> {
-    return repo.findOne(conditions)
+  async get(
+    conditions: FindConditions<PriceEntity>,
+    options?: FindOneOptions<PriceEntity>,
+    repo = this.repo
+  ): Promise<PriceEntity> {
+    return repo.findOne(conditions, options)
   }
 
   async getPrice(token: string, timestamp: number = Date.now(), repo = this.repo): Promise<string> {
@@ -22,7 +24,7 @@ export class PriceService {
       { token, datetime: LessThanOrEqual(new Date(timestamp)) },
       {
         select: ['close', 'datetime'],
-        order: { datetime: 'DESC' }
+        order: { datetime: 'DESC' },
       }
     )
     return price?.close
@@ -33,7 +35,11 @@ export class PriceService {
   }
 
   async setOHLC(
-    token: string, timestamp: number, price: string, repo = this.repo, needSave = true
+    token: string,
+    timestamp: number,
+    price: string,
+    repo = this.repo,
+    needSave = true
   ): Promise<PriceEntity> {
     const datetime = new Date(timestamp - (timestamp % 60000))
     let priceEntity = await repo.findOne({ token, datetime })
@@ -44,7 +50,12 @@ export class PriceService {
       priceEntity.close = price
     } else {
       priceEntity = new PriceEntity({
-        token, open: price, high: price, low: price, close: price, datetime
+        token,
+        open: price,
+        high: price,
+        low: price,
+        close: price,
+        datetime,
       })
     }
 
@@ -56,9 +67,18 @@ export class PriceService {
   }
 
   async getHistory(
-    token: string | string[], from: number, to: number, interval: number, repo = this.repo
+    token: string | string[],
+    from: number,
+    to: number,
+    interval: number,
+    repo = this.repo
   ): Promise<PriceAt[]> {
-    return getHistory<PriceEntity>(repo, token, from, to, interval)
+    return getConnection().query('SELECT * FROM public.priceHistory($1, $2, $3, $4)', [
+      token,
+      new Date(from),
+      new Date(to),
+      interval,
+    ])
   }
 }
 

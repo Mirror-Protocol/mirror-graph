@@ -8,14 +8,14 @@
 * PostgreSQL v12 (https://www.postgresql.org/download/)
 * ormconfig.json on project root
 * .envrc on project root
-* address.json, assets.json, codeIds.json, contracts.json on project root/data
+* address.json, assets.json, codeIds.json, contracts.json, description.json on project root/data
 
 ## Install dependencies
 ```
 $ yarn
 ```
 
-## .envrc
+## Setup process.env (.envrc sample)
 ```
 export SERVER_PORT=1234
 export ORM='default'
@@ -24,6 +24,12 @@ export TERRA_CHAIN_ID='localterra'
 
 export KEYSTORE_PATH='./keystore.json'
 export CONTRACT_ID=-1
+
+export POLYGON_API_KEY='api-key'
+export IEX_CLOUD_API_KEY='api-key'
+
+export OWNER_PASSWORD='owner-password'
+export BOT_PASSWORD='bot-password'
 ```
 
 ## cli
@@ -38,14 +44,24 @@ Options:
 Commands:
   create [options]   create gov from json
   update-owner-key   update owner key
-  update-oracle-key  update oracle key
-  update-lp-key      update LP(liquidity provider) key
+  update-bot-key     update bot key
   help [command]     display help for command
+```
+
+## Setup wallet keys using cli
+```
+$ yarn cli update-owner-key
+$ yarn cli update-bot-key
 ```
 
 ## Run Collector
 ```
 $ yarn collect
+```
+
+## Run Bot
+```
+$ yarn bot
 ```
 
 ## Run Graph Server

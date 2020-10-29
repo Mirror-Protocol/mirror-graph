@@ -1,19 +1,18 @@
 import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
-import { assetService, accountService, priceService, statisticService } from 'services'
-import { TxEntity, AssetPositionsEntity, DailyStatisticEntity, PriceEntity, BalanceEntity } from 'orm'
+import { assetService, priceService, statisticService, txService } from 'services'
+import { AssetPositionsEntity, DailyStatisticEntity, PriceEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, msg, log, contract }: ParseArgs
+  { manager, height, txHash, timestamp, sender, msg, log, contract, fee }: ParseArgs
 ): Promise<void> {
-  const { token, govId } = contract
+  const { address, token, govId } = contract
   const datetime = new Date(timestamp)
   const attributes = findAttributes(log.events, 'from_contract')
   const positionsRepo = manager.getRepository(AssetPositionsEntity)
-  const balanceRepo = manager.getRepository(BalanceEntity)
   let parsed = {}
   let positions: AssetPositionsEntity
 
@@ -34,34 +33,18 @@ export async function parse(
       ? offerAmount
       : num(returnAmount).plus(spreadAmount).plus(commissionAmount).toString()
 
-    // buy price: offer / (return + commission)
-    // sell price: (return + commission) / offer
+    // buy price: offer / return
+    // sell price: return / offer
     const price = type === TxType.BUY
-      ? num(offerAmount).dividedBy(num(returnAmount).plus(commissionAmount)).toString()
-      : num(returnAmount).plus(commissionAmount).dividedBy(offerAmount).toString()
+      ? num(offerAmount).dividedBy(returnAmount).toString()
+      : num(returnAmount).dividedBy(offerAmount).toString()
 
-    // buy fee: pool price * commission
-    const feeValue = type === TxType.BUY
-      ? num(offerAmount)
-          .dividedBy(num(returnAmount).plus(spreadAmount).plus(commissionAmount))
-          .multipliedBy(commissionAmount).toString()
+    // buy fee: buy price * commission
+    const commissionValue = type === TxType.BUY
+      ? num(price).multipliedBy(commissionAmount).toString()
       : commissionAmount
 
     const recvAmount = num(returnAmount).minus(taxAmount).toString()
-    const poolChanged = num(returnAmount).plus(ownerCommissionAmount).multipliedBy(-1).toString()
-
-    // add asset's pool position, account balance
-    if (type === TxType.BUY) {
-      positions = await assetService().addPoolPosition(token, poolChanged, offerAmount, positionsRepo)
-      await accountService().addBalance(sender, token, price, recvAmount, balanceRepo)
-    } else {
-      positions = await assetService().addPoolPosition(token, offerAmount, poolChanged, positionsRepo)
-      await accountService().removeBalance(sender, token, offerAmount, balanceRepo)
-    }
-
-    // add daily trading volume
-    const dailyStatRepo = manager.getRepository(DailyStatisticEntity)
-    await statisticService().addDailyTradingVolume(datetime.getTime(), volume, dailyStatRepo)
 
     parsed = {
       type,
@@ -78,55 +61,71 @@ export async function parse(
         recvAmount,
         price,
       },
-      feeValue,
+      feeValue: commissionValue,
       volume
     }
+
+    // add asset's pool position, account balance
+    if (type === TxType.BUY) {
+      const assetPoolChanged = num(returnAmount).plus(ownerCommissionAmount).multipliedBy(-1).toString()
+
+      positions = await assetService().addPoolPosition(token, assetPoolChanged, offerAmount, positionsRepo)
+    } else {
+      const { transfer } = log.eventsByType
+
+      let uusdAmountNum = num(0)
+      for (let index = 0; index < transfer['sender'].length; index += 1) {
+        const tokenAmount = splitTokenAmount(transfer['amount'][index])
+        if (transfer['sender'][index] === address && tokenAmount.token === 'uusd') {
+          uusdAmountNum = uusdAmountNum.minus(tokenAmount.amount)
+        }
+      }
+      const uusdPoolChanged = uusdAmountNum.toString()
+
+      positions = await assetService().addPoolPosition(token, offerAmount, uusdPoolChanged, positionsRepo)
+    }
+
+    // add daily trading volume
+    const dailyStatRepo = manager.getRepository(DailyStatisticEntity)
+    await statisticService().addDailyTradingVolume(datetime.getTime(), volume, dailyStatRepo)
+
   } else if (msg['provide_liquidity']) {
     const assets = findAttribute(attributes, 'assets')
+    const share = findAttribute(attributes, 'share')
     const liquidities = assets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
     const assetToken = liquidities[0]
     const uusdToken = liquidities[1]
 
-    parsed = {
-      type: TxType.PROVIDE_LIQUIDITY,
-      data: { assets, share: findAttribute(attributes, 'share') }
-    }
-
-    // remove account balance
-    await accountService().removeBalance(sender, token, assetToken.amount, balanceRepo)
-
     // add asset's liquidity position
     positions = await assetService().addLiquidityPosition(
-      assetToken.token, assetToken.amount, uusdToken.amount, positionsRepo
+      assetToken.token, assetToken.amount, uusdToken.amount, share, positionsRepo
     )
+
+    parsed = {
+      type: TxType.PROVIDE_LIQUIDITY,
+      data: { assets, share }
+    }
   } else if (msg['withdraw_liquidity']) {
     const refundAssets = findAttribute(attributes, 'refund_assets')
+    const withdrawnShare = findAttribute(attributes, 'withdrawn_share')
     const liquidities = refundAssets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
     const assetToken = liquidities[1]
     const uusdToken = liquidities[0]
 
-    parsed = {
-      type: TxType.WITHDRAW_LIQUIDITY,
-      data: { refundAssets, withdrawnShare: findAttribute(attributes, 'withdrawn_share') }
-    }
-
-    // add account balance
-    const price = await priceService().getPrice(token, datetime.getTime(), manager.getRepository(PriceEntity))
-    await accountService().addBalance(sender, token, price, assetToken.amount, balanceRepo)
-
     // remove asset's liquidity position
     positions = await assetService().addLiquidityPosition(
-      assetToken.token, `-${assetToken.amount}`, `-${uusdToken.amount}`, positionsRepo
+      assetToken.token, `-${assetToken.amount}`, `-${uusdToken.amount}`, `-${withdrawnShare}`, positionsRepo
     )
+
+    parsed = {
+      type: TxType.WITHDRAW_LIQUIDITY,
+      data: { refundAssets, withdrawnShare }
+    }
   } else {
     return
   }
 
   // set pool price ohlc
-  const tx = new TxEntity({
-    ...parsed, height, txHash, address: sender, datetime, govId, token, contract
-  })
-
   const price = await priceService().setOHLC(
     token,
     datetime.getTime(),
@@ -134,6 +133,9 @@ export async function parse(
     manager.getRepository(PriceEntity),
     false
   )
+  await manager.save(price)
 
-  await manager.save([tx, price])
+  await txService().newTx(manager, {
+    ...parsed, height, txHash, address: sender, datetime, govId, token, contract, fee
+  })
 }

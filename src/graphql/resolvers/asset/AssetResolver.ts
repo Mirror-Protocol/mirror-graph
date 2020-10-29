@@ -1,6 +1,6 @@
 import { Resolver, Query, Arg, Root, FieldResolver } from 'type-graphql'
 import { AssetEntity } from 'orm'
-import { Asset } from 'graphql/schema'
+import { Asset, AssetNews } from 'graphql/schema'
 import { AssetService } from 'services'
 
 @Resolver((of) => Asset)
@@ -20,5 +20,15 @@ export class AssetResolver {
   @FieldResolver()
   async prices(@Root() asset: AssetEntity): Promise<AssetEntity> {
     return asset
+  }
+
+  @FieldResolver()
+  async statistic(@Root() asset: AssetEntity): Promise<AssetEntity> {
+    return asset
+  }
+
+  @FieldResolver()
+  async news(@Root() asset: AssetEntity): Promise<AssetNews[]> {
+    return this.assetService.getNews(asset.token)
   }
 }

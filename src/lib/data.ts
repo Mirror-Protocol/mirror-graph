@@ -6,8 +6,9 @@ const CODE_IDS_PATH = './data/codeIds.json'
 const WHITELIST_PATH = './data/whitelist.json'
 const CONTRACTS_PATH = './data/contracts.json'
 const ASSETS_PATH = './data/assets.json'
+const DESCRIPTION_PATH = './data/description.json'
 
-function loadJSON(path: string): unknown {
+export function loadJSON(path: string): unknown {
   try {
     const data = JSON.parse(fs.readFileSync(path, 'utf8'))
     return data
@@ -16,7 +17,7 @@ function loadJSON(path: string): unknown {
   }
 }
 
-function saveJSON(path: string, data: unknown): void {
+export function saveJSON(path: string, data: unknown): void {
   try {
     fs.writeFileSync(path, JSON.stringify(data))
     logger.error(`${path} saved`)
@@ -41,9 +42,13 @@ export function loadAssets(): Assets | undefined {
   return loadJSON(ASSETS_PATH) as Assets
 }
 
+export function loadDescriptions(): { [symbol: string]: string } | undefined {
+  return loadJSON(DESCRIPTION_PATH) as { [symbol: string]: string }
+}
+
 export function getAsset(symbol: string): Asset {
   const assets = loadAssets()
-  const token = Object.keys(assets).find(token => assets[token].symbol === symbol)
+  const token = Object.keys(assets).find((token) => assets[token].symbol === symbol)
 
   return assets[token]
 }

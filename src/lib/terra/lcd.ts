@@ -36,7 +36,7 @@ export async function transaction(
       .createAndSignTx({ msgs, account_number: accountNumber, sequence })
       .then((signed) => lcd.tx.broadcast(signed))
       .then(async (broadcastResult) => {
-        if (broadcastResult.code) {
+        if (broadcastResult['code']) {
           throw new Error(broadcastResult.raw_log)
         }
         return checkTx(broadcastResult.txhash, timeout)

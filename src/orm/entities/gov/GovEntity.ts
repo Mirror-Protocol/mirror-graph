@@ -1,5 +1,4 @@
 import { Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Column } from 'typeorm'
-import { CodeIds } from 'types'
 
 @Entity('gov')
 export class GovEntity {
@@ -15,9 +14,6 @@ export class GovEntity {
 
   @PrimaryGeneratedColumn()
   id: number
-
-  @Column({ type: 'jsonb' })
-  codeIds: CodeIds
 
   @Column()
   chainId: string

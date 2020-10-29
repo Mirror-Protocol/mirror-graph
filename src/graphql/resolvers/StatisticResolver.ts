@@ -1,5 +1,5 @@
 import { Resolver, Query, FieldResolver, Arg } from 'type-graphql'
-import { Statistic, ValueAt } from 'graphql/schema'
+import { Statistic, Latest24h, ValueAt } from 'graphql/schema'
 import { StatisticService } from 'services'
 
 @Resolver((of) => Statistic)
@@ -9,6 +9,11 @@ export class StatisticResolver {
   @Query((returns) => Statistic)
   async statistic(): Promise<Statistic> {
     return await this.statisticService.statistic() as Statistic
+  }
+
+  @FieldResolver((type) => Latest24h)
+  async latest24h(): Promise<Latest24h> {
+    return this.statisticService.latest24h()
   }
 
   @FieldResolver((type) => [ValueAt])

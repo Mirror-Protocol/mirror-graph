@@ -5,7 +5,8 @@ import { TxWallet } from 'lib/terra'
 import { getKey } from 'lib/keystore'
 import { Assets } from 'types'
 import config from 'config'
-import { loadCodeIds, loadContracts, loadAssets, saveAssets } from './data'
+import { loadContracts, loadAssets, saveAssets } from 'lib/data'
+import { fetchNews } from 'lib/iex'
 
 export function ownerCommands(): void {
   program
@@ -14,27 +15,12 @@ export function ownerCommands(): void {
     .requiredOption('-p, --password <owner-password>', 'owner key password')
     .action(async ({ password }) => {
       const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
-      const codeIds = loadCodeIds()
       const contracts = loadContracts()
       const assets = loadAssets()
 
-      const gov = await govService().create(wallet, codeIds, contracts, assets)
+      const gov = await govService().create(wallet, contracts, assets)
 
       logger.info(`mirror contracts loaded. gov id: ${gov.id}`)
-    })
-
-  program
-    .command('update-code-ids')
-    .description('update codeIds from json')
-    .action(async () => {
-      const codeIds = loadCodeIds()
-
-      const gov = govService().get()
-      gov.codeIds = codeIds
-
-      await govService().update(gov)
-
-      logger.info(`codeIds updated. gov id: ${gov.id}`)
     })
 
   program
@@ -50,5 +36,15 @@ export function ownerCommands(): void {
       })
 
       saveAssets(assets)
+    })
+
+  program
+    .command('news')
+    .action(async () => {
+      const assetList = await assetService().getAll({ where: { isListed: true }})
+      assetList.map(async (asset) => {
+        const { symbol } = asset
+        await fetchNews(symbol.substring(1), 2000)
+      })
     })
 }
