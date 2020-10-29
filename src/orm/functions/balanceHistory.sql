@@ -15,14 +15,18 @@ BEGIN
     RETURN QUERY
     SELECT
       timeIterator as "timestamp",
-      sum(pb.assetValue) as "assetValue",
-      sum(pb.investedValue) as "investedValue"
+      coalesce(sum(pb.assetValue), 0) as "assetValue",
+      coalesce(sum(pb.investedValue), 0) as "investedValue"
     FROM (
       SELECT
         DISTINCT ON (token) token,
-        coalesce((SELECT p.close FROM price p
-          WHERE p.token = b.token AND p.datetime <= timeIteratorNext
-          ORDER BY p.datetime DESC LIMIT 1), 0)*b.balance as assetValue,
+        (CASE
+          WHEN b.balance > 0
+            THEN coalesce((SELECT p.close FROM price p
+              WHERE p.token = b.token AND p.datetime <= timeIteratorNext
+              ORDER BY p.datetime DESC LIMIT 1), 0)*b.balance
+            ELSE 0
+          END) as assetValue,
         b.average_price*b.balance as investedValue
       FROM balance b
       WHERE b.address=_address AND b.datetime <= timeIteratorNext
