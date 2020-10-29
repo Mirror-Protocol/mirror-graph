@@ -14,13 +14,13 @@ export function initMantle(URL: string): GraphQLClient {
 export async function getLatestBlockHeight(): Promise<number> {
   const result = await mantle.request(
     gql`query {
-      BaseState {
+      BlockState {
         Height
       }      
     }`
   )
 
-  return result?.BaseState?.Height
+  return result?.BlockState?.Height
 }
 
 export async function getContractStore<T>(address: string, query: unknown): Promise<T> {
