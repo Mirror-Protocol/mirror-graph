@@ -11,7 +11,7 @@ export async function getLastBlockFromDB(): Promise<BlockEntity> {
 
 export async function getCollectedHeight(): Promise<number> {
   const latestBlockFromDB = await getLastBlockFromDB()
-  return latestBlockFromDB?.height || +process.env.START_BLOCK_HEIGHT || 0
+  return latestBlockFromDB?.height || config.START_BLOCK_HEIGHT
 }
 
 export async function updateBlock(height: number): Promise<BlockEntity> {

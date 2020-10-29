@@ -22,15 +22,14 @@ export ORM='default'
 export TERRA_LCD='http://localhost:1317/'
 export TERRA_CHAIN_ID='localterra'
 
-export KEYSTORE_PATH='./keystore.json'
 export CONTRACT_ID=-1
 
-export POLYGON_API_KEY='api-key'
-export IEX_CLOUD_API_KEY='api-key'
+export POLYGON_API_KEY='<api key>'
+export IEX_CLOUD_API_KEY='<api key>'
 
-export KEYSTORE_PATH='./mirror-graph.json'
-export OWNER_PASSWORD='owner-password'
-export BOT_PASSWORD='bot-password'
+export KEYSTORE_PATH='./keystore-graph.json'
+export KEYSTORE_OWNER_PASSWORD='<password>'
+export KEYSTORE_BOT_PASSWORD='<password>'
 
 export START_BLOCK_HEIGHT=0
 ```

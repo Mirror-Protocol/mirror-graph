@@ -7,7 +7,7 @@ import { initORM } from 'orm'
 import { init as initErrorHandler, errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { initMirror } from 'loaders'
-import { validateConfig } from 'config'
+import config, { validateConfig } from 'config'
 import { createJobs } from './createJobs'
 
 bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
@@ -26,7 +26,7 @@ async function main(): Promise<void> {
 
   program.action(async (options) => {
     const password =
-      process.env.BOT_PASSWORD ||
+      config.KEYSTORE_BOT_PASSWORD ||
       (await promptly.password(`Enter bot passphrase:`, { replace: `*` }))
     if (!password) {
       throw new Error('bot password is missing')

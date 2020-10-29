@@ -16,15 +16,17 @@ export async function initMirror(): Promise<void> {
 
     logger.info('create mirror gov from json files')
 
-    const ownerPassword = process.env.OWNER_PASSWORD
+    const ownerPassword = config.KEYSTORE_OWNER_PASSWORD
     if (!ownerPassword) {
-      throw new Error('required process.env.OWNER_PASSWORD')
+      throw new Error('KEYSTORE_OWNER_PASSWORD environment variable must be defined')
     }
-    const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, ownerPassword))
+    const wallet = new TxWallet(
+      getKey(config.KEYSTORE_PATH, config.KEYSTORE_OWNER_KEY, ownerPassword)
+    )
 
     await govService().create(wallet, contracts, assets)
 
-    if (!await govService().load(-1)) {
+    if (!(await govService().load(-1))) {
       throw new Error('create mirror gov failed')
     }
   }
