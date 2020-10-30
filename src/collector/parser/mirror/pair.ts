@@ -61,7 +61,7 @@ export async function parse(
         recvAmount,
         price,
       },
-      feeValue: commissionValue,
+      commissionValue,
       volume
     }
 

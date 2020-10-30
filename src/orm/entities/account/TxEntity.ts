@@ -37,7 +37,7 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   @Column('numeric', { precision: 40, default: 0, comment: 'uusd volume' })
   volume: string
 
-  @Column('numeric', { precision: 40, default: 0, comment: 'uusd fee value' })
+  @Column('numeric', { precision: 40, default: 0, comment: 'uusd commission fee value' })
   commissionValue: string
 
   @Column({ default: '0uusd' })
