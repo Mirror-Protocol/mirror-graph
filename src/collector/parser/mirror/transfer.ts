@@ -56,6 +56,7 @@ export async function parse(args: ParseArgs): Promise<void> {
     async (action) => {
       const { contract: token, from, to, amount } = action
 
+      // token is listed asset and receiver is not contract, record balance
       if (await assetService().get({ token }, undefined, assetRepo) &&
         !(await contractService().get({ address: to }, undefined, contractRepo))
       ) {
