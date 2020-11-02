@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class CreateLatestOraclePrices1603979983323 implements MigrationInterface {
+export class CreateLatestOraclePrices1604324036891 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(`
 CREATE OR REPLACE FUNCTION public.latestOraclePrices("timestamp" timestamp)
