@@ -45,7 +45,7 @@ export class AccountService {
   async getBalance(address: string, token: string): Promise<AssetBalance> {
     if (token === 'uusd') {
       const coin = (await lcd.bank.balance(address)).get(token)
-      return { token, balance: coin.amount?.toString() || '0', averagePrice: '0' }
+      return { token, balance: coin?.amount?.toString() || '0', averagePrice: '0' }
     }
 
     const balanceEntity = await this.getBalanceEntity(
