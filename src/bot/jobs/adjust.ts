@@ -6,6 +6,7 @@ import { getLatestBlockHeight } from 'lib/terra'
 import { getPairPool, getTokenBalance } from 'lib/mirror'
 import { assetService } from 'services'
 import { BlockEntity, AssetPositionsEntity, BalanceEntity } from 'orm'
+import { AssetStatus } from 'types'
 import config from 'config'
 
 export async function getCollectedHeight(): Promise<number> {
@@ -16,7 +17,7 @@ export async function getCollectedHeight(): Promise<number> {
 }
 
 async function adjustPool(): Promise<void> {
-  const assets = await assetService().getAll({ where: { isListed: true }})
+  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTING }})
   await bluebird.map(assets, async (asset) => {
     const pool = await getPairPool(asset.pair)
 

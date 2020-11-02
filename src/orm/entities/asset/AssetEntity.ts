@@ -6,6 +6,7 @@ import {
   Column,
   OneToOne,
 } from 'typeorm'
+import { AssetStatus } from 'types'
 import { AssetPositionsEntity } from './AssetPositionsEntity'
 import { HaveGov } from '../Have'
 
@@ -43,8 +44,8 @@ export class AssetEntity extends HaveGov {
   @Column()
   pair: string // pair address
 
-  @Column({ default: true })
-  isListed: boolean
+  @Column({ type: 'enum', enum: AssetStatus, default: AssetStatus.NONE })
+  status: AssetStatus
 
   @OneToOne(
     (type) => AssetPositionsEntity,

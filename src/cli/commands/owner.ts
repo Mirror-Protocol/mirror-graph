@@ -2,11 +2,10 @@ import { program } from 'commander'
 import { govService, assetService } from 'services'
 import * as logger from 'lib/logger'
 import { TxWallet } from 'lib/terra'
+import { loadContracts, loadAssets, saveAssets, saveOracleAddress } from 'lib/data'
 import { getKey } from 'lib/keystore'
-import { Assets } from 'types'
+import { Assets, AssetStatus, OracleAddress } from 'types'
 import config from 'config'
-import { loadContracts, loadAssets, saveAssets } from 'lib/data'
-import { fetchNews } from 'lib/iex'
 
 export function ownerCommands(): void {
   program
@@ -14,7 +13,7 @@ export function ownerCommands(): void {
     .description('create gov from json')
     .requiredOption('-p, --password <owner-password>', 'owner key password')
     .action(async ({ password }) => {
-      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.OWNER_KEY, password))
+      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.KEYSTORE_OWNER_KEY, password))
       const contracts = loadContracts()
       const assets = loadAssets()
 
@@ -27,24 +26,38 @@ export function ownerCommands(): void {
     .command('export-assets')
     .description('export assets.json')
     .action(async () => {
-      const assetList = await assetService().getAll({ where: { isListed: true }})
+      const assetList = await assetService().getAll({
+        where: [{ status: AssetStatus.LISTING }, { status: AssetStatus.MIGRATED }]
+      })
       const assets: Assets = {}
 
       assetList.map((asset) => {
-        const { symbol, name, token, pair, lpToken } = asset
-        assets[asset.token] = { symbol, name, token, pair, lpToken }
+        const { symbol, name, token, pair, lpToken, status } = asset
+        assets[asset.token] = { symbol, name, token, pair, lpToken, status }
       })
 
       saveAssets(assets)
     })
 
   program
-    .command('news')
+    .command('export-oracle-address')
+    .description('export address.json for oracle')
     .action(async () => {
-      const assetList = await assetService().getAll({ where: { isListed: true }})
-      assetList.map(async (asset) => {
-        const { symbol } = asset
-        await fetchNews(symbol.substring(1), 2000)
+      const contracts = loadContracts()
+      const assetList = await assetService().getAll({
+        where: { status: AssetStatus.LISTING }
       })
+
+      const oracleInfo: OracleAddress = {
+        oracle: contracts.oracle,
+        assets: {}
+      }
+
+      assetList.map((asset) => {
+        const { symbol, token } = asset
+        oracleInfo.assets[symbol.substring(1)] = token
+      })
+
+      saveOracleAddress(oracleInfo)
     })
 }

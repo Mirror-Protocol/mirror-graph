@@ -6,6 +6,7 @@ import * as logger from 'lib/logger'
 import { fetchAggregates, TimeSpan } from 'lib/polygon'
 import { assetService, priceService } from 'services'
 import { PriceEntity, AssetEntity } from 'orm'
+import { AssetStatus } from 'types'
 import { loadDescriptions } from 'lib/data'
 
 async function collectPrice(
@@ -27,7 +28,7 @@ async function collectPrice(
 }
 
 async function fillPriceHistory(): Promise<void> {
-  const assets = await assetService().getAll({ where: { isListed: true }})
+  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTING }})
   const price = await priceService().get(undefined, { order: { id: 'ASC' }})
   const minFrom = startOfDay(addDays(price.datetime, -1)).getTime()
   const minTo = addMinutes(price.datetime, -1).getTime()

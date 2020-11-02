@@ -2,7 +2,7 @@ import { Repository, FindConditions, getManager, EntityManager } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service } from 'typedi'
 import { GovEntity, ContractEntity, AssetEntity } from 'orm'
-import { Contracts, Assets, ContractType } from 'types'
+import { Contracts, Assets, ContractType, AssetStatus } from 'types'
 import { TxWallet } from 'lib/terra'
 import { loadDescriptions } from 'lib/data'
 import * as logger from 'lib/logger'
@@ -90,6 +90,7 @@ export class GovService {
         token,
         pair,
         lpToken,
+        status: AssetStatus.LISTING,
       })
 
       entities.push(
@@ -101,7 +102,7 @@ export class GovService {
           token: 'uusd',
           pair: 'uusd',
           lpToken: 'uusd',
-          isListed: false,
+          status: AssetStatus.NONE,
         }),
         new ContractEntity({ address: token, type: ContractType.TOKEN, gov: govEntity, asset }),
         new ContractEntity({ address: pair, type: ContractType.PAIR, gov: govEntity, asset }),
@@ -116,12 +117,7 @@ export class GovService {
   }
 
   whitelisting(
-    govId: number,
-    symbol: string,
-    name: string,
-    token: string,
-    pair: string,
-    lpToken: string
+    govId: number, symbol: string, name: string, token: string, pair: string, lpToken: string
   ): unknown[] {
     if (!token || !pair || !lpToken) {
       throw new Error(`whitelisting failed. token(${token}), lpToken(${lpToken}), pair(${pair})`)
@@ -129,7 +125,10 @@ export class GovService {
     const descriptions = loadDescriptions()
     const description = descriptions[symbol.substring(1)]
 
-    const asset = new AssetEntity({ govId, symbol, name, description, token, pair, lpToken })
+    const asset = new AssetEntity({
+      govId, symbol, name, description, token, pair, lpToken, status: AssetStatus.LISTING
+    })
+
     const entities = [
       asset,
       new ContractEntity({ address: token, type: ContractType.TOKEN, govId, asset }),

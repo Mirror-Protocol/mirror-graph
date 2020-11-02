@@ -5,11 +5,12 @@ import { toSnakeCase } from 'lib/caseStyles'
 import * as logger from 'lib/logger'
 import { getTokenBalance, getStakingPool } from 'lib/mirror'
 import { govService, assetService } from 'services'
+import { AssetStatus } from 'types'
 import { num } from 'lib/num'
 
 export async function distributeRewards(wallet: TxWallet): Promise<void> {
   const { factory, collector, staking } = govService().get()
-  const assets = await assetService().getAll({ where: { isListed: true }})
+  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTING }})
   const sender = wallet.key.accAddress
   
   // MIR inflation

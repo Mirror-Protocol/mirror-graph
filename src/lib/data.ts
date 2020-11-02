@@ -1,12 +1,12 @@
 import * as fs from 'fs'
-import { CodeIds, Contracts, Asset, Assets, Whitelist } from 'types'
+import { CodeIds, Contracts, Asset, Assets, OracleAddress } from 'types'
 import * as logger from 'lib/logger'
 
 const CODE_IDS_PATH = './data/codeIds.json'
-const WHITELIST_PATH = './data/whitelist.json'
 const CONTRACTS_PATH = './data/contracts.json'
 const ASSETS_PATH = './data/assets.json'
 const DESCRIPTION_PATH = './data/description.json'
+const ORACLE_ADDRESS_PATH = './data/address.json'
 
 export function loadJSON(path: string): unknown {
   try {
@@ -30,10 +30,6 @@ export function loadCodeIds(): CodeIds | undefined {
   return loadJSON(CODE_IDS_PATH) as CodeIds
 }
 
-export function loadWhitelist(): Whitelist | undefined {
-  return loadJSON(WHITELIST_PATH) as Whitelist
-}
-
 export function loadContracts(): Contracts | undefined {
   return loadJSON(CONTRACTS_PATH) as Contracts
 }
@@ -55,4 +51,8 @@ export function getAsset(symbol: string): Asset {
 
 export function saveAssets(assets: Assets): void {
   saveJSON(ASSETS_PATH, assets)
+}
+
+export function saveOracleAddress(oracleAddress: OracleAddress): void {
+  saveJSON(ORACLE_ADDRESS_PATH, oracleAddress)
 }

@@ -27,6 +27,7 @@ export interface Asset {
   token: string
   pair: string
   lpToken: string
+  status: string
 }
 
 export interface Assets {
