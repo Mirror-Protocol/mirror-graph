@@ -14,29 +14,18 @@
 $ npm install
 ```
 
-## Setup process.env (.envrc sample)
+## cli
+### require process.env (.envrc sample)
 ```
-export SENTRY='<sentry url for graphql server>'
-export SENTRY_BOT='<sentry url for bot>'
-export SENTRY_COLLECTOR='<sentry url for collector>'
-export SERVER_PORT=3858
-export ORM='default'
-export TERRA_LCD='http://localhost:1317/'
-export TERRA_CHAIN_ID='localterra'
+export TERRA_LCD='<lcd url>'
+export TERRA_MANTLE='<mantle url>
+export TERRA_CHAIN_ID='<chain id>'
 
 export CONTRACT_ID=-1
 
-export POLYGON_API_KEY='<api key>'
-export IEX_CLOUD_API_KEY='<api key>'
-
 export KEYSTORE_PATH='./keystore-graph.json'
 export KEYSTORE_OWNER_PASSWORD='<password>'
-export KEYSTORE_BOT_PASSWORD='<password>'
-
-export START_BLOCK_HEIGHT=0
 ```
-
-## cli
 ```
 $ npm run cli
 Usage: npm run cli [options] [command]
@@ -59,16 +48,64 @@ $ npm run cli -- update-bot-key
 ```
 
 ## Run Collector
+### require process.env (.envrc sample)
+```
+export TERRA_LCD='<lcd url>'
+export TERRA_MANTLE='<mantle url>
+export TERRA_CHAIN_ID='<chain id>'
+
+export CONTRACT_ID=-1
+
+export SENTRY_COLLECTOR='<sentry url for collector>'
+
+export KEYSTORE_PATH='./keystore-graph.json'
+export KEYSTORE_OWNER_PASSWORD='<password>'
+```
+### run
 ```
 $ npm run collect
 ```
 
 ## Run Bot
+### require process.env (.envrc sample)
+```
+export TERRA_LCD='<lcd url>'
+export TERRA_MANTLE='<mantle url>
+export TERRA_CHAIN_ID='<chain id>'
+
+export CONTRACT_ID=-1
+
+export SENTRY_BOT='<sentry url for bot>'
+
+export KEYSTORE_PATH='./keystore-graph.json'
+export KEYSTORE_BOT_PASSWORD='<password>'
+```
+### run
 ```
 $ npm run bot
 ```
 
 ## Run Graph Server
+### require process.env (.envrc sample)
+```
+export SERVER_PORT=3858
+export ORM='default'
+
+export TERRA_LCD='<lcd url>'
+export TERRA_MANTLE='<mantle url>
+export TERRA_CHAIN_ID='<chain id>'
+
+export CONTRACT_ID=-1
+
+export SENTRY='<sentry url for graphql server>'
+
+export IEX_CLOUD_API_KEY='<api key>'
+
+export KEYSTORE_PATH='./keystore-graph.json'
+export KEYSTORE_OWNER_PASSWORD='<password>'
+export KEYSTORE_BOT_PASSWORD='<password>'
+```
+### run
 ```
 $ npm run start
 ```
