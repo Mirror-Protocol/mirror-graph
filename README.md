@@ -54,12 +54,13 @@ export TERRA_LCD='<lcd url>'
 export TERRA_MANTLE='<mantle url>
 export TERRA_CHAIN_ID='<chain id>'
 
-export CONTRACT_ID=-1
-
 export SENTRY_COLLECTOR='<sentry url for collector>'
 
 export KEYSTORE_PATH='./keystore-graph.json'
 export KEYSTORE_OWNER_PASSWORD='<password>'
+
+export CONTRACT_ID=-1
+export START_BLOCK_HEIGHT=0
 ```
 ### run
 ```
