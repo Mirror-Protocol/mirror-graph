@@ -4,6 +4,7 @@ import { Container } from 'typedi'
 import { initORM } from 'orm'
 import { init as initErrorHandler, errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
+import { sendSlack } from 'lib/slack'
 import { initMirror } from 'loaders'
 import { validateConfig } from 'config'
 import { collect } from './collect'
@@ -36,5 +37,9 @@ async function main(): Promise<void> {
 }
 
 if (require.main === module) {
-  main().catch(errorHandler)
+  main().catch((error) => {
+    error['message'] && sendSlack('mirror-collector', error['message'])
+
+    errorHandler(error)
+  })
 }

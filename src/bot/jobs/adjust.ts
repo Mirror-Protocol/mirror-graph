@@ -1,9 +1,9 @@
 import { getRepository } from 'typeorm'
 import * as bluebird from 'bluebird'
 import { errorHandler } from 'lib/error'
-import * as logger from 'lib/logger'
 import { getLatestBlockHeight } from 'lib/terra'
 import { getPairPool, getTokenBalance } from 'lib/mirror'
+import { sendSlack } from 'lib/slack'
 import { assetService } from 'services'
 import { BlockEntity, AssetPositionsEntity, BalanceEntity } from 'orm'
 import { AssetStatus } from 'types'
@@ -22,12 +22,18 @@ async function adjustPool(): Promise<void> {
     const pool = await getPairPool(asset.pair)
 
     if (asset.positions.pool !== pool.assetAmount) {
-      logger.info(`adjust pool: ${asset.symbol}, ${asset.positions.pool} to ${pool.assetAmount}`)
+      sendSlack(
+        'mirror-bot',
+        `adjust pool: ${asset.symbol}, ${asset.positions.pool} to ${pool.assetAmount}`
+      )
       asset.positions.pool = pool.assetAmount
       await getRepository(AssetPositionsEntity).save(asset.positions)
     }
     if (asset.positions.uusdPool !== pool.collateralAmount) {
-      logger.info(`adjust uusd pool: ${asset.symbol}, ${asset.positions.uusdPool} to ${pool.collateralAmount}`)
+      sendSlack(
+        'mirror-bot',
+        `adjust uusd pool: ${asset.symbol}, ${asset.positions.uusdPool} to ${pool.collateralAmount}`
+      )
       asset.positions.uusdPool = pool.collateralAmount
       await getRepository(AssetPositionsEntity).save(asset.positions)
     }
@@ -52,9 +58,9 @@ export async function adjustBalance(): Promise<void> {
   await bluebird.mapSeries(balances, async (row) => {
     const contractBalance = await getTokenBalance(row.token, row.address)
     if (row.balance !== contractBalance) {
-      logger.info(
-        `wrong balance - [${row.id}] address: ${row.address}, token: ${row.token},`,
-        `db: ${row.balance}, contract: ${contractBalance}`
+      sendSlack(
+        'mirror-bot',
+        `wrong balance - [${row.id}] address: ${row.address}, token: ${row.token}, db: ${row.balance}, contract: ${contractBalance}`
       )
     }
   })

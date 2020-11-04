@@ -14,16 +14,23 @@
 $ npm install
 ```
 
-## cli
-### require process.env (.envrc sample)
+## require common process.env
 ```
 export TERRA_LCD='<lcd url>'
 export TERRA_MANTLE='<mantle url>
 export TERRA_CHAIN_ID='<chain id>'
 
+export KEYSTORE_PATH='./keystore-graph.json'
+
+SLACK_URL='<slack url>'
+SLACK_CHANNEL='<slack channel name'
+```
+
+## cli
+### require process.env (.envrc sample)
+```
 export CONTRACT_ID=-1
 
-export KEYSTORE_PATH='./keystore-graph.json'
 export KEYSTORE_OWNER_PASSWORD='<password>'
 ```
 ```
@@ -50,15 +57,8 @@ $ npm run cli -- update-bot-key
 ## Run Collector
 ### require process.env (.envrc sample)
 ```
-export TERRA_LCD='<lcd url>'
-export TERRA_MANTLE='<mantle url>
-export TERRA_CHAIN_ID='<chain id>'
-
 export SENTRY_COLLECTOR='<sentry url for collector>'
-
-export KEYSTORE_PATH='./keystore-graph.json'
 export KEYSTORE_OWNER_PASSWORD='<password>'
-
 export CONTRACT_ID=-1
 export START_BLOCK_HEIGHT=0
 ```
@@ -70,16 +70,9 @@ $ npm run collect
 ## Run Bot
 ### require process.env (.envrc sample)
 ```
-export TERRA_LCD='<lcd url>'
-export TERRA_MANTLE='<mantle url>
-export TERRA_CHAIN_ID='<chain id>'
-
-export CONTRACT_ID=-1
-
 export SENTRY_BOT='<sentry url for bot>'
-
-export KEYSTORE_PATH='./keystore-graph.json'
 export KEYSTORE_BOT_PASSWORD='<password>'
+export CONTRACT_ID=-1
 ```
 ### run
 ```
@@ -92,19 +85,13 @@ $ npm run bot
 export SERVER_PORT=3858
 export ORM='default'
 
-export TERRA_LCD='<lcd url>'
-export TERRA_MANTLE='<mantle url>
-export TERRA_CHAIN_ID='<chain id>'
-
-export CONTRACT_ID=-1
-
-export SENTRY='<sentry url for graphql server>'
-
+export SENTRY='<sentry url>'
 export IEX_CLOUD_API_KEY='<api key>'
 
-export KEYSTORE_PATH='./keystore-graph.json'
 export KEYSTORE_OWNER_PASSWORD='<password>'
 export KEYSTORE_BOT_PASSWORD='<password>'
+
+export CONTRACT_ID=-1
 ```
 ### run
 ```
