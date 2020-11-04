@@ -22,8 +22,8 @@ export TERRA_CHAIN_ID='<chain id>'
 
 export KEYSTORE_PATH='./keystore-graph.json'
 
-SLACK_URL='<slack url>'
-SLACK_CHANNEL='<slack channel name'
+export SLACK_URL='<slack url>'
+export SLACK_CHANNEL='<slack channel name>'
 ```
 
 ## cli
