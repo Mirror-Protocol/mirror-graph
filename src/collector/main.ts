@@ -29,10 +29,13 @@ async function main(): Promise<void> {
 
   validateConfig()
 
+  logger.info('initialize orm')
   await initORM(Container)
 
+  logger.info('initialize mirror')
   await initMirror()
 
+  logger.info('start collecting')
   await loop()
 }
 
