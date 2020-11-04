@@ -25,7 +25,7 @@ const config = {
   TERRA_CHAIN_ID,
   CONTRACT_ID: CONTRACT_ID ? +CONTRACT_ID : -1,
   // keys
-  KEYSTORE_PATH: KEYSTORE_PATH || './mirror-graph.json',
+  KEYSTORE_PATH: KEYSTORE_PATH || './data/mirror-graph.json',
   KEYSTORE_OWNER_KEY: 'owner',
   KEYSTORE_OWNER_PASSWORD: process.env.KEYSTORE_OWNER_PASSWORD,
   KEYSTORE_BOT_KEY: 'bot',
