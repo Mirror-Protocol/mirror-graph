@@ -1,6 +1,6 @@
 {
   "name": "mirror-graph",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "src/main.ts",
   "license": "MIT",
   "scripts": {
@@ -16,10 +16,10 @@
   },
   "dependencies": {
     "@koa/cors": "^3.1.0",
-    "@sentry/node": "^5",
+    "@sentry/node": "^5.27.2",
     "@terra-money/terra.js": "0.5.6",
-    "apollo-server": "^2.11.0",
-    "apollo-server-koa": "^2.17.0",
+    "apollo-server": "^2.19.0",
+    "apollo-server-koa": "^2.19.0",
     "bignumber.js": "^9.0.0",
     "bluebird": "^3.7.2",
     "bn.js": "^5.1.2",
@@ -29,8 +29,8 @@
     "date-fns": "^2.16.0",
     "date-fns-timezone": "^0.1.4",
     "form-data": "^3.0.0",
-    "graphql": "^15",
-    "graphql-request": "^3.1.0",
+    "graphql": "^15.4.0",
+    "graphql-request": "^3.3.0",
     "graphql-scalars": "^1.2.7",
     "graphql-type-json": "^0.3.2",
     "koa": "^2.13.0",
@@ -40,7 +40,7 @@
     "lodash": "^4.17.20",
     "node-cron": "^2.0.3",
     "node-fetch": "^2.6.0",
-    "pg": "^8",
+    "pg": "^8.4.2",
     "promptly": "^3.1.0",
     "reflect-metadata": "^0.1.13",
     "subscriptions-transport-ws": "^0.9.16",
@@ -48,13 +48,13 @@
     "tsconfig-paths": "^3.9.0",
     "type-graphql": "^1.0.0",
     "typedi": "^0.8.0",
-    "typeorm": "^0.2.24",
+    "typeorm": "^0.2.29",
     "typeorm-typedi-extensions": "^0.2.3",
-    "typescript": "^4"
+    "typescript": "^4.0.5"
   },
   "devDependencies": {
     "@types/bignumber.js": "^5.0.0",
-    "@types/bluebird": "^3.5.30",
+    "@types/bluebird": "^3.5.33",
     "@types/bn.js": "^4.11.6",
     "@types/graphql": "^14.5.0",
     "@types/jest": "^26",
@@ -67,12 +67,12 @@
     "@typescript-eslint/parser": "^2.29.0",
     "eslint": "^6.8.0",
     "husky": "^4",
-    "jest": "^26",
-    "lint-staged": "^10",
+    "jest": "^26.6.3",
+    "lint-staged": "^10.5.1",
     "nodemon": "^2.0.3",
     "prettier": "^2",
-    "sinon": "^9.0.0",
-    "ts-jest": "^26"
+    "sinon": "^9.2.1",
+    "ts-jest": "^26.4.3"
   },
   "husky": {
     "hooks": {
