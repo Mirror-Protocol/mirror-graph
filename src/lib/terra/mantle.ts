@@ -18,7 +18,9 @@ export async function getLatestBlockHeight(): Promise<number> {
         Height
       }      
     }`
-  )
+  ).catch(error => {
+    throw new Error(error?.response?.errors ? JSON.stringify(error.response.errors) : error)
+  })
 
   return result?.BlockState?.Height
 }
@@ -35,7 +37,9 @@ export async function getContractStore<T>(address: string, query: unknown): Prom
       address,
       query: JSON.stringify(toSnakeCase(query))
     }
-  )
+  ).catch(error => {
+    throw new Error(error?.response?.errors ? JSON.stringify(error.response.errors) : error)
+  })
 
   if (!response?.WasmContractsContractAddressStore?.Result) {
     return undefined
@@ -104,7 +108,9 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
       range: [start, end],
       limit
     }
-  )
+  ).catch(error => {
+    throw new Error(error?.response?.errors ? JSON.stringify(error.response.errors) : error)
+  })
 
   const txs: TxInfo[] = []
 
