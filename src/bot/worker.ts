@@ -1,29 +1,34 @@
 import * as bluebird from 'bluebird'
 import { TxWallet } from 'lib/terra'
-import { errorHandler } from 'lib/error'
+import { errorHandler as errorHandleWithSentry } from 'lib/error'
 import { sendSlack } from 'lib/slack'
 import {
   distributeRewards, updateCdps, updatePolls, adjust, updateNews
 } from './jobs'
 
-function errorHandleWithSlack(error?: object): void {
+function errorHandler(job: string, error?: object): void {
   if (error) {
-    error['message'] && sendSlack('mirror-bot', error['message'])
+    if (error['message']) {
+      sendSlack('mirror-bot', `${job} failed: ${error['message']}`)
+    } else if(error['response'] && error['response'].errors) {
+      sendSlack('mirror-bot', `${job} failed: ${JSON.stringify(error['response'].errors)}`)
+    }
 
-    errorHandler(error)
+    errorHandleWithSentry(error)
   }
 }
 
 async function tick(now: number, wallet: TxWallet): Promise<void> {
-  await distributeRewards(wallet).catch(errorHandleWithSlack)
+  await distributeRewards(wallet)
+    .catch((error) => errorHandler('distributeRewards', error))
 
-  await updateNews().catch(errorHandleWithSlack)
+  await updateNews().catch((error) => errorHandler('updateNews', error))
 
-  await updateCdps().catch(errorHandleWithSlack)
+  await updateCdps().catch((error) => errorHandler('updateCdps', error))
 
-  await updatePolls(wallet).catch(errorHandleWithSlack)
+  await updatePolls(wallet).catch((error) => errorHandler('updatePolls', error))
 
-  await adjust().catch(errorHandleWithSlack)
+  await adjust().catch((error) => errorHandler('adjest', error))
 }
 
 export async function loop(wallet: TxWallet): Promise<void> {
