@@ -7,8 +7,10 @@ import { initORM } from 'orm'
 import { init as initErrorHandler, errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { initMirror } from 'loaders'
+import { TxWallet } from 'lib/terra'
+import { getKey } from 'lib/keystore'
 import config, { validateConfig } from 'config'
-import { createJobs } from './createJobs'
+import { loop } from './worker'
 
 bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
 global.Promise = bluebird as any // eslint-disable-line
@@ -31,8 +33,9 @@ async function main(): Promise<void> {
     if (!password) {
       throw new Error('bot password is missing')
     }
+    const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.KEYSTORE_BOT_KEY, password))
 
-    await createJobs(password)
+    await loop(wallet)
   })
 
   await program.parseAsync(process.argv)

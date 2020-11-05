@@ -3,6 +3,9 @@ import * as logger from 'lib/logger'
 import { num } from 'lib/num'
 import { cdpService, oracleService } from 'services'
 import { CdpEntity } from 'orm'
+import { Updater } from 'lib/Updater'
+
+const updater = new Updater(60000) // 1min
 
 async function removeClosedCdps(): Promise<void> {
   const closedCdps = await cdpService().getAll({
@@ -38,6 +41,10 @@ async function calculateCollateralRatio(): Promise<void> {
 }
 
 export async function updateCdps(): Promise<void> {
+  if (!updater.needUpdate(Date.now())) {
+    return
+  }
+
   await removeClosedCdps()
 
   await calculateCollateralRatio()

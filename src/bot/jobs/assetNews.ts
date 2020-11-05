@@ -5,8 +5,15 @@ import * as logger from 'lib/logger'
 import { assetService } from 'services'
 import { AssetNewsEntity } from 'orm'
 import { AssetStatus } from 'types'
+import { Updater } from 'lib/Updater'
+
+const updater = new Updater(60 * 60000) // 1hour
 
 export async function updateNews(): Promise<void> {
+  if (!updater.needUpdate(Date.now())) {
+    return
+  }
+
   const assets = await assetService().getAll({ where: { status: AssetStatus.LISTING }})
 
   await bluebird.mapSeries(assets, async (asset) => {

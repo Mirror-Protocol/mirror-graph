@@ -8,6 +8,9 @@ import { assetService } from 'services'
 import { BlockEntity, AssetPositionsEntity, BalanceEntity } from 'orm'
 import { AssetStatus } from 'types'
 import config from 'config'
+import { Updater } from 'lib/Updater'
+
+const updater = new Updater(5 * 60000) // 5mins
 
 export async function getCollectedHeight(): Promise<number> {
   const latestBlockFromDB = await getRepository(BlockEntity)
@@ -17,6 +20,10 @@ export async function getCollectedHeight(): Promise<number> {
 }
 
 async function adjustPool(): Promise<void> {
+  if (!updater.needUpdate(Date.now())) {
+    return
+  }
+
   const assets = await assetService().getAll({ where: { status: AssetStatus.LISTING }})
   await bluebird.map(assets, async (asset) => {
     const pool = await getPairPool(asset.pair)

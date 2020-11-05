@@ -7,8 +7,15 @@ import { getTokenBalance, getStakingPool } from 'lib/mirror'
 import { govService, assetService } from 'services'
 import { AssetStatus } from 'types'
 import { num } from 'lib/num'
+import { Updater } from 'lib/Updater'
+
+const updater = new Updater(60 * 60000) // 1hour
 
 export async function distributeRewards(wallet: TxWallet): Promise<void> {
+  if (!updater.needUpdate(Date.now())) {
+    return
+  }
+
   const { factory, collector, staking } = govService().get()
   const assets = await assetService().getAll({ where: { status: AssetStatus.LISTING }})
   const sender = wallet.key.accAddress
@@ -27,7 +34,9 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
     .filter(Boolean)
 
   // execute distribute inflation
-  await wallet.executeMsgs(msgs)
+  if (msgs.length > 0) {
+    await wallet.executeMsgs(msgs)
+  }
 
   // owner commission
   const convertMsgs = await bluebird

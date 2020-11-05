@@ -4,8 +4,15 @@ import { getGovPolls, getGovConfig } from 'lib/mirror'
 import { toSnakeCase } from 'lib/caseStyles'
 import * as logger from 'lib/logger'
 import { govService } from 'services'
+import { Updater } from 'lib/Updater'
+
+const updater = new Updater(5 * 60000) // 5mins
 
 export async function updatePolls(wallet: TxWallet): Promise<void> {
+  if (!updater.needUpdate(Date.now())) {
+    return
+  }
+
   const { gov } = govService().get()
   const sender = wallet.key.accAddress
   const latestHeight = await getLatestBlockHeight()
