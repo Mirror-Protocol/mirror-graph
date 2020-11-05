@@ -1,4 +1,5 @@
 import { program } from 'commander'
+import { Not } from 'typeorm'
 import { govService, assetService } from 'services'
 import * as logger from 'lib/logger'
 import { TxWallet } from 'lib/terra'
@@ -45,7 +46,7 @@ export function ownerCommands(): void {
     .action(async () => {
       const contracts = loadContracts()
       const assetList = await assetService().getAll({
-        where: { status: AssetStatus.LISTING }
+        where: { status: AssetStatus.LISTING, token: Not(contracts.mirrorToken) }
       })
 
       const oracleInfo: OracleAddress = {
