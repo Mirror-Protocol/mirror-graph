@@ -70,6 +70,7 @@ $ npm run collect
 ## Run Bot
 ### require process.env (.envrc sample)
 ```
+export IEX_CLOUD_API_KEY='<api key>'
 export SENTRY_BOT='<sentry url for bot>'
 export KEYSTORE_BOT_PASSWORD='<password>'
 export CONTRACT_ID=-1
@@ -86,7 +87,6 @@ export SERVER_PORT=3858
 export ORM='default'
 
 export SENTRY='<sentry url>'
-export IEX_CLOUD_API_KEY='<api key>'
 
 export KEYSTORE_OWNER_PASSWORD='<password>'
 export KEYSTORE_BOT_PASSWORD='<password>'
