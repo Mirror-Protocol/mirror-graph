@@ -90,7 +90,7 @@ export class GovService {
         token,
         pair,
         lpToken,
-        status: AssetStatus.LISTING,
+        status: AssetStatus.LISTED,
       })
 
       entities.push(
@@ -126,7 +126,7 @@ export class GovService {
     const description = descriptions[symbol.substring(1)]
 
     const asset = new AssetEntity({
-      govId, symbol, name, description, token, pair, lpToken, status: AssetStatus.LISTING
+      govId, symbol, name, description, token, pair, lpToken, status: AssetStatus.LISTED
     })
 
     const entities = [

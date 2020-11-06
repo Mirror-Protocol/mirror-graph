@@ -24,7 +24,7 @@ async function adjustPool(): Promise<void> {
     return
   }
 
-  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTING }})
+  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
   await bluebird.map(assets, async (asset) => {
     const pool = await getPairPool(asset.pair)
 

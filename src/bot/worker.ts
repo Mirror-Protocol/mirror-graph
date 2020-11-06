@@ -3,7 +3,7 @@ import { TxWallet } from 'lib/terra'
 import { errorHandler as errorHandleWithSentry } from 'lib/error'
 import { sendSlack } from 'lib/slack'
 import {
-  distributeRewards, updateCdps, updatePolls, adjust, updateNews
+  distributeRewards, updateCdps, updatePolls, updateNews
 } from './jobs'
 
 function errorHandler(job: string, error?: object): void {
@@ -28,7 +28,7 @@ async function tick(now: number, wallet: TxWallet): Promise<void> {
 
   await updatePolls(wallet).catch((error) => errorHandler('updatePolls', error))
 
-  await adjust().catch((error) => errorHandler('adjest', error))
+  // await adjust().catch((error) => errorHandler('adjust', error))
 }
 
 export async function loop(wallet: TxWallet): Promise<void> {

@@ -28,7 +28,7 @@ async function collectPrice(
 }
 
 async function fillPriceHistory(): Promise<void> {
-  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTING }})
+  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
   const price = await priceService().get(undefined, { order: { id: 'ASC' }})
   const minFrom = startOfDay(addDays(price.datetime, -1)).getTime()
   const minTo = addMinutes(price.datetime, -1).getTime()

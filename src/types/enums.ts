@@ -2,8 +2,8 @@ import { registerEnumType } from 'type-graphql'
 
 export enum AssetStatus {
   NONE = 'NONE',
-  LISTING = 'LISTING',
-  MIGRATED = 'MIGRATED',
+  LISTED = 'LISTED',
+  DELISTED = 'DELISTED',
 }
 
 registerEnumType(AssetStatus, { name: 'AssetStatus' })

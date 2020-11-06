@@ -28,7 +28,7 @@ export function ownerCommands(): void {
     .description('export assets.json')
     .action(async () => {
       const assetList = await assetService().getAll({
-        where: [{ status: AssetStatus.LISTING }, { status: AssetStatus.MIGRATED }]
+        where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }]
       })
       const assets: Assets = {}
 
@@ -46,7 +46,7 @@ export function ownerCommands(): void {
     .action(async () => {
       const contracts = loadContracts()
       const assetList = await assetService().getAll({
-        where: { status: AssetStatus.LISTING, token: Not(contracts.mirrorToken) }
+        where: { status: AssetStatus.LISTED, token: Not(contracts.mirrorToken) }
       })
 
       const oracleInfo: OracleAddress = {

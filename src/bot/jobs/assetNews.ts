@@ -14,7 +14,7 @@ export async function updateNews(): Promise<void> {
     return
   }
 
-  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTING }})
+  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
 
   await bluebird.mapSeries(assets, async (asset) => {
     const { symbol, token } = asset

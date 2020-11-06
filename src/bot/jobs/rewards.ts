@@ -17,7 +17,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
   }
 
   const { factory, collector, staking } = govService().get()
-  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTING }})
+  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
   const sender = wallet.key.accAddress
   
   // MIR inflation

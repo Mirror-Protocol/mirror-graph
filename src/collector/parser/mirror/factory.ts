@@ -42,7 +42,7 @@ export async function parse(
       { token: fromToken, govId }, undefined, manager.getRepository(AssetEntity)
     )
 
-    asset.status = AssetStatus.MIGRATED
+    asset.status = AssetStatus.DELISTED
 
     // whitelisting new asset
     const entities = await govService().whitelisting(
