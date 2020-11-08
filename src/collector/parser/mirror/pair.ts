@@ -62,7 +62,8 @@ export async function parse(
         price,
       },
       commissionValue,
-      volume
+      volume,
+      tags: [offerAsset, askAsset]
     }
 
     // add asset's pool position, account balance
@@ -103,7 +104,8 @@ export async function parse(
 
     parsed = {
       type: TxType.PROVIDE_LIQUIDITY,
-      data: { assets, share }
+      data: { assets, share },
+      tags: [assetToken.token, uusdToken.token],
     }
   } else if (msg['withdraw_liquidity']) {
     const refundAssets = findAttribute(attributes, 'refund_assets')
@@ -119,7 +121,8 @@ export async function parse(
 
     parsed = {
       type: TxType.WITHDRAW_LIQUIDITY,
-      data: { refundAssets, withdrawnShare }
+      data: { refundAssets, withdrawnShare },
+      tags: [assetToken.token, uusdToken.token],
     }
   } else {
     return

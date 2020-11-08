@@ -2,6 +2,7 @@ import * as bluebird from 'bluebird'
 import { TxInfo, TxLog, MsgSend, MsgSwap, MsgSwapSend } from '@terra-money/terra.js'
 import { EntityManager } from 'typeorm'
 import { parseTransfer, findAttributes, findAttribute } from 'lib/terra'
+import { splitTokenAmount } from 'lib/utils'
 import { govService, txService } from 'services'
 import { TxType } from 'types'
 import { AccountEntity } from 'orm'
@@ -34,9 +35,10 @@ export async function parseTerraMsg(
       const { from, to } = transfer
       const data = transfer
       const fee = txInfo.tx.fee.amount.toString()
+      const tags = [transfer.denom]
 
-      await txService().newTx(manager, { ...tx, type: TxType.TERRA_SEND, address: from, data, fee })
-      await txService().newTx(manager, { ...tx, type: TxType.TERRA_RECEIVE, address: to, data })
+      await txService().newTx(manager, { ...tx, type: TxType.TERRA_SEND, address: from, data, tags, fee })
+      await txService().newTx(manager, { ...tx, type: TxType.TERRA_RECEIVE, address: to, data, tags })
     })
   } else if (msg instanceof MsgSwap) {
     // only tx exists address
@@ -45,19 +47,25 @@ export async function parseTerraMsg(
     }
 
     const attributes = findAttributes(log.events, 'swap')
+    const offer = findAttribute(attributes, 'offer')
+    const swapCoin = findAttribute(attributes, 'swap_coin')
+
+    const offerTokenAmount = splitTokenAmount(offer)
+    const swapTokenAmount = splitTokenAmount(swapCoin)
 
     await txService().newTx(manager, {
       ...tx,
       type: TxType.TERRA_SWAP,
       address: msg.trader,
       data: {
-        offer: findAttribute(attributes, 'offer'),
+        offer,
         trader: findAttribute(attributes, 'trader'),
         recipient: findAttribute(attributes, 'recipient'),
-        swapCoin: findAttribute(attributes, 'swap_coin'),
+        swapCoin,
         swapFee: findAttribute(attributes, 'swap_fee'),
       },
       fee: txInfo.tx.fee.amount.toString(),
+      tags: [offerTokenAmount.token, swapTokenAmount.token],
     })
   } else if (msg instanceof MsgSwapSend) {
     const attributes = findAttributes(log.events, 'swap')
@@ -75,6 +83,8 @@ export async function parseTerraMsg(
     const swapCoin = findAttribute(attributes, 'swap_coin')
     const swapFee = findAttribute(attributes, 'swap_fee')
     const fee = txInfo.tx.fee.amount.toString()
+    const offerTokenAmount = splitTokenAmount(offer)
+    const swapTokenAmount = splitTokenAmount(swapCoin)
 
     await txService().newTx(manager, {
       ...tx,
@@ -87,7 +97,8 @@ export async function parseTerraMsg(
       ...tx,
       type: TxType.TERRA_RECEIVE,
       address: recipient,
-      data: { recipient, sender: trader, amount: swapCoin }
+      data: { recipient, sender: trader, amount: swapCoin },
+      tags: [offerTokenAmount.token, swapTokenAmount.token],
     })
   }
 }

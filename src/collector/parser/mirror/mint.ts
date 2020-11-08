@@ -52,6 +52,7 @@ export async function parse(
       type: TxType.OPEN_POSITION,
       data: { positionIdx, mintAmount, collateralAmount },
       token: mint.token,
+      tags: [mint.token, collateral.token],
     }
   } else if (msg['deposit']) {
     const depositAmount = findAttribute(attributes, 'deposit_amount')
@@ -68,6 +69,7 @@ export async function parse(
       type: TxType.DEPOSIT_COLLATERAL,
       data: { positionIdx, depositAmount },
       token: deposit.token,
+      tags: [deposit.token],
     }
   } else if (msg['withdraw']) {
     const withdrawAmount = findAttribute(attributes, 'withdraw_amount')
@@ -88,6 +90,7 @@ export async function parse(
         taxAmount: findAttribute(attributes, 'tax_amount'),
       },
       token: withdraw.token,
+      tags: [withdraw.token],
     }
   } else if (msg['mint']) {
     const mintAmount = findAttribute(attributes, 'mint_amount')
@@ -108,6 +111,7 @@ export async function parse(
       type: TxType.MINT,
       data: { positionIdx, mintAmount },
       token: mint.token,
+      tags: [mint.token],
     }
   } else if (msg['burn']) {
     const burnAmount = findAttribute(attributes, 'burn_amount')
@@ -124,6 +128,7 @@ export async function parse(
       type: TxType.BURN,
       data: { positionIdx, burnAmount },
       token: burn.token,
+      tags: [burn.token],
     }
   } else if (msg['auction']) {
     const liquidatedAmount = findAttribute(attributes, 'liquidated_amount')
@@ -159,6 +164,7 @@ export async function parse(
       type: TxType.AUCTION,
       data: { positionIdx, liquidatedAmount, returnCollateralAmount, taxAmount },
       token: liquidated.token,
+      tags: [liquidated.token, returnCollateral.token],
     }
   } else {
     return

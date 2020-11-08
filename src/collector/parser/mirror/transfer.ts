@@ -70,7 +70,7 @@ export async function parse(args: ParseArgs): Promise<void> {
       if (needRecordTx) {
         const { govId } = contract
 
-        const tx = { height, txHash, datetime, govId, token, contract }
+        const tx = { height, txHash, datetime, govId, token, contract, tags: [token] }
         const data = { from, to, amount }
 
         await txService().newTx(manager, { ...tx, address: from, type: TxType.SEND, data, fee })

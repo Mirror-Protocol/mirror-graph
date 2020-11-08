@@ -26,6 +26,7 @@ export async function parse(
       type,
       data: { assetToken, amount },
       token: assetToken,
+      tags: [assetToken],
     }
   } else if (msg['withdraw']) {
     const amount = findAttribute(attributes, 'amount')
@@ -34,6 +35,7 @@ export async function parse(
       type: TxType.WITHDRAW_REWARDS,
       data: { amount },
       token: govService().get().mirrorToken,
+      tags: [govService().get().mirrorToken],
     }
   } else {
     return

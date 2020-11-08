@@ -9,14 +9,10 @@ export class TxResolver {
   @Query((returns) => [Tx])
   async txs(
     @Arg('account') account: string,
+    @Arg('tag', { nullable: true, defaultValue: undefined }) tag: string,
     @Arg('offset', { defaultValue: 0 }) offset: number,
     @Arg('limit', { defaultValue: 100 }) limit: number,
   ): Promise<Tx[]> {
-    return this.txService.getAll({
-      where: { address: account },
-      order: { id: 'DESC' },
-      skip: offset,
-      take: limit,
-    })
+    return this.txService.getAll(tag, offset, limit)
   }
 }

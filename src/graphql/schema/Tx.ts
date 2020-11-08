@@ -34,6 +34,9 @@ export class Tx {
   @Field()
   fee: string
 
+  @Field((type) => [String])
+  tags: string[]
+
   @Field({ nullable: true })
   memo?: string
 }

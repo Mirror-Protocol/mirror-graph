@@ -46,6 +46,9 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   @Column({ nullable: true, default: null })
   memo?: string
 
+  @Column('text', { array: true, default: '{}' })
+  tags: string[]
+
   @Column()
   datetime: Date
 

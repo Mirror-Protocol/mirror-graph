@@ -1,4 +1,4 @@
-import { Repository, FindConditions, FindOneOptions, FindManyOptions, EntityManager } from 'typeorm'
+import { Repository, FindConditions, FindOneOptions, EntityManager } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { AccountService } from 'services'
@@ -19,8 +19,22 @@ export class TxService {
     return repo.findOne(conditions, options)
   }
 
-  async getAll(options?: FindManyOptions<TxEntity>, repo = this.repo): Promise<TxEntity[]> {
-    return repo.find(options)
+  // async getAll(options?: FindManyOptions<TxEntity>, repo = this.repo): Promise<TxEntity[]> {
+  //   return repo.find(options)
+  // }
+
+  async getAll(tag: string|undefined, offset: number, limit: number, repo = this.repo): Promise<TxEntity[]> {
+    let qb = repo
+      .createQueryBuilder()
+      .skip(offset)
+      .take(limit)
+      .orderBy('id', 'DESC')
+
+    if (tag) {
+      qb = qb.where(':tag = ANY(tags)', { tag })
+    }
+
+    return qb.getMany()
   }
 
   async newTx(manager: EntityManager, tx: Partial<TxEntity>): Promise<TxEntity> {
