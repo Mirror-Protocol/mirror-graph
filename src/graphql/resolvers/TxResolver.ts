@@ -13,6 +13,6 @@ export class TxResolver {
     @Arg('offset', { defaultValue: 0 }) offset: number,
     @Arg('limit', { defaultValue: 100 }) limit: number,
   ): Promise<Tx[]> {
-    return this.txService.getAll(tag, offset, limit)
+    return this.txService.getHistory(account, tag, offset, limit)
   }
 }
