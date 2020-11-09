@@ -2,7 +2,7 @@ import { Repository, FindConditions, FindOneOptions, getConnection } from 'typeo
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service } from 'typedi'
 import { lcd } from 'lib/terra'
-import { num, BigNumber } from 'lib/num'
+import { num } from 'lib/num'
 import { AssetBalance, ValueAt } from 'graphql/schema'
 import { AccountEntity, BalanceEntity } from 'orm'
 
@@ -81,31 +81,11 @@ export class AccountService {
     to: number,
     interval: number
   ): Promise<ValueAt[]> {
-    const values = (await getConnection().query('SELECT * FROM public.balanceHistory($1, $2, $3, $4)', [
-      address, new Date(from), new Date(to), interval,
-    ]) as { timestamp: number; assetValue: string; investedValue: string }[]).reverse()
-    if (values.length < 1) {
-      return []
-    }
-
-    const ustBalance = num((await this.getBalance(address, 'uusd')).balance)
-
-    let lastCV: BigNumber
-    let lastProfit: BigNumber
- 
-    return values
-      .map((history) => {
-        const profit = num(history.assetValue).minus(history.investedValue)
-        const value = !lastCV
-          ? ustBalance.plus(history.assetValue)
-          : lastCV.minus(lastProfit).plus(profit)
-
-        lastCV = value
-        lastProfit = profit
-
-        return { timestamp: history.timestamp, value: value.toFixed(0) }
-      })
-      .reverse()
+    const uusdBalance = (await this.getBalance(address, 'uusd'))?.balance || '0'
+    return getConnection().query(
+      'SELECT * FROM public.balanceHistory($1, $2, $3, $4, $5)',
+      [address, uusdBalance, new Date(from), new Date(to), interval]
+    )
   }
 
   async addBalance(

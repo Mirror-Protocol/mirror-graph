@@ -1,5 +1,9 @@
-DROP FUNCTION public.balanceHistory;
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
+export class BalanceHistoryFunc1604926344581 implements MigrationInterface {
+  public async up(queryRunner: QueryRunner): Promise<any> {
+    await queryRunner.query('DROP FUNCTION IF EXISTS public.balanceHistory;')
+    await queryRunner.query(`
 CREATE OR REPLACE FUNCTION public.balanceHistory(
   _address varchar,
   _uusdBalance numeric,
@@ -46,3 +50,10 @@ BEGIN
 
 END;
 $BODY$;
+`)
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<any> {
+    await queryRunner.query('DROP FUNCTION public.balanceHistory;')
+  }
+}

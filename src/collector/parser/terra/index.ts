@@ -26,25 +26,45 @@ export async function parseTerraMsg(
 
     await bluebird.mapSeries(transfers, async (transfer) => {
       // only tx exists address
-      if (!(await accountRepo.findOne({
-        select: ['address'], where: [{ address: transfer.from }, { address: transfer.to }]
-      }))) {
+      const account = await accountRepo.findOne({
+        select: ['address'],
+        where: [{ address: transfer.from }, { address: transfer.to }]
+      })
+
+      if (!account)
         return
-      }
 
       const { from, to } = transfer
       const data = transfer
       const fee = txInfo.tx.fee.amount.toString()
       const tags = [transfer.denom]
 
-      await txService().newTx(manager, { ...tx, type: TxType.TERRA_SEND, address: from, data, tags, fee })
-      await txService().newTx(manager, { ...tx, type: TxType.TERRA_RECEIVE, address: to, data, tags })
+      await txService().newTx(manager, {
+        ...tx,
+        type: TxType.TERRA_SEND,
+        address: from,
+        data,
+        uusdChange: transfer.denom === 'uusd' ? `-${transfer.amount}` : '0',
+        tags,
+        fee,
+      })
+      await txService().newTx(manager, {
+        ...tx,
+        type: TxType.TERRA_RECEIVE,
+        address: to,
+        data,
+        uusdChange: transfer.denom === 'uusd' ? transfer.amount : '0',
+        tags,
+      })
     })
   } else if (msg instanceof MsgSwap) {
     // only tx exists address
-    if (!(await accountRepo.findOne({ select: ['address'], where: { address: msg.trader } }))) {
+    const account = await accountRepo.findOne({
+      select: ['address'], where: { address: msg.trader }
+    })
+
+    if (!account)
       return
-    }
 
     const attributes = findAttributes(log.events, 'swap')
     const offer = findAttribute(attributes, 'offer')
@@ -52,6 +72,10 @@ export async function parseTerraMsg(
 
     const offerTokenAmount = splitTokenAmount(offer)
     const swapTokenAmount = splitTokenAmount(swapCoin)
+
+    let uusdChange = '0'
+    if (offerTokenAmount.token === 'uusd') uusdChange = `-${offerTokenAmount.amount}`
+    else if(swapTokenAmount.token === 'uusd') uusdChange = swapTokenAmount.amount
 
     await txService().newTx(manager, {
       ...tx,
@@ -64,6 +88,7 @@ export async function parseTerraMsg(
         swapCoin,
         swapFee: findAttribute(attributes, 'swap_fee'),
       },
+      uusdChange,
       fee: txInfo.tx.fee.amount.toString(),
       tags: [offerTokenAmount.token, swapTokenAmount.token],
     })
@@ -73,11 +98,13 @@ export async function parseTerraMsg(
     const recipient = findAttribute(attributes, 'recipient')
 
     // only tx exists address
-    if (!(await accountRepo.findOne({
-      select: ['address'], where: [{ address: trader }, { address: recipient }]
-    }))) {
+    const account = await accountRepo.findOne({
+      select: ['address'],
+      where: [{ address: trader }, { address: recipient }]
+    })
+
+    if (!account)
       return
-    }
 
     const offer = findAttribute(attributes, 'offer')
     const swapCoin = findAttribute(attributes, 'swap_coin')
@@ -91,14 +118,17 @@ export async function parseTerraMsg(
       type: TxType.TERRA_SWAP_SEND,
       address: trader,
       data: { trader, recipient, offer, swapCoin, swapFee },
-      fee
+      uusdChange: offerTokenAmount.token === 'uusd' ? `-${offerTokenAmount.amount}` : '0',
+      fee,
     })
+
     await txService().newTx(manager, {
       ...tx,
       type: TxType.TERRA_RECEIVE,
       address: recipient,
       data: { recipient, sender: trader, amount: swapCoin },
       tags: [offerTokenAmount.token, swapTokenAmount.token],
+      uusdChange: swapTokenAmount.token === 'uusd' ? swapTokenAmount.amount : '0',
     })
   }
 }
