@@ -2,7 +2,7 @@ import { Repository, FindConditions, FindOneOptions, FindManyOptions, EntityMana
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { AccountService } from 'services'
-import { AccountEntity, TxEntity } from 'orm'
+import { TxEntity } from 'orm'
 
 @Service()
 export class TxService {

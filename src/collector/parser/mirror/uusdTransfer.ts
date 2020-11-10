@@ -5,7 +5,7 @@ import { parseTransfer } from 'lib/terra'
 import { accountService } from 'services'
 import { AccountEntity, BalanceEntity } from 'orm'
 
-export async function parse(manager: EntityManager, txInfo: TxInfo, log: TxLog, calculateFee = true): Promise<void> {
+export async function parse(manager: EntityManager, txInfo: TxInfo, log: TxLog): Promise<void> {
   const transfers = parseTransfer(log.events)
   if (!transfers || transfers.length < 1)
     return
