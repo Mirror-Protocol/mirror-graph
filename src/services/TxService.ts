@@ -39,9 +39,7 @@ export class TxService {
   }
 
   async newTx(manager: EntityManager, tx: Partial<TxEntity>): Promise<TxEntity> {
-    await this.accountService.newAccount(
-      { address: tx.address, govId: tx.govId }, manager.getRepository(AccountEntity)
-    )
+    await this.accountService.newAccount({ address: tx.address, govId: tx.govId })
 
     return manager.save(new TxEntity(tx))
   }
