@@ -10,6 +10,8 @@ function errorHandler(job: string, error?: object): void {
   if (error) {
     if (error['message']) {
       sendSlack('mirror-bot', `${job} failed: ${error['message']}`)
+    } else if(error['response'] && error['response'].status) {
+      sendSlack('mirror-bot', `${job} failed: Request failed with status code ${error['response'].status}`)
     } else if(error['response'] && error['response'].errors) {
       sendSlack('mirror-bot', `${job} failed: ${JSON.stringify(error['response'].errors)}`)
     }

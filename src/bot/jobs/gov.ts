@@ -13,9 +13,12 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
     return
   }
 
+  const latestHeight = await getLatestBlockHeight()
+  if (!latestHeight)
+    return
+
   const { gov } = govService().get()
   const sender = wallet.key.accAddress
-  const latestHeight = await getLatestBlockHeight()
   const { effectiveDelay } = await getGovConfig(gov)
   const msgs = []
 
