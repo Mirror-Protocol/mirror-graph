@@ -38,8 +38,13 @@ export class AccountResolver {
   }
 
   @Mutation((returns) => Account, { nullable: true })
-  async connect(@Arg('address') address: string): Promise<Account | null> {
-    return this.accountService.newAccount({ address, govId: this.govService.get().id })
+  async connect(
+    @Arg('address') address: string,
+    @Arg('isAppUser', { defaultValue: false }) isAppUser: boolean
+  ): Promise<Account | null> {
+    return this.accountService.newAccount({
+      address, isAppUser, govId: this.govService.get().id
+    })
   }
 
   @FieldResolver()

@@ -1,3 +1,4 @@
+import * as bluebird from 'bluebird'
 import { formatToTimeZone } from 'date-fns-timezone'
 import { getManager, EntityManager } from 'typeorm'
 import { getLatestBlockHeight, getTxs } from 'lib/terra'
@@ -8,7 +9,11 @@ import { getCollectedHeight, updateBlock } from './block'
 import config from 'config'
 
 export async function collect(now: number): Promise<void> {
-  const latestHeight = await getLatestBlockHeight().catch(errorHandler)
+  const latestHeight = await getLatestBlockHeight().catch(async (error) => {
+    errorHandler(error)
+    await bluebird.delay(5000)
+  })
+
   const collectedHeight = await getCollectedHeight()
   if (!latestHeight || collectedHeight >= latestHeight) {
     return

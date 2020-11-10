@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, CreateDateColumn, Column, Index } from 'typeorm'
-import { HaveAsset } from '../Have'
+import { HaveGov } from '../Have'
 
 @Entity('balance')
-export class BalanceEntity extends HaveAsset {
+export class BalanceEntity extends HaveGov {
   constructor(options: Partial<BalanceEntity>) {
     super()
 
@@ -18,6 +18,10 @@ export class BalanceEntity extends HaveAsset {
   @Column()
   @Index()
   address: string
+
+  @Column()
+  @Index()
+  token: string
 
   @Column('decimal', { precision: 40, scale: 6 })
   averagePrice: string

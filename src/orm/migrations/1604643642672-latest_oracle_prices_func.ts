@@ -1,7 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class CreateLatestOraclePrices1603979983323 implements MigrationInterface {
-  public async up(queryRunner: QueryRunner): Promise<any> {
+export class LatestOraclePrices1604643642672 implements MigrationInterface {
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query('DROP FUNCTION IF EXISTS public.latestOraclePrices;')
     await queryRunner.query(`
 CREATE OR REPLACE FUNCTION public.latestOraclePrices("timestamp" timestamp)
   RETURNS TABLE ("token" varchar, "price" numeric)
@@ -17,14 +18,14 @@ BEGIN
       WHERE p.token = a.token AND p.datetime <= "timestamp"
       ORDER BY p.datetime DESC LIMIT 1) as price
   FROM asset as a
-  WHERE is_listed=true;
+  WHERE status='LISTED';
 
 END;
 $BODY$;
 `)
   }
 
-  public async down(queryRunner: QueryRunner): Promise<any> {
+  public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query('DROP FUNCTION public.latestOraclePrices;')
   }
 }

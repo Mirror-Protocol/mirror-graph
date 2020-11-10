@@ -1,14 +1,16 @@
 import { Repository, FindConditions, FindOneOptions, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { Container, Service } from 'typedi'
+import { Container, Service, Inject } from 'typedi'
 import { lcd } from 'lib/terra'
 import { num } from 'lib/num'
 import { AssetBalance, ValueAt } from 'graphql/schema'
+import { GovService } from 'services'
 import { AccountEntity, BalanceEntity } from 'orm'
 
 @Service()
 export class AccountService {
   constructor(
+    @Inject((type) => GovService) private readonly govService: GovService,
     @InjectRepository(AccountEntity) private readonly repo: Repository<AccountEntity>,
     @InjectRepository(BalanceEntity) private readonly balanceRepo: Repository<BalanceEntity>
   ) {}
@@ -16,7 +18,7 @@ export class AccountService {
   async newAccount(account: Partial<AccountEntity>, repo = this.repo): Promise<AccountEntity | undefined> {
     const accountEntity = await this.get({ address: account.address }, undefined, repo)
     if (accountEntity) {
-      return accountEntity
+      return repo.save(Object.assign(accountEntity, account))
     }
 
     return repo.save(account)
@@ -106,6 +108,7 @@ export class AccountService {
         averagePrice: latest.averagePrice,
         balance: latest.balance,
         datetime,
+        govId: this.govService.get().id,
       })
 
       const totalBalance = num(entity.balance).plus(amount)
@@ -126,6 +129,7 @@ export class AccountService {
         averagePrice: price,
         balance: amount,
         datetime,
+        govId: this.govService.get().id,
       })
     }
 
@@ -152,6 +156,7 @@ export class AccountService {
       averagePrice: balance !== '0' ? latest.averagePrice : '0',
       balance,
       datetime,
+      govId: this.govService.get().id,
     })
 
     return repo.save(entity)

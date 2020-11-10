@@ -12,7 +12,9 @@ import * as mint from './mint'
 import * as staking from './staking'
 import * as gov from './gov'
 import * as collector from './collector'
-import * as transfer from './transfer'
+import * as tokenTransfer from './tokenTransfer'
+import * as uusdTransfer from './uusdTransfer'
+import * as fee from './fee'
 
 export async function parseMirrorMsg(
   manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog
@@ -75,5 +77,9 @@ export async function parseMirrorMsg(
   }
 
   // tracking token balance
-  await transfer.parse(args)
+  await tokenTransfer.parse(args)
+  // tracking uusd balance
+  await uusdTransfer.parse(manager, txInfo, log)
+  // tracking fee
+  await fee.parse(manager, txInfo, msg.sender)
 }

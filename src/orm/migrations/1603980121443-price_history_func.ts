@@ -1,7 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class CreatePriceHistory1603980121443 implements MigrationInterface {
-  public async up(queryRunner: QueryRunner): Promise<any> {
+export class PriceHistory1603980121443 implements MigrationInterface {
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query('DROP FUNCTION IF EXISTS public.priceHistory;')
     await queryRunner.query(`
 CREATE OR REPLACE FUNCTION public.priceHistory(_token varchar, _from timestamp, _to timestamp, _interval integer)
   RETURNS TABLE ("timestamp" timestamp, "price" numeric)
@@ -33,7 +34,7 @@ $BODY$;
 `)
   }
 
-  public async down(queryRunner: QueryRunner): Promise<any> {
+  public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query('DROP FUNCTION public.priceHistory;')
   }
 }
