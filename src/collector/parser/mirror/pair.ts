@@ -129,10 +129,14 @@ export async function parse(
   }
 
   // set pool price ohlc
+  const poolPrice = (positions.uusdPool !== '0' && positions.pool !== '0')
+    ? num(positions.uusdPool).dividedBy(positions.pool).toString()
+    : '0'
+
   const price = await priceService().setOHLC(
     token,
     datetime.getTime(),
-    num(positions.uusdPool).dividedBy(positions.pool).toString(),
+    poolPrice,
     manager.getRepository(PriceEntity),
     false
   )
