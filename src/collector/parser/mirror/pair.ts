@@ -23,9 +23,7 @@ export async function parse(
     const returnAmount = findAttribute(attributes, 'return_amount')
     const taxAmount = findAttribute(attributes, 'tax_amount')
     const spreadAmount = findAttribute(attributes, 'spread_amount')
-    const lpCommissionAmount = findAttribute(attributes, 'lp_commission_amount')
-    const ownerCommissionAmount = findAttribute(attributes, 'owner_commission_amount')
-    const commissionAmount = num(lpCommissionAmount).plus(ownerCommissionAmount).toString()
+    const commissionAmount = findAttribute(attributes, 'commission_amount')
 
     const type = offerAsset === 'uusd' ? TxType.BUY : TxType.SELL
 
@@ -56,8 +54,6 @@ export async function parse(
         taxAmount,
         spreadAmount,
         commissionAmount,
-        lpCommissionAmount,
-        ownerCommissionAmount,
         recvAmount,
         price,
       },
@@ -68,7 +64,7 @@ export async function parse(
 
     // add asset's pool position, account balance
     if (type === TxType.BUY) {
-      const assetPoolChanged = num(returnAmount).plus(ownerCommissionAmount).multipliedBy(-1).toString()
+      const assetPoolChanged = num(returnAmount).multipliedBy(-1).toString()
 
       positions = await assetService().addPoolPosition(token, assetPoolChanged, offerAmount, positionsRepo)
     } else {

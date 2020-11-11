@@ -7,6 +7,8 @@ export async function parseFeedPrice(
   { manager, msg, timestamp: txTimestamp }: ParseArgs
 ): Promise<void> {
   const { prices } = msg['feed_price']
+  if (!prices)
+    return
   const timestamp = new Date(txTimestamp).getTime()
   const repo = manager.getRepository(OraclePriceEntity)
 

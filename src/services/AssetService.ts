@@ -73,13 +73,20 @@ export class AssetService {
       repo
     )
 
-    positions.liquidity = num(positions.liquidity).plus(amount).toString()
-    positions.uusdLiquidity = num(positions.uusdLiquidity).plus(uusdAmount).toString()
+    const liquidity = num(positions.liquidity).plus(amount)
+    positions.liquidity = liquidity.isLessThan(0) ? '0' : liquidity.toString()
 
-    positions.pool = num(positions.pool).plus(amount).toString()
-    positions.uusdPool = num(positions.uusdPool).plus(uusdAmount).toString()
+    const uusdLiquidity = num(positions.uusdLiquidity).plus(uusdAmount)
+    positions.uusdLiquidity = uusdLiquidity.isLessThan(0) ? '0' : uusdLiquidity.toString()
 
-    positions.lpShares = num(positions.lpShares).plus(lpShares).toString()
+    const pool = num(positions.pool).plus(amount)
+    positions.pool = pool.isLessThan(0) ? '0' : pool.toString()
+
+    const uusdPool = num(positions.uusdPool).plus(uusdAmount)
+    positions.uusdPool = uusdPool.isLessThan(0) ? '0' : uusdPool.toString()
+
+    const lpSharesNum = num(positions.lpShares).plus(lpShares)
+    positions.lpShares = lpSharesNum.isLessThan(0) ? '0' : lpSharesNum.toString()
 
     return repo.save(positions)
   }
