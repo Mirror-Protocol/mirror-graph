@@ -5,6 +5,10 @@ import {
 @Entity('block')
 @Index('idx_block_chainid_height', ['chainId', 'height'], { unique: true })
 export class BlockEntity {
+  constructor(options: Partial<BlockEntity>) {
+    Object.assign(this, options)
+  }
+
   @CreateDateColumn()
   createdAt: Date
 
