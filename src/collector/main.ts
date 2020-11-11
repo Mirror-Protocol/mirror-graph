@@ -8,6 +8,7 @@ import { sendSlack } from 'lib/slack'
 import { initMirror } from 'loaders'
 import { validateConfig } from 'config'
 import { collect } from './collect'
+import config from 'config'
 
 bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } })
 global.Promise = bluebird as any // eslint-disable-line
@@ -23,7 +24,7 @@ async function loop(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  logger.info('initialize collector')
+  logger.info(`initialize collector, start_block_height: ${config.START_BLOCK_HEIGHT}`)
 
   initErrorHandler({ sentryDsn: process.env.SENTRY_COLLECTOR })
 
