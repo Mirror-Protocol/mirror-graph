@@ -15,7 +15,7 @@ async function collectPrice(
   logger.info(`collect price: ${symbol}, timespan: ${timespan}`)
   const ohlcs = await fetchAggregates(symbol, timespan, from, to)
 
-  await bluebird.map(ohlcs, async (ohlc) => {
+  await bluebird.mapSeries(ohlcs, async (ohlc) => {
     const timestamp = useOnlyDay ? startOfDay(ohlc.timestamp) : ohlc.timestamp
 
     const { open, high, low, close } = ohlc
@@ -37,7 +37,7 @@ async function fillPriceHistory(): Promise<void> {
   const dayFrom = startOfDay(new Date('2015-01-01')).getTime()
   const dayTo = hourFrom
 
-  await bluebird.map(assets, async (asset) => {
+  await bluebird.mapSeries(assets, async (asset) => {
     if (asset.symbol === 'MIR')
       return
 
