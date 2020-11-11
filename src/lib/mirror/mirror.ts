@@ -1,7 +1,7 @@
 import { getContractStore } from 'lib/terra'
 import { num } from 'lib/num'
 import {
-  PairPool, OraclePrice, GovConfig, GovPoll, MintAssetConfig, StakingPool
+  PairPool, OraclePrice, GovConfig, GovPoll, MintAssetConfig, StakingPool, DistributionInfo
 } from './types'
 
 export async function getPairPool(pair: string):
@@ -26,13 +26,13 @@ export async function getPairPrice(pair: string): Promise<string> {
 
 export async function getOraclePrice(oracle: string, token: string): Promise<string> {
   const oraclePrice = await getContractStore<OraclePrice>(
-    oracle, { price: { assetToken: token } }
+    oracle, { price: { baseAsset: token, quoteAsset: 'uusd' } }
   )
 
   if (!oraclePrice)
     return undefined
 
-  return num(oraclePrice.price).toString()
+  return num(oraclePrice.rate).toString()
 }
 
 export async function getTokenBalance(token: string, address: string): Promise<string> {
@@ -57,4 +57,8 @@ export async function getGovPolls(gov: string, filter: string, limit: number): P
 
 export async function getMintAssetConfig(mint: string, token: string): Promise<MintAssetConfig> {
   return getContractStore(mint, { assetConfig: { assetToken: token } })
+}
+
+export async function getDistributionInfo(factory: string): Promise<DistributionInfo> {
+  return getContractStore(factory, { distributionInfo: {} })
 }

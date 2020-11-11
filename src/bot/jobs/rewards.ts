@@ -3,7 +3,7 @@ import { Coins, MsgExecuteContract } from '@terra-money/terra.js'
 import { TxWallet } from 'lib/terra'
 import { toSnakeCase } from 'lib/caseStyles'
 import * as logger from 'lib/logger'
-import { getTokenBalance, getStakingPool } from 'lib/mirror'
+import { getTokenBalance, getDistributionInfo } from 'lib/mirror'
 import { govService, assetService } from 'services'
 import { AssetStatus } from 'types'
 import { num } from 'lib/num'
@@ -16,26 +16,14 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
     return
   }
 
-  const { factory, collector, staking } = govService().get()
+  const { factory, collector } = govService().get()
   const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
   const sender = wallet.key.accAddress
   
-  // MIR inflation
-  const msgs = await bluebird
-    .map(assets, async (asset) => {
-      const pool = await getStakingPool(staking, asset.token)
-
-      if (num(pool.totalBondAmount).isGreaterThan(0)) {
-        return new MsgExecuteContract(
-          sender, factory, toSnakeCase({ mint: { assetToken: asset.token } }), new Coins([])
-        )
-      }
-    })
-    .filter(Boolean)
-
-  // execute distribute inflation
-  if (msgs.length > 0) {
-    await wallet.executeMsgs(msgs)
+  // MIR inflation distribute every 1hour
+  const distributionInfo = await getDistributionInfo(factory)
+  if (Date.now() - distributionInfo.lastDistributed > 60000 * 60) {
+    await wallet.execute(factory, { distribute: {} })
   }
 
   // owner commission

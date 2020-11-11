@@ -1,5 +1,5 @@
 export interface OraclePrice {
-  assetToken: string
-  price: string
-  lastUpdateTime: number
+  lastUpdatedBase: string // timestamp
+  lastUpdatedQuote: string // timestamp
+  rate: string
 }
