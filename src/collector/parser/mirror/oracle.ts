@@ -6,14 +6,14 @@ import { ParseArgs } from './parseArgs'
 export async function parseFeedPrice(
   { manager, msg, timestamp: txTimestamp }: ParseArgs
 ): Promise<void> {
-  const { price_infos: priceInfos } = msg['feed_price']
+  const { prices } = msg['feed_price']
   const timestamp = new Date(txTimestamp).getTime()
   const repo = manager.getRepository(OraclePriceEntity)
 
   const entities = await bluebird
-    .mapSeries(priceInfos, async (info) => {
-      const token = info['asset_token']
-      const price = info['price']
+    .mapSeries(prices, async (priceInfo) => {
+      const token = priceInfo[0]
+      const price = priceInfo[1]
 
       return oracleService().setOHLC(token, timestamp, price, repo, false)
     })
