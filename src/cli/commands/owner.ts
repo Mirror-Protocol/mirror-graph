@@ -1,34 +1,17 @@
 import { program } from 'commander'
 import { Not } from 'typeorm'
-import { govService, assetService } from 'services'
-import * as logger from 'lib/logger'
-import { TxWallet } from 'lib/terra'
-import { loadContracts, loadAssets, saveAssets, saveOracleAddress } from 'lib/data'
-import { getKey } from 'lib/keystore'
+import { assetService } from 'services'
+import { loadContracts, saveAssets, saveOracleAddress } from 'lib/data'
 import { Assets, AssetStatus, OracleAddress } from 'types'
-import config from 'config'
 
 export function ownerCommands(): void {
-  program
-    .command('create')
-    .description('create gov from json')
-    .requiredOption('-p, --password <owner-password>', 'owner key password')
-    .action(async ({ password }) => {
-      const wallet = new TxWallet(getKey(config.KEYSTORE_PATH, config.KEYSTORE_OWNER_KEY, password))
-      const contracts = loadContracts()
-      const assets = loadAssets()
-
-      const gov = await govService().create(wallet, contracts, assets)
-
-      logger.info(`mirror contracts loaded. gov id: ${gov.id}`)
-    })
-
   program
     .command('export-assets')
     .description('export assets.json')
     .action(async () => {
       const assetList = await assetService().getAll({
-        where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }]
+        where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }],
+        order: { symbol: 'ASC' },
       })
       const assets: Assets = {}
 
@@ -46,7 +29,8 @@ export function ownerCommands(): void {
     .action(async () => {
       const contracts = loadContracts()
       const assetList = await assetService().getAll({
-        where: { status: AssetStatus.LISTED, token: Not(contracts.mirrorToken) }
+        where: { status: AssetStatus.LISTED, token: Not(contracts.mirrorToken) },
+        order: { symbol: 'ASC' },
       })
 
       const oracleInfo: OracleAddress = {

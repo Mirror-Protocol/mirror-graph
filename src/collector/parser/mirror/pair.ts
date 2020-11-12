@@ -69,12 +69,12 @@ export async function parse(
     const assets = findAttribute(attributes, 'assets')
     const share = findAttribute(attributes, 'share')
     const liquidities = assets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
-    const assetToken = liquidities[0]
-    const uusdToken = liquidities[1]
+    const assetToken = liquidities.find((liquidity) => liquidity.token !== 'uusd')
+    const uusdToken = liquidities.find((liquidity) => liquidity.token === 'uusd')
 
     // add asset's liquidity position
     await assetService().addLiquidityPosition(
-      assetToken.token, assetToken.amount, uusdToken.amount, share, positionsRepo
+      assetToken.token, assetToken.amount, uusdToken.amount, share, datetime, positionsRepo
     )
 
     parsed = {
@@ -86,12 +86,12 @@ export async function parse(
     const refundAssets = findAttribute(attributes, 'refund_assets')
     const withdrawnShare = findAttribute(attributes, 'withdrawn_share')
     const liquidities = refundAssets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
-    const assetToken = liquidities[1]
-    const uusdToken = liquidities[0]
+    const assetToken = liquidities.find((liquidity) => liquidity.token !== 'uusd')
+    const uusdToken = liquidities.find((liquidity) => liquidity.token === 'uusd')
 
     // remove asset's liquidity position
     await assetService().addLiquidityPosition(
-      assetToken.token, `-${assetToken.amount}`, `-${uusdToken.amount}`, `-${withdrawnShare}`, positionsRepo
+      assetToken.token, `-${assetToken.amount}`, `-${uusdToken.amount}`, `-${withdrawnShare}`, datetime, positionsRepo
     )
 
     parsed = {

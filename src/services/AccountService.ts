@@ -16,12 +16,25 @@ export class AccountService {
   ) {}
 
   async newAccount(account: Partial<AccountEntity>): Promise<AccountEntity | undefined> {
-    const accountEntity = await this.get({ address: account.address }, undefined)
-    if (accountEntity) {
-      return this.repo.save(Object.assign(accountEntity, account))
+    const accountEntity = await this.get({ address: account.address })
+      || new AccountEntity(account)
+
+    accountEntity.isAppUser = account.isAppUser
+    if (accountEntity.isAppUser) {
+      const { address } = account
+
+      // if uusd balance is null but have uusd, record uusd balance
+      const balanceEntity = await this.getBalanceEntity({ address, token: 'uusd' })
+      if (!balanceEntity) {
+        const { balance: uusdAmount } = await this.getBalance(address, 'uusd')
+
+        if (uusdAmount && num(uusdAmount).isGreaterThan(0)) {
+          await this.addBalance(address, 'uusd', '1', uusdAmount, new Date(Date.now()))
+        }
+      }
     }
 
-    return this.repo.save(account)
+    return this.repo.save(accountEntity)
   }
 
   async haveBalanceHistory(account: string): Promise<boolean> {
