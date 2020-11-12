@@ -8,7 +8,7 @@ import {
 } from 'typeorm'
 import { Container, Service } from 'typedi'
 import { addMonths } from 'date-fns'
-import { num } from 'lib/num'
+import { num, BigNumber } from 'lib/num'
 import { AssetEntity, AssetPositionsEntity, AssetNewsEntity } from 'orm'
 
 @Service()
@@ -73,38 +73,9 @@ export class AssetService {
       repo
     )
 
-    const liquidity = num(positions.liquidity).plus(amount)
-    positions.liquidity = liquidity.isLessThan(0) ? '0' : liquidity.toString()
-
-    const uusdLiquidity = num(positions.uusdLiquidity).plus(uusdAmount)
-    positions.uusdLiquidity = uusdLiquidity.isLessThan(0) ? '0' : uusdLiquidity.toString()
-
-    const pool = num(positions.pool).plus(amount)
-    positions.pool = pool.isLessThan(0) ? '0' : pool.toString()
-
-    const uusdPool = num(positions.uusdPool).plus(uusdAmount)
-    positions.uusdPool = uusdPool.isLessThan(0) ? '0' : uusdPool.toString()
-
-    const lpSharesNum = num(positions.lpShares).plus(lpShares)
-    positions.lpShares = lpSharesNum.isLessThan(0) ? '0' : lpSharesNum.toString()
-
-    return repo.save(positions)
-  }
-
-  async addPoolPosition(
-    token: string,
-    amount: string,
-    uusdAmount: string,
-    repo = this.positionsRepo
-  ): Promise<AssetPositionsEntity> {
-    const positions = await this.getPositions(
-      { token },
-      { select: ['token', 'pool', 'uusdPool'] },
-      repo
-    )
-
-    positions.pool = num(positions.pool).plus(amount).toString()
-    positions.uusdPool = num(positions.uusdPool).plus(uusdAmount).toString()
+    positions.liquidity = BigNumber.max(num(positions.liquidity).plus(amount), 0).toString()
+    positions.uusdLiquidity = BigNumber.max(num(positions.uusdLiquidity).plus(uusdAmount), 0).toString()
+    positions.lpShares = BigNumber.max(num(positions.lpShares).plus(lpShares), 0).toString()
 
     return repo.save(positions)
   }
@@ -120,7 +91,7 @@ export class AssetService {
       repo
     )
 
-    positions.asCollateral = num(positions.asCollateral).plus(amount).toString()
+    positions.asCollateral = BigNumber.max(num(positions.asCollateral).plus(amount), 0).toString()
 
     return repo.save(positions)
   }
@@ -132,7 +103,7 @@ export class AssetService {
   ): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions({ token }, { select: ['token', 'lpStaked'] }, repo)
 
-    positions.lpStaked = num(positions.lpStaked).plus(stakeAmount).toString()
+    positions.lpStaked = BigNumber.max(num(positions.lpStaked).plus(stakeAmount), 0).toString()
 
     return repo.save(positions)
   }

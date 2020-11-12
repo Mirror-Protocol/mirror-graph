@@ -1,8 +1,9 @@
 import * as bluebird from 'bluebird'
+import { EntityManager } from 'typeorm'
 import { ContractActions, findAttributes, parseContractActions } from 'lib/terra'
-import { num } from 'lib/num'
+import { num, BigNumber } from 'lib/num'
 import { contractService, accountService, assetService, priceService, txService } from 'services'
-import { BalanceEntity, AssetEntity, PriceEntity, ContractEntity } from 'orm'
+import { BalanceEntity, AssetEntity, PriceEntity, ContractEntity, AssetPositionsEntity } from 'orm'
 import { ContractType, TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
@@ -29,6 +30,31 @@ async function getBuyPrice(
   return (await priceService().getPrice(token, datetime.getTime(), priceEntity)) || '0'
 }
 
+async function contractTransfer(
+  contract: ContractEntity, token: string, value: string, manager: EntityManager, datetime: Date
+): Promise<void> {
+  if (contract.type !== ContractType.PAIR || contract.token !== token)
+    return
+
+  const positionsRepo = manager.getRepository(AssetPositionsEntity)
+  const positions = await assetService().getPositions({ token }, undefined, positionsRepo)
+  if (!positions)
+    return
+
+  // pair contract token balance changed
+  positions.pool = BigNumber.max(num(positions.pool).plus(value), 0).toString()
+
+  // set pool price ohlc
+  const priceRepo = manager.getRepository(PriceEntity)
+  const poolPrice = (positions.uusdPool !== '0' && positions.pool !== '0')
+    ? num(positions.uusdPool).dividedBy(positions.pool).toString()
+    : '0'
+
+  await priceService().setOHLC(token, datetime.getTime(), poolPrice, priceRepo, true)
+
+  await positionsRepo.save(positions)
+}
+
 export async function parse(args: ParseArgs): Promise<void> {
   const { manager, contract, height, txHash, timestamp, msg, log, fee } = args
   const attributes = findAttributes(log.events, 'from_contract')
@@ -51,31 +77,41 @@ export async function parse(args: ParseArgs): Promise<void> {
   const needRecordTx = msg['transfer']
     && (contract.type === ContractType.TOKEN || contract.type === ContractType.LP_TOKEN)
 
-  await bluebird.mapSeries(
-    transfers,
-    async (action) => {
-      const { contract: token, from, to, amount } = action
+  await bluebird.mapSeries(transfers, async (action) => {
+    const { contract: token, from, to, amount } = action
+    if (amount === '0')
+      return
 
-      // token is listed asset and receiver is not contract, record balance
-      if (await assetService().get({ token }, undefined, assetRepo) &&
-        !(await contractService().get({ address: to }, undefined, contractRepo))
-      ) {
-        const price = await getBuyPrice(token, contractActions, args)
-        await accountService().addBalance(to, token, price, amount, datetime, balanceRepo)
-      }
+    const asset = await assetService().get({ token }, undefined, assetRepo)
+    const receiverContract = await contractService().get(
+      { address: to }, undefined, contractRepo
+    )
+    const senderContract = await contractService().get(
+      { address: from }, undefined, contractRepo
+    )
 
-      await accountService().removeBalance(from, token, amount, datetime, balanceRepo)
-
-      // record tx entity
-      if (needRecordTx) {
-        const { govId } = contract
-
-        const tx = { height, txHash, datetime, govId, token, contract, tags: [token] }
-        const data = { from, to, amount }
-
-        await txService().newTx(manager, { ...tx, address: from, type: TxType.SEND, data, fee })
-        await txService().newTx(manager, { ...tx, address: to, type: TxType.RECEIVE, data })
-      }
+    if (receiverContract) { // receiver is contract
+      await contractTransfer(receiverContract, token, amount, manager, datetime)
+    } else if (asset) { // receiver is user, record balance
+      const price = await getBuyPrice(token, contractActions, args)
+      await accountService().addBalance(to, token, price, amount, datetime, balanceRepo)
     }
-  )
+
+    if (senderContract) {
+      await contractTransfer(senderContract, token, `-${amount}`, manager, datetime)
+    } else if (asset) {
+      await accountService().removeBalance(from, token, amount, datetime, balanceRepo)
+    }
+
+    // record tx entity
+    if (needRecordTx) {
+      const { govId } = contract
+
+      const tx = { height, txHash, datetime, govId, token, contract, tags: [token] }
+      const data = { from, to, amount }
+
+      await txService().newTx(manager, { ...tx, address: from, type: TxType.SEND, data, fee })
+      await txService().newTx(manager, { ...tx, address: to, type: TxType.RECEIVE, data })
+    }
+  })
 }
