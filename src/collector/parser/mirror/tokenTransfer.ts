@@ -83,12 +83,8 @@ export async function parse(args: ParseArgs): Promise<void> {
       return
 
     const asset = await assetService().get({ token }, undefined, assetRepo)
-    const receiverContract = await contractService().get(
-      { address: to }, undefined, contractRepo
-    )
-    const senderContract = await contractService().get(
-      { address: from }, undefined, contractRepo
-    )
+    const receiverContract = await contractService().get({ address: to }, undefined, contractRepo)
+    const senderContract = await contractService().get({ address: from }, undefined, contractRepo)
 
     if (receiverContract) { // receiver is contract
       await contractTransfer(receiverContract, token, amount, manager, datetime)

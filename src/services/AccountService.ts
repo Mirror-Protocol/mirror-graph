@@ -2,7 +2,7 @@ import { Repository, FindConditions, FindOneOptions, getConnection } from 'typeo
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { lcd } from 'lib/terra'
-import { num } from 'lib/num'
+import { num, BigNumber } from 'lib/num'
 import { AssetBalance, ValueAt } from 'graphql/schema'
 import { GovService } from 'services'
 import { AccountEntity, BalanceEntity } from 'orm'
@@ -124,7 +124,7 @@ export class AccountService {
         govId: this.govService.get().id,
       })
 
-      const totalBalance = num(entity.balance).plus(amount)
+      const totalBalance = BigNumber.max(num(entity.balance).plus(amount), 0)
 
       if (num(price).isGreaterThan(0)) {
         // average = (last.avg_price*last.amount + current.avg_price*current.amount) / total_amount
