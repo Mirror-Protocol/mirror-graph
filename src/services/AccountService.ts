@@ -40,7 +40,7 @@ export class AccountService {
             govId: this.govService.get().id,
             type: TxType.REGISTRATION,
             address,
-            data: {},
+            data: { uusdBalance: uusdAmount },
             uusdChange: uusdAmount,
             tags: ['uusd']
           })
