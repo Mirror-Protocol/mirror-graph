@@ -56,14 +56,14 @@ export async function parse(
       }
     })
 
-    await txService().newTx(manager, {
+    await txService().newTx({
       ...tx,
       type: TxType.TERRA_SWAP_SEND,
       address: trader,
       data: { trader, recipient, offer, swapCoin, swapFee },
       uusdChange,
       fee,
-    })
+    }, manager)
 
     // if uusd token and app user, record balance history
     if (fromAccount.isAppUser && uusdChange !== '0') {
@@ -76,14 +76,14 @@ export async function parse(
   if (toAccount) {
     const uusdChange = swapTokenAmount.token === 'uusd' ? swapTokenAmount.amount : '0'
 
-    await txService().newTx(manager, {
+    await txService().newTx({
       ...tx,
       type: TxType.TERRA_RECEIVE,
       address: recipient,
       data: { recipient, sender: trader, amount: swapCoin },
       tags: [offerTokenAmount.token, swapTokenAmount.token],
       uusdChange,
-    })
+    }, manager)
 
     // if uusd token and app user, record balance history
     if (toAccount.isAppUser && uusdChange !== '0') {

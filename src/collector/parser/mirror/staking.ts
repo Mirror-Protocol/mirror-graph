@@ -41,7 +41,7 @@ export async function parse(
     return
   }
 
-  await txService().newTx(manager, {
+  await txService().newTx({
     ...parsed, height, txHash, address: sender, datetime, govId, contract, fee
-  })
+  }, manager)
 }

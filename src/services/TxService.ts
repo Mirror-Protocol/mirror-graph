@@ -38,10 +38,12 @@ export class TxService {
     return qb.getMany()
   }
 
-  async newTx(manager: EntityManager, tx: Partial<TxEntity>): Promise<TxEntity> {
+  async newTx(tx: Partial<TxEntity>, manager?: EntityManager): Promise<TxEntity> {
     await this.accountService.newAccount({ address: tx.address, govId: tx.govId })
 
-    return manager.save(new TxEntity(tx))
+    return manager
+      ? manager.save(new TxEntity(tx))
+      : this.repo.save(tx)
   }
 }
 

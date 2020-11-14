@@ -1,12 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class BalanceHistoryFunc1604999521649 implements MigrationInterface {
+export class BalanceHistoryFunc1605352902890 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query('DROP FUNCTION IF EXISTS public.balanceHistory;')
     await queryRunner.query(`
 CREATE OR REPLACE FUNCTION public.balanceHistory(
   _address varchar,
-  _uusdBalance numeric,
   _from timestamp,
   _to timestamp,
   _interval integer
@@ -25,9 +24,8 @@ BEGIN
     RETURN QUERY
     SELECT
       timeIterator as "timestamp",
-      COALESCE(SUM(pb.assetValue), 0)
-      +COALESCE((SELECT SUM(uusd_change) FROM tx WHERE address=_address AND datetime > timeIterator), 0)
-      +_uusdBalance AS "value"
+      COALESCE((SELECT SUM(uusd_change) FROM tx WHERE address=_address AND datetime > timeIteratorNext), 0)
+      +COALESCE(SUM(pb.assetValue), 0) AS "value"
     FROM (
       SELECT
         DISTINCT ON (token) token,

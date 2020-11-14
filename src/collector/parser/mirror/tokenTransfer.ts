@@ -106,8 +106,8 @@ export async function parse(args: ParseArgs): Promise<void> {
       const tx = { height, txHash, datetime, govId, token, contract, tags: [token] }
       const data = { from, to, amount }
 
-      await txService().newTx(manager, { ...tx, address: from, type: TxType.SEND, data, fee })
-      await txService().newTx(manager, { ...tx, address: to, type: TxType.RECEIVE, data })
+      await txService().newTx({ ...tx, address: from, type: TxType.SEND, data, fee }, manager)
+      await txService().newTx({ ...tx, address: to, type: TxType.RECEIVE, data }, manager)
     }
   })
 }

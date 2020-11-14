@@ -189,7 +189,7 @@ export async function parse(
 
   await manager.save(cdp)
 
-  await txService().newTx(manager, {
+  await txService().newTx({
     ...tx, height, txHash, address: sender, datetime, govId, contract, fee
-  })
+  }, manager)
 }

@@ -72,7 +72,7 @@ export async function parse(args: ParseArgs): Promise<void> {
     return
   }
 
-  await txService().newTx(manager, {
+  await txService().newTx({
     ...parsed, height, txHash, address: sender, datetime, govId, contract, fee, tags: [mirrorToken],
-  })
+  }, manager)
 }

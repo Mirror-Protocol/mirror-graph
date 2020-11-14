@@ -1,11 +1,13 @@
 import { Repository, FindConditions, FindOneOptions, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
-import { lcd } from 'lib/terra'
+import { getLatestBlockHeight, lcd } from 'lib/terra'
+import { errorHandler } from 'lib/error'
 import { num, BigNumber } from 'lib/num'
 import { AssetBalance, ValueAt } from 'graphql/schema'
-import { GovService } from 'services'
+import { GovService, txService } from 'services'
 import { AccountEntity, BalanceEntity } from 'orm'
+import { TxType } from 'types'
 
 @Service()
 export class AccountService {
@@ -29,7 +31,20 @@ export class AccountService {
         const { balance: uusdAmount } = await this.getBalance(address, 'uusd')
 
         if (uusdAmount && num(uusdAmount).isGreaterThan(0)) {
-          await this.addBalance(address, 'uusd', '1', uusdAmount, new Date(Date.now()))
+          const latestHeight = await getLatestBlockHeight().catch(errorHandler)
+          const datetime = new Date(Date.now())
+          await txService().newTx({
+            height: latestHeight || -1,
+            txHash: '',
+            datetime,
+            govId: this.govService.get().id,
+            type: TxType.REGISTRATION,
+            address,
+            data: {},
+            uusdChange: uusdAmount,
+            tags: ['uusd']
+          })
+          await this.addBalance(address, 'uusd', '1', uusdAmount, datetime)
         }
       }
     }
@@ -96,10 +111,9 @@ export class AccountService {
     to: number,
     interval: number
   ): Promise<ValueAt[]> {
-    const uusdBalance = (await this.getBalance(address, 'uusd'))?.balance || '0'
     return getConnection().query(
-      'SELECT * FROM public.balanceHistory($1, $2, $3, $4, $5)',
-      [address, uusdBalance, new Date(from), new Date(to), interval]
+      'SELECT * FROM public.balanceHistory($1, $2, $3, $4)',
+      [address, new Date(from), new Date(to), interval]
     )
   }
 

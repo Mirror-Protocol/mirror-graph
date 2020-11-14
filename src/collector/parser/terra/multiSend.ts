@@ -51,9 +51,9 @@ export async function parse(manager: EntityManager, txInfo: TxInfo, log: TxLog):
 
     const uusdChange = transfer.denom === 'uusd' ? transfer.amount : '0'
 
-    await txService().newTx(manager, {
+    await txService().newTx({
       ...tx, type: TxType.TERRA_RECEIVE, address: to, data, uusdChange, tags
-    })
+    }, manager)
 
     // if uusd token and app user, record balance history
     if (toAccount.isAppUser && uusdChange !== '0') {

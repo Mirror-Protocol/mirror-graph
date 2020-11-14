@@ -48,7 +48,7 @@ export async function parse(
     }
   })
 
-  await txService().newTx(manager, {
+  await txService().newTx({
     ...tx,
     type: TxType.TERRA_SWAP,
     address: msg.trader,
@@ -62,7 +62,7 @@ export async function parse(
     uusdChange,
     fee: txInfo.tx.fee.amount.toString(),
     tags: [offerTokenAmount.token, swapTokenAmount.token],
-  })
+  }, manager)
 
   // if uusd token and app user, record balance history
   if (account.isAppUser && uusdChange !== '0') {

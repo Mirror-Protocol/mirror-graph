@@ -27,6 +27,8 @@ export enum TxType {
   TERRA_SEND = 'TERRA_SEND',
   TERRA_SWAP_SEND = 'TERRA_SWAP_SEND',
   TERRA_RECEIVE = 'TERRA_RECEIVE',
+
+  REGISTRATION = 'REGISTRATION',
 }
 
 registerEnumType(TxType, { name: 'TxType' })
