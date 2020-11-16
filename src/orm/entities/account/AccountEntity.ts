@@ -17,4 +17,7 @@ export class AccountEntity extends HaveGov {
 
   @Column({ default: false })
   isAppUser: boolean
+
+  @Column({ nullable: true, default: null })
+  email?: string
 }

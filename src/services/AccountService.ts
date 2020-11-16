@@ -21,7 +21,8 @@ export class AccountService {
     const accountEntity = await this.get({ address: account.address })
       || new AccountEntity(account)
 
-    accountEntity.isAppUser = account.isAppUser
+    Object.assign(accountEntity, account)
+
     if (accountEntity.isAppUser) {
       const { address } = account
 
@@ -42,7 +43,6 @@ export class AccountService {
             address,
             data: { uusdBalance: uusdAmount },
             uusdChange: uusdAmount,
-            tags: ['uusd']
           })
           await this.addBalance(address, 'uusd', '1', uusdAmount, datetime)
         }

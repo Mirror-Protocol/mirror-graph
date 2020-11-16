@@ -40,10 +40,11 @@ export class AccountResolver {
   @Mutation((returns) => Account, { nullable: true })
   async connect(
     @Arg('address') address: string,
-    @Arg('isAppUser', { defaultValue: false }) isAppUser: boolean
+    @Arg('isAppUser', { defaultValue: false }) isAppUser: boolean,
+    @Arg('email', { nullable: true }) email?: string,
   ): Promise<Account | null> {
     return this.accountService.newAccount({
-      address, isAppUser, govId: this.govService.get().id
+      address, isAppUser, email, govId: this.govService.get().id
     })
   }
 
