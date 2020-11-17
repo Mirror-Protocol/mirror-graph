@@ -27,12 +27,6 @@ export SLACK_CHANNEL='<slack channel name>'
 ```
 
 ## cli
-### require process.env (.envrc sample)
-```
-export CONTRACT_ID=-1
-
-export KEYSTORE_OWNER_PASSWORD='<password>'
-```
 ```
 $ npm run cli
 Usage: npm run cli [options] [command]
@@ -43,7 +37,6 @@ Options:
 
 Commands:
   create [options]   create gov from json
-  update-owner-key   update owner key
   update-bot-key     update bot key
   help [command]     display help for command
 ```
@@ -58,7 +51,6 @@ $ npm run cli -- update-bot-key
 ### require process.env (.envrc sample)
 ```
 export SENTRY_COLLECTOR='<sentry url for collector>'
-export KEYSTORE_OWNER_PASSWORD='<password>'
 export CONTRACT_ID=-1
 export START_BLOCK_HEIGHT=0
 ```
@@ -88,7 +80,6 @@ export ORM='default'
 
 export SENTRY='<sentry url>'
 
-export KEYSTORE_OWNER_PASSWORD='<password>'
 export KEYSTORE_BOT_PASSWORD='<password>'
 
 export CONTRACT_ID=-1

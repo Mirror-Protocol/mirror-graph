@@ -3,7 +3,6 @@ import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service } from 'typedi'
 import { GovEntity, ContractEntity, AssetEntity } from 'orm'
 import { Contracts, Assets, ContractType, AssetStatus } from 'types'
-import { TxWallet } from 'lib/terra'
 import { loadDescriptions } from 'lib/data'
 import * as logger from 'lib/logger'
 import config from 'config'
@@ -35,10 +34,9 @@ export class GovService {
     return this.gov
   }
 
-  async create(wallet: TxWallet, contracts: Contracts, assets: Assets): Promise<GovEntity> {
+  async create(contracts: Contracts, assets: Assets): Promise<GovEntity> {
     return getManager().transaction(async (manager: EntityManager) => {
       const { TERRA_CHAIN_ID: chainId } = config
-      const owner = wallet.key.accAddress
 
       const {
         gov,
@@ -55,7 +53,6 @@ export class GovService {
 
       // create gov entity
       const govEntity = new GovEntity({
-        owner,
         chainId,
         gov,
         mirrorToken,

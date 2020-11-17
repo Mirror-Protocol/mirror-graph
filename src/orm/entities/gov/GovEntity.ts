@@ -19,9 +19,6 @@ export class GovEntity {
   chainId: string
 
   @Column()
-  owner: string
-
-  @Column()
   gov: string // gov contract address
 
   @Column()

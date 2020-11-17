@@ -1,6 +1,5 @@
-import { initLCD, initMantle, TxWallet } from 'lib/terra'
+import { initLCD, initMantle } from 'lib/terra'
 import { loadContracts, loadAssets } from 'lib/data'
-import { getKey } from 'lib/keystore'
 import * as logger from 'lib/logger'
 import { govService } from 'services'
 import config from 'config'
@@ -16,15 +15,7 @@ export async function initMirror(): Promise<void> {
 
     logger.info('create mirror gov from json files')
 
-    const ownerPassword = config.KEYSTORE_OWNER_PASSWORD
-    if (!ownerPassword) {
-      throw new Error('KEYSTORE_OWNER_PASSWORD environment variable must be defined')
-    }
-    const wallet = new TxWallet(
-      getKey(config.KEYSTORE_PATH, config.KEYSTORE_OWNER_KEY, ownerPassword)
-    )
-
-    await govService().create(wallet, contracts, assets)
+    await govService().create(contracts, assets)
 
     if (!(await govService().load(-1))) {
       throw new Error('create mirror gov failed')

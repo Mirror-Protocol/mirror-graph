@@ -4,11 +4,6 @@ import config from 'config'
 
 export function key(): void {
   program
-    .command('update-owner-key')
-    .description('update owner key')
-    .action(async () => updateKey(config.KEYSTORE_PATH, config.KEYSTORE_OWNER_KEY))
-
-  program
     .command('update-bot-key')
     .description('bot key')
     .action(async () => updateKey(config.KEYSTORE_PATH, config.KEYSTORE_BOT_KEY))

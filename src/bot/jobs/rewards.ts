@@ -26,7 +26,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
     await wallet.execute(factory, { distribute: {} })
   }
 
-  // owner commission
+  // commission
   const convertMsgs = await bluebird
     .map(assets, async (asset) => {
       const balance = await getTokenBalance(asset.token, collector)
@@ -40,10 +40,10 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
     .filter(Boolean)
 
   if (convertMsgs.length > 0) {
-    // execute convert owner commission
+    // execute convert commission
     await wallet.executeMsgs(convertMsgs)
 
-    // execute distribute converted owner commission
+    // execute distribute converted commission
     await wallet.execute(collector, { send: {} })
   }
 
