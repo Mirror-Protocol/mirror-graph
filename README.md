@@ -43,7 +43,6 @@ Commands:
 
 ## Setup wallet keys using cli
 ```
-$ npm run cli -- update-owner-key
 $ npm run cli -- update-bot-key
 ```
 
