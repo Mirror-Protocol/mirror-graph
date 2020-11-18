@@ -19,6 +19,7 @@ export interface Contracts {
   staking: string
   tokenFactory: string
   collector: string
+  community: string
 }
 
 export interface Asset {

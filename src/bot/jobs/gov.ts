@@ -19,7 +19,7 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
 
   const { gov } = govService().get()
   const sender = wallet.key.accAddress
-  const { effectiveDelay } = await getGovConfig(gov)
+  const { effectiveDelay, expirationPeriod } = await getGovConfig(gov)
   const msgs = []
 
   // collect ended poll
@@ -39,12 +39,22 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
   polls.map((poll) => {
     const executeHeight = poll.endHeight + effectiveDelay
     // try execute only 1 hour(600 blocks)
-    if (latestHeight - executeHeight > 0 && latestHeight - executeHeight < 10 * 60 ) {
+    if (latestHeight > executeHeight && latestHeight - executeHeight < 10 * 60 ) {
       msgs.push(new MsgExecuteContract(
         sender, gov, toSnakeCase({ executePoll: { pollId: poll.id } }), new Coins([])
       ))
 
       logger.info(`execute poll id: ${poll.id}`)
+    }
+
+    // over expiration period, expire
+    const expireHeight = poll.endHeight + expirationPeriod
+    if (latestHeight > expireHeight) {
+      msgs.push(new MsgExecuteContract(
+        sender, gov, toSnakeCase({ expirePoll: { pollId: poll.id } }), new Coins([])
+      ))
+
+      logger.info(`expire poll id: ${poll.id}`)
     }
   })
 

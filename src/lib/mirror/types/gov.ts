@@ -1,11 +1,12 @@
 export interface GovConfig {
+  votingPeriod: number
   effectiveDelay: number
+  expirationPeriod: number
   mirrorToken: string
   owner: string
   proposalDeposit: string
   quorum: string
   threshold: string
-  votingPeriod: number
 }
 
 export interface GovPoll {
