@@ -20,7 +20,8 @@ export async function collect(now: number): Promise<void> {
   }
   const collectedHeight = collectedBlock.height
 
-  const txs = await getTxs(collectedHeight + 1, latestHeight, 500).catch(errorHandler)
+  logger.info(`collecting ${collectedHeight + 1}-${latestHeight}`)
+  const txs = await getTxs(collectedHeight + 1, latestHeight, 100).catch(errorHandler)
   if (!txs) {
     return
   }
