@@ -6,15 +6,12 @@ import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { govService, txService, accountService } from 'services'
 import { TxType } from 'types'
-import { AccountEntity, BalanceEntity } from 'orm'
+import { BalanceEntity } from 'orm'
 
 export async function parse(
   manager: EntityManager, txInfo: TxInfo, msg: MsgSwap, log: TxLog
 ): Promise<void> {
-  const accountRepo = manager.getRepository(AccountEntity)
-  const account = await accountRepo.findOne({
-    select: ['address', 'isAppUser'], where: { address: msg.trader }
-  })
+  const account = await accountService().get({ address: msg.trader })
 
   // only registered account
   if (!account)

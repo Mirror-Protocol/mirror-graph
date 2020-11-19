@@ -4,7 +4,7 @@ import { EntityManager } from 'typeorm'
 import { findAttributes } from 'lib/terra'
 import { govService, txService, accountService } from 'services'
 import { TxType } from 'types'
-import { AccountEntity, BalanceEntity } from 'orm'
+import { BalanceEntity } from 'orm'
 
 export async function parse(manager: EntityManager, txInfo: TxInfo, log: TxLog): Promise<void> {
   const attributes = findAttributes(log.events, 'transfer')
@@ -25,7 +25,6 @@ export async function parse(manager: EntityManager, txInfo: TxInfo, log: TxLog):
   if (!transfers || transfers.length < 1)
     return
 
-  const accountRepo = manager.getRepository(AccountEntity)
   const balanceRepo = manager.getRepository(BalanceEntity)
   const datetime = new Date(txInfo.timestamp)
   const tx = {
@@ -41,9 +40,7 @@ export async function parse(manager: EntityManager, txInfo: TxInfo, log: TxLog):
     const data = transfer
     const tags = [transfer.denom]
 
-    const toAccount = await accountRepo.findOne({
-      select: ['address', 'isAppUser'], where: { address: transfer.to }
-    })
+    const toAccount = await accountService().get({ address: transfer.to })
 
     // only registered account
     if (!toAccount) 

@@ -5,14 +5,13 @@ import { parseTransfer } from 'lib/terra'
 import { num } from 'lib/num'
 import { govService, txService, accountService } from 'services'
 import { TxType } from 'types'
-import { AccountEntity, BalanceEntity } from 'orm'
+import { BalanceEntity } from 'orm'
 
 export async function parse(manager: EntityManager, txInfo: TxInfo, log: TxLog): Promise<void> {
   const transfers = parseTransfer(log.events)
   if (!transfers || transfers.length < 1)
     return
 
-  const accountRepo = manager.getRepository(AccountEntity)
   const balanceRepo = manager.getRepository(BalanceEntity)
   const datetime = new Date(txInfo.timestamp)
   const tx = {
@@ -28,9 +27,7 @@ export async function parse(manager: EntityManager, txInfo: TxInfo, log: TxLog):
     const data = transfer
     const tags = [transfer.denom]
 
-    const fromAccount = await accountRepo.findOne({
-      select: ['address', 'isAppUser'], where: { address: transfer.from }
-    })
+    const fromAccount = await accountService().get({ address: transfer.from })
 
     // only registered account
     if (fromAccount) {
@@ -57,9 +54,7 @@ export async function parse(manager: EntityManager, txInfo: TxInfo, log: TxLog):
       }
     }
 
-    const toAccount = await accountRepo.findOne({
-      select: ['address', 'isAppUser'], where: { address: transfer.to }
-    })
+    const toAccount = await accountService().get({ address: transfer.to })
 
     // only registered account
     if (toAccount) {

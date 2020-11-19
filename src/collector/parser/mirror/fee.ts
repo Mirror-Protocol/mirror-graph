@@ -3,15 +3,12 @@ import { TxInfo } from '@terra-money/terra.js'
 import { EntityManager } from 'typeorm'
 import { num } from 'lib/num'
 import { accountService } from 'services'
-import { AccountEntity, BalanceEntity } from 'orm'
+import { BalanceEntity } from 'orm'
 
 export async function parse(
   manager: EntityManager, txInfo: TxInfo, sender: string
 ): Promise<void> {
-  const accountRepo = manager.getRepository(AccountEntity)
-  const account = await accountRepo.findOne({
-    select: ['address', 'isAppUser'], where: { address: sender }
-  })
+  const account = await accountService().get({ address: sender })
 
   // only registered app user
   if (!account || !account.isAppUser)

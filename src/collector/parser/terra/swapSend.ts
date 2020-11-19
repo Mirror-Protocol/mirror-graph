@@ -6,7 +6,7 @@ import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { govService, txService, accountService } from 'services'
 import { TxType } from 'types'
-import { AccountEntity, BalanceEntity } from 'orm'
+import { BalanceEntity } from 'orm'
 
 export async function parse(
   manager: EntityManager, txInfo: TxInfo, msg: MsgSwapSend, log: TxLog
@@ -14,15 +14,9 @@ export async function parse(
   const attributes = findAttributes(log.events, 'swap')
   const trader = findAttribute(attributes, 'trader')
   const recipient = findAttribute(attributes, 'recipient')
-  const accountRepo = manager.getRepository(AccountEntity)
 
-  const fromAccount = await accountRepo.findOne({
-    select: ['address', 'isAppUser'], where: { address: trader }
-  })
-
-  const toAccount = await accountRepo.findOne({
-    select: ['address', 'isAppUser'], where: { address: recipient }
-  })
+  const fromAccount = await accountService().get({ address: trader })
+  const toAccount = await accountService().get({ address: recipient })
 
   // only registered account
   if (!fromAccount && !toAccount)

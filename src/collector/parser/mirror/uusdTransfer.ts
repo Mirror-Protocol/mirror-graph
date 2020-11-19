@@ -5,7 +5,7 @@ import { parseTransfer } from 'lib/terra'
 import { num, BigNumber } from 'lib/num'
 import { accountService, contractService, assetService, priceService } from 'services'
 import {
-  AccountEntity, BalanceEntity, ContractEntity, AssetPositionsEntity, PriceEntity
+  BalanceEntity, ContractEntity, AssetPositionsEntity, PriceEntity
 } from 'orm'
 import { ContractType } from 'types'
 
@@ -35,13 +35,9 @@ async function contractTransfer(
 }
 
 async function accountTransfer(address: string, value: string, datetime: Date, manager: EntityManager): Promise<void> {
-  const accountRepo = manager.getRepository(AccountEntity)
   const balanceRepo = manager.getRepository(BalanceEntity)
 
-  const account = await accountRepo.findOne({
-    select: ['address'],
-    where: { address, isAppUser: true }
-  })
+  const account = await accountService().get({ address, isAppUser: true })
 
   if (!account)
     return
