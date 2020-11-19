@@ -40,7 +40,7 @@ export class TxService {
 
   async newTx(tx: Partial<TxEntity>, manager?: EntityManager): Promise<TxEntity> {
     if (!(await this.accountService.get({ address: tx.address }))) {
-      await this.accountService.newAccount({ address: tx.address, govId: tx.govId })
+      await this.accountService.newAccount({ address: tx.address })
     }
 
     return manager

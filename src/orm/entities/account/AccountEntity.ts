@@ -1,11 +1,8 @@
 import { Entity, PrimaryColumn, CreateDateColumn, Column } from 'typeorm'
-import { HaveGov } from '../Have'
 
 @Entity('account')
-export class AccountEntity extends HaveGov {
+export class AccountEntity {
   constructor(options: Partial<AccountEntity>) {
-    super()
-
     Object.assign(this, options)
   }
 

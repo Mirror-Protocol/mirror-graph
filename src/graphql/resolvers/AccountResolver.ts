@@ -43,9 +43,7 @@ export class AccountResolver {
     @Arg('isAppUser', { defaultValue: false }) isAppUser: boolean,
     @Arg('email', { nullable: true }) email?: string,
   ): Promise<Account | null> {
-    return this.accountService.newAccount({
-      address, isAppUser, email, govId: this.govService.get().id
-    })
+    return this.accountService.newAccount({ address, isAppUser, email })
   }
 
   @FieldResolver()
