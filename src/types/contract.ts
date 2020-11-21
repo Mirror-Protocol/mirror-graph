@@ -9,4 +9,6 @@ export enum ContractType {
   LP_TOKEN = 'lpToken',
   TOKEN_FACTORY = 'tokenFactory',
   PAIR = 'pair',
+  COMMUNITY = 'community',
+  AIRDROP = 'airdrop',
 }
