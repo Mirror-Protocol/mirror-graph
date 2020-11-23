@@ -2,6 +2,7 @@ import { TxInfo, Msg } from '@terra-money/terra.js'
 import { GraphQLClient, gql } from 'graphql-request'
 import { pick } from 'lodash'
 import { toSnakeCase, toCamelCase } from 'lib/caseStyles'
+import { errorHandler } from 'lib/error'
 
 export let mantle: GraphQLClient
 
@@ -119,9 +120,14 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
         value: {
           ...txValue,
           msg: rawTx.Tx.Msg
-            .map((msg) =>
-              Msg.fromData({ type: msg.Type, value: JSON.parse(msg.Value) } as Msg.Data)?.toData()
-            )
+            .map((msg) => {
+              try {
+                return Msg.fromData({ type: msg.Type, value: JSON.parse(msg.Value) } as Msg.Data)?.toData()
+              } catch(error) {
+                errorHandler(error)
+                return
+              }
+            })
             .filter(Boolean)
         }
       }
