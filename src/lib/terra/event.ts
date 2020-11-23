@@ -1,4 +1,4 @@
-import { Event, EventKV, Coin } from '@terra-money/terra.js'
+import { Event, EventKV, Coins } from '@terra-money/terra.js'
 import { toCamelCase } from 'lib/caseStyles'
 
 export interface ContractActions {
@@ -70,10 +70,12 @@ export function parseTransfer(events: Event[]): Transfer[] {
   for (let i = 0; i < attributes.length / 3; i += 1) {
     const to = attributes[i * 3].value
     const from = attributes[i * 3 + 1].value
-    const coin = Coin.fromString(attributes[i * 3 + 2].value)
-    const { denom, amount } = coin.toData()
+    const coins = Coins.fromString(attributes[i * 3 + 2].value)
+    coins.map((coin) => {
+      const { denom, amount } = coin.toData()
 
-    transfers.push({ from, to, denom, amount })
+      transfers.push({ from, to, denom, amount })
+    })
   }
 
   return transfers

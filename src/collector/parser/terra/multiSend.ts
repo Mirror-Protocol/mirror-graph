@@ -1,5 +1,5 @@
 import * as bluebird from 'bluebird'
-import { TxInfo, TxLog, Coin } from '@terra-money/terra.js'
+import { TxInfo, TxLog, Coins } from '@terra-money/terra.js'
 import { EntityManager } from 'typeorm'
 import { findAttributes } from 'lib/terra'
 import { govService, txService, accountService } from 'services'
@@ -16,10 +16,13 @@ export async function parse(manager: EntityManager, txInfo: TxInfo, log: TxLog):
 
   for (let i = 0; i < attributes.length / 2; i ++) {
     const to = attributes[i * 2].value
-    const coin = Coin.fromString(attributes[i * 2 + 1].value)
-    const { denom, amount } = coin.toData()
 
-    transfers.push({ to, denom, amount })
+    const coins = Coins.fromString(attributes[i * 3 + 2].value)
+    coins.map((coin) => {
+      const { denom, amount } = coin.toData()
+
+      transfers.push({ to, denom, amount })
+    })
   }
 
   if (!transfers || transfers.length < 1)
