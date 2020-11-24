@@ -1,13 +1,16 @@
 import { Resolver, Query, Mutation, Root, Arg, FieldResolver } from 'type-graphql'
 import GraphQLJSON from 'graphql-type-json'
 import { history as moonpayHistory } from 'lib/moonpay'
-import { AccountService } from 'services'
+import { AccountService, TxService } from 'services'
 import { Account, AssetBalance, ValueAt } from 'graphql/schema'
 import { AccountEntity } from 'orm'
 
 @Resolver((of) => Account)
 export class AccountResolver {
-  constructor(private readonly accountService: AccountService) {}
+  constructor(
+    private readonly accountService: AccountService,
+    private readonly txService: TxService,
+  ) {}
 
   @Query((returns) => Account, { nullable: true })
   async account(@Arg('address') address: string): Promise<Account> {
@@ -34,6 +37,15 @@ export class AccountResolver {
     @Arg('interval', { description: 'unit is minute' }) interval: number,
   ): Promise<ValueAt[]> {
     return this.accountService.getBalanceHistory(address, from, to, interval)
+  }
+
+  @Query((returns) => String)
+  async tradingVolume(
+    @Arg('address') address: string,
+    @Arg('from', { description: 'timestamp' }) from: number,
+    @Arg('to', { description: 'timestamp' }) to: number,
+  ): Promise<string> {
+    return this.txService.getTradingVolume(address, from, to)
   }
 
   @Query((returns) => GraphQLJSON, { nullable: true })

@@ -1,6 +1,7 @@
 import { Repository, FindConditions, FindOneOptions, FindManyOptions, EntityManager } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
+import { num } from 'lib/num'
 import { AccountService } from 'services'
 import { TxEntity } from 'orm'
 
@@ -46,6 +47,23 @@ export class TxService {
     return manager
       ? manager.save(new TxEntity(tx))
       : this.repo.save(tx)
+  }
+
+  async getTradingVolume(account: string, from: number, to: number): Promise<string> {
+    const buyVolume = await this.repo
+      .createQueryBuilder()
+      .select(`sum(coalesce((data->>'offerAmount')::numeric, 0))`, 'volume')
+      .where(`address = :address AND type='BUY'`, { address: account })
+      .andWhere('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .getRawOne()
+    const sellVolume = await this.repo
+      .createQueryBuilder()
+      .select(`sum(coalesce((data->>'recvAmount')::numeric, 0))+sum(coalesce((data->>'commissionAmount')::numeric, 0))`, 'volume')
+      .where(`address = :address AND type='BUY'`, { address: account })
+      .andWhere('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .getRawOne()
+
+    return num(buyVolume?.volume ?? '0').plus(sellVolume?.volume ?? '0').toFixed(0)
   }
 }
 
