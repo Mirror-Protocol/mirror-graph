@@ -140,7 +140,9 @@ export class AccountService {
 
       const totalBalance = BigNumber.max(num(entity.balance).plus(amount), 0)
 
-      if (num(price).isGreaterThan(0)) {
+      if (totalBalance.isLessThanOrEqualTo(0)) {
+        entity.averagePrice = '0'
+      } else if (num(price).isGreaterThan(0)) {
         // average = (last.avg_price*last.amount + current.avg_price*current.amount) / total_amount
         const value = num(price).multipliedBy(amount)
         const lastValue = num(entity.averagePrice).multipliedBy(entity.balance)
