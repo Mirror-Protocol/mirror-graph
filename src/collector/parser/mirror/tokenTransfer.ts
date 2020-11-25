@@ -79,7 +79,7 @@ export async function parse(args: ParseArgs): Promise<void> {
 
   await bluebird.mapSeries(transfers, async (action) => {
     const { contract: token, from, to, amount } = action
-    if (amount === '0')
+    if (amount === '0' || !from || !to)
       return
 
     const asset = await assetService().get({ token }, undefined, assetRepo)

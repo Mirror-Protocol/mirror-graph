@@ -8,7 +8,7 @@ import * as pair from './pair'
 export async function parse(args: ParseArgs): Promise<void> {
   const { manager, height, txHash, timestamp, msg, log, contract } = args
 
-  if (msg['send']) {
+  if (msg['send'] || msg['distribute']) {
     const datetime = new Date(timestamp)
     const attributes = findAttributes(log.events, 'from_contract')
     const amount = findAttribute(attributes, 'amount')

@@ -4,7 +4,7 @@ import { TxWallet } from 'lib/terra'
 import { toSnakeCase } from 'lib/caseStyles'
 import * as logger from 'lib/logger'
 import { getTokenBalance, getDistributionInfo } from 'lib/mirror'
-import { govService, assetService } from 'services'
+import { govService, assetService, accountService } from 'services'
 import { AssetStatus } from 'types'
 import { num } from 'lib/num'
 import { Updater } from 'lib/Updater'
@@ -16,7 +16,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
     return
   }
 
-  const { factory, collector } = govService().get()
+  const { factory, collector, mirrorToken } = govService().get()
   const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
   const sender = wallet.key.accAddress
   
@@ -26,7 +26,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
     await wallet.execute(factory, { distribute: {} })
   }
 
-  // commission
+  // cdp close fee(mAsset) > convert mir
   const convertMsgs = await bluebird
     .map(assets, async (asset) => {
       const balance = await getTokenBalance(asset.token, collector)
@@ -39,12 +39,20 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
     })
     .filter(Boolean)
 
+  // cdp close fee(uusd) > convert mir
+  const { balance: uusdBalance } = await accountService().getBalance(collector, 'uusd')
+  if (num(uusdBalance).isGreaterThan(1000)) {
+    convertMsgs.push(new MsgExecuteContract(
+      sender, collector, toSnakeCase({ convert: { assetToken: mirrorToken } }), new Coins([])
+    ))
+  }
+
   if (convertMsgs.length > 0) {
-    // execute convert commission
+    // execute convert fee
     await wallet.executeMsgs(convertMsgs)
 
-    // execute distribute converted commission
-    await wallet.execute(collector, { send: {} })
+    // execute distribute converted fee
+    await wallet.execute(collector, { distribute: {} })
   }
 
   logger.info('rewards distributed')
