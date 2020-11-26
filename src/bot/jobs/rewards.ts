@@ -31,7 +31,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
     .map(assets, async (asset) => {
       const balance = await getTokenBalance(asset.token, collector)
 
-      if (num(balance).isGreaterThan(1000)) {
+      if (num(balance).isGreaterThan(10000)) {
         return new MsgExecuteContract(
           sender, collector, toSnakeCase({ convert: { assetToken: asset.token } }), new Coins([])
         )
@@ -41,7 +41,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
 
   // cdp close fee(uusd) > convert mir
   const { balance: uusdBalance } = await accountService().getBalance(collector, 'uusd')
-  if (num(uusdBalance).isGreaterThan(1000)) {
+  if (num(uusdBalance).isGreaterThan(10000000)) {
     convertMsgs.push(new MsgExecuteContract(
       sender, collector, toSnakeCase({ convert: { assetToken: mirrorToken } }), new Coins([])
     ))
