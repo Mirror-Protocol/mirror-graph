@@ -73,14 +73,18 @@ export async function parse(
     }
   } else if (msg['withdraw']) {
     const withdrawAmount = findAttribute(attributes, 'withdraw_amount')
+    const protocolFeeAmount = findAttribute(attributes, 'protocol_fee')
     const withdraw = splitTokenAmount(withdrawAmount)
+    const protocolFee = splitTokenAmount(protocolFeeAmount)
+
+    const totalWithdraw = num(withdraw.amount).plus(protocolFee.amount).toString()
 
     // remove cdp collateral
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
-    cdp.collateralAmount = num(cdp.collateralAmount).minus(withdraw.amount).toString()
+    cdp.collateralAmount = num(cdp.collateralAmount).minus(totalWithdraw).toString()
 
     // remove asset's asCollateral position
-    await assetService().addAsCollateralPosition(withdraw.token, `-${withdraw.amount}`, positionsRepo)
+    await assetService().addAsCollateralPosition(withdraw.token, `-${totalWithdraw}`, positionsRepo)
 
     tx = {
       type: TxType.WITHDRAW_COLLATERAL,
@@ -88,6 +92,7 @@ export async function parse(
         positionIdx,
         withdrawAmount,
         taxAmount: findAttribute(attributes, 'tax_amount'),
+        protocolFeeAmount
       },
       token: withdraw.token,
       tags: [withdraw.token],

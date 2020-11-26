@@ -1,4 +1,4 @@
-import { Raw } from 'typeorm'
+import { MoreThan, Raw } from 'typeorm'
 import { Resolver, Query, Arg } from 'type-graphql'
 import { Cdp } from 'graphql/schema'
 import { CdpService } from 'services'
@@ -11,7 +11,8 @@ export class CdpResolver {
   async cdps(@Arg('maxRatio') maxRatio: number): Promise<Cdp[]> {
     return this.cdpService.getAll({
       where: {
-        collateralRatio: Raw((alias) => `${alias} <= ${maxRatio}`)
+        collateralRatio: Raw((alias) => `${alias} <= ${maxRatio}`),
+        mintAmount: MoreThan(0)
       }
     })
   }
