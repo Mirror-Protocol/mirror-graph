@@ -15,6 +15,7 @@ import * as collector from './collector'
 import * as tokenTransfer from './tokenTransfer'
 import * as uusdTransfer from './uusdTransfer'
 import * as fee from './fee'
+import * as airdrop from './airdrop'
 
 export async function parseMirrorMsg(
   manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog
@@ -70,6 +71,10 @@ export async function parseMirrorMsg(
 
     case ContractType.COLLECTOR:
       await collector.parse(args)
+      break
+
+    case ContractType.AIRDROP:
+      await airdrop.parse(args)
       break
 
     default:
