@@ -22,8 +22,8 @@ const LUNA_STAKER_AIRDROP_AMOUNT = '345283000000'
 
 // const SNAPSHOT_BLOCK_START =  900000
 // const SNAPSHOT_BLOCK_PERIOD = 100000
-const SNAPSHOT_BLOCK_START = 690000
-const SNAPSHOT_BLOCK_PERIOD = 10000
+const SNAPSHOT_BLOCK_START = +process.env.SNAPSHOT_BLOCK_START
+const SNAPSHOT_BLOCK_PERIOD = +process.env.SNAPSHOT_BLOCK_PERIOD
 
 const SNAPSHOT_LAST_STAGE = 53 + 1 // start stage: 2, initial stage: 1
 
@@ -105,7 +105,10 @@ async function takeSnapshot(
 }
 
 export async function updateAirdrop(wallet: TxWallet): Promise<void> {
-  if (!updater.needUpdate(Date.now())) {
+  if (!updater.needUpdate(Date.now())
+    || !SNAPSHOT_BLOCK_START
+    || !SNAPSHOT_BLOCK_PERIOD
+  ) {
     return
   }
 
