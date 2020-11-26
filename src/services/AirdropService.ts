@@ -21,6 +21,14 @@ export class AirdropService {
   async newAirdrop(airdrop: Partial<AirdropEntity>): Promise<AirdropEntity> {
     return this.repo.save(airdrop)
   }
+
+  async getAirdrop(network: string, address: string): Promise<AirdropEntity[]> {
+    return this.getAll({
+      select: ['address', 'stage', 'proof', 'amount'],
+      where: { network, address, claimable: true },
+      order: { id: 'ASC' },
+    })
+  }
 }
 
 export function airdropService(): AirdropService {

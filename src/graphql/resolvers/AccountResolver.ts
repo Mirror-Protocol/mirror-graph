@@ -1,7 +1,7 @@
 import { Resolver, Query, Mutation, Root, Arg, FieldResolver } from 'type-graphql'
 import GraphQLJSON from 'graphql-type-json'
 import { history as moonpayHistory } from 'lib/moonpay'
-import { AccountService, TxService } from 'services'
+import { AccountService, AirdropService, TxService } from 'services'
 import { Account, AssetBalance, ValueAt } from 'graphql/schema'
 import { AccountEntity } from 'orm'
 
@@ -9,6 +9,7 @@ import { AccountEntity } from 'orm'
 export class AccountResolver {
   constructor(
     private readonly accountService: AccountService,
+    private readonly airdropService: AirdropService,
     private readonly txService: TxService,
   ) {}
 
@@ -54,6 +55,14 @@ export class AccountResolver {
     @Arg('limit', { defaultValue: 1 }) limit?: number,
   ): Promise<unknown | null> {
     return moonpayHistory(transactionId, limit)
+  }
+
+  @Query((returns) => GraphQLJSON, { nullable: true })
+  async airdrop(
+    @Arg('network', { defaultValue: 'TERRA', description: 'TERRA or ETH' }) network: string,
+    @Arg('address') address: string,
+  ): Promise<unknown | null> {
+    return this.airdropService.getAirdrop(network, address)
   }
 
   @Mutation((returns) => Account, { nullable: true })
