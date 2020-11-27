@@ -122,9 +122,6 @@ export async function updateAirdrop(wallet: TxWallet): Promise<void> {
     throw new Error('airdrop contract not exists')
   }
 
-  // const record = await getRepository(AirdropEntity).findOne(undefined, { order: { id: 'DESC' }})
-  // const latestStage = record ? record.stage : undefined
-
   const { latestStage } = await contractQuery(contract.address, { latestStage: {} })
   if (!latestStage) {
     // take initial airdrop snapshot

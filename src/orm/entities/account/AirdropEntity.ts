@@ -22,16 +22,16 @@ export class AirdropEntity {
   @Column()
   address: string
 
-  @Column('numeric', { precision: 40, default: 0, comment: 'luna staked amount' })
+  @Column({ default: '0', comment: 'luna staked amount' })
   staked: string
 
-  @Column('numeric', { precision: 40, default: 0, comment: 'total luna staked amount (staked > 1000)' })
+  @Column({ default: '0', comment: 'total luna staked amount (staked > 1000)' })
   total: string
 
   @Column('decimal', { precision: 40, scale: 6, default: 0, comment: 'staked luna rate' })
   rate: string
 
-  @Column('numeric', { precision: 40, default: 0, comment: 'mir airdrop amount' })
+  @Column()
   amount: string
 
   @Column()

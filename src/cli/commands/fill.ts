@@ -1,11 +1,12 @@
 import { program } from 'commander'
-import { getRepository } from 'typeorm'
+import { getManager, EntityManager, getRepository } from 'typeorm'
 import { addMinutes, addDays, startOfDay } from 'date-fns'
 import * as bluebird from 'bluebird'
+import * as fs from 'fs'
 import * as logger from 'lib/logger'
 import { fetchAggregates, TimeSpan } from 'lib/polygon'
 import { assetService, priceService } from 'services'
-import { AssetEntity, PriceEntity } from 'orm'
+import { AssetEntity, PriceEntity, AirdropEntity } from 'orm'
 import { AssetStatus } from 'types'
 
 async function collectPrice(
@@ -66,6 +67,39 @@ export function fillCommands(): void {
         const asset = await assetService().get({ symbol })
         await fillPriceHistory(asset)
       }
+
+      logger.info('completed')
+    })
+
+  program
+    .command('fill-eth-airdrop')
+    .action(async () => {
+      const data = JSON.parse(fs.readFileSync('./data/eth_airdrop.json', 'utf8'))
+      const { merkleRoot, tokenTotal, claims } = data
+
+      await getManager().transaction(async (manager: EntityManager) => {
+        const repo = manager.getRepository(AirdropEntity)
+
+        await bluebird.mapSeries(Object.keys(claims), async (address, counter) => {
+          const { index, amount, proof } = claims[address]
+
+          await repo.save({
+            network: 'ETH',
+            stage: index,
+            address,
+            staked: '0',
+            rate: '0',
+            amount,
+            total: tokenTotal,
+            proof: JSON.stringify(proof),
+            merkleRoot
+          })
+
+          if (counter % 1000 === 0) {
+            logger.info('counter', counter)
+          }
+        })
+      })
 
       logger.info('completed')
     })
