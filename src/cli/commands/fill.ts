@@ -1,5 +1,5 @@
 import { program } from 'commander'
-import { getManager, EntityManager, getRepository } from 'typeorm'
+import { getRepository } from 'typeorm'
 import { addMinutes, addDays, startOfDay } from 'date-fns'
 import * as bluebird from 'bluebird'
 import * as fs from 'fs'
@@ -77,12 +77,13 @@ export function fillCommands(): void {
       const data = JSON.parse(fs.readFileSync('./data/eth_airdrop.json', 'utf8'))
       const { merkleRoot, tokenTotal, claims } = data
 
-      await getManager().transaction(async (manager: EntityManager) => {
-        const repo = manager.getRepository(AirdropEntity)
+      const repo = getRepository(AirdropEntity)
 
-        await bluebird.mapSeries(Object.keys(claims), async (address, counter) => {
-          const { index, amount, proof } = claims[address]
+      await bluebird.mapSeries(Object.keys(claims), async (address, counter) => {
+        const { index, amount, proof } = claims[address]
 
+        const record = await repo.findOne({ stage: index, network: 'ETH', address, amount })
+        if (!record) {
           await repo.save({
             network: 'ETH',
             stage: index,
@@ -94,11 +95,11 @@ export function fillCommands(): void {
             proof: JSON.stringify(proof),
             merkleRoot
           })
+        }
 
-          if (counter % 1000 === 0) {
-            logger.info('counter', counter)
-          }
-        })
+        if (counter % 1000 === 0) {
+          logger.info('counter', counter)
+        }
       })
 
       logger.info('completed')
