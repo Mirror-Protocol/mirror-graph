@@ -1,8 +1,7 @@
 import * as bluebird from 'bluebird'
-import { LCDClient } from '@terra-money/terra.js'
 import { Snapshot, Airdrop } from '@mirror-protocol/mirror-airdrop'
 import { getManager, EntityManager } from 'typeorm'
-import { TxWallet } from 'lib/terra'
+import { lcd, TxWallet } from 'lib/terra'
 import * as logger from 'lib/logger'
 import { Updater } from 'lib/Updater'
 import { num } from 'lib/num'
@@ -10,18 +9,15 @@ import { contractQuery } from 'lib/terra'
 import { contractService, govService } from 'services'
 import { AirdropEntity } from 'orm'
 import { ContractType } from 'types'
+import config from 'config'
 
-const lcdUrl = 'https://lcd.terra.dev'
-
-// 2020.11.23 00:00(UTC+0) height: 677984, (snapshot height must be in 10,000 units)
-const INITIAL_AIRDROP_BLOCK_HEIGHT = 680000
+// 2020.11.23 00:00(UTC+0) height: 677984, use 680000 (snapshot height must be in 10,000 units)
+const INITIAL_AIRDROP_BLOCK_HEIGHT = +process.env.INITIAL_AIRDROP_BLOCK_HEIGHT
 const INITIAL_AIRDROP_AMOUNT = '9150000000000'
 
 // floor(18300000000000(airdrop total) / 53) = 345283000000
 const LUNA_STAKER_AIRDROP_AMOUNT = '345283000000'
 
-// const SNAPSHOT_BLOCK_START =  900000
-// const SNAPSHOT_BLOCK_PERIOD = 100000
 const SNAPSHOT_BLOCK_START = +process.env.SNAPSHOT_BLOCK_START
 const SNAPSHOT_BLOCK_PERIOD = +process.env.SNAPSHOT_BLOCK_PERIOD
 
@@ -33,7 +29,7 @@ async function takeSnapshot(
   wallet: TxWallet, airdropContract: string, stage: number, height: number, airdropAmount: string, isInitialAirdrop = false
 ): Promise<void> {
   // take snapshot
-  const snapshot = new Snapshot(lcdUrl)
+  const snapshot = new Snapshot(config.TERRA_LCD)
   const snapshotHeight = height - (height % 10000)
   const delegators = await snapshot.takeSnapshot(snapshotHeight)
 
@@ -98,21 +94,17 @@ async function takeSnapshot(
   logger.info(
     `take airdrop snapshot - stage: ${stage}, height: ${snapshotHeight}, stakers: ${accounts.length}, staked: ${total.dividedBy(1000000).toFormat(0)}, airdrop: ${num(airdropAmount).dividedBy(1000000).toFormat(0)}`
   )
-  // console.log("Merkle Root", airdrop.getMerkleRoot());
-  // console.log("Merkle Proof", proof);
-  // console.log("Target Acc", accounts[0]);
-  // console.log("Verified", airdrop.verify(proof, accounts[0]));
 }
 
 export async function updateAirdrop(wallet: TxWallet): Promise<void> {
-  if (!updater.needUpdate(Date.now())
-    || !SNAPSHOT_BLOCK_START
-    || !SNAPSHOT_BLOCK_PERIOD
+  if (!updater.needUpdate(Date.now()) ||
+    !INITIAL_AIRDROP_BLOCK_HEIGHT ||
+    !SNAPSHOT_BLOCK_START ||
+    !SNAPSHOT_BLOCK_PERIOD
   ) {
     return
   }
 
-  const lcd = new LCDClient({ URL: lcdUrl, chainID: 'columbus-4', gasPrices: { uusd: 0.15 } })
   const latestBlock = await lcd.tendermint.blockInfo()
   if (!latestBlock)
     return
