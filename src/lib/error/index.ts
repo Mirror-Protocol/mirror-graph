@@ -6,7 +6,7 @@ export function init(
     sentryDsn?: string
   } = undefined
 ): void {
-  opts?.sentryDsn && sentry.init({ dsn: opts.sentryDsn })
+  opts?.sentryDsn && sentry.init({ dsn: opts.sentryDsn, environment: process.env.TERRA_CHAIN_ID })
 
   process.on('unhandledRejection', (error) => {
     logger.error(error)
