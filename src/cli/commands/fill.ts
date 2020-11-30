@@ -87,7 +87,7 @@ export function fillCommands(): void {
           await repo.save({
             network: 'ETH',
             stage: index,
-            address,
+            address: address.toLowerCase(),
             staked: '0',
             rate: '0',
             amount,
