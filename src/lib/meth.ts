@@ -7,7 +7,7 @@ const provider = ethers.getDefaultProvider(
 const distributorContract = new ethers.Contract(
   process.env.TERRA_CHAIN_ID === 'columbus-4'
     ? '??'
-    :'0xA15188DCdB6f22D634Ba4c2CEE987b98AfEa165d',
+    :'0x2A398bBa1236890fb6e9698A698A393Bb8ee8674',
   abi,
   provider,
 )

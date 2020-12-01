@@ -1,4 +1,5 @@
 import { program } from 'commander'
+import { ethers } from 'ethers'
 import { getRepository } from 'typeorm'
 import { addMinutes, addDays, startOfDay } from 'date-fns'
 import * as bluebird from 'bluebird'
@@ -90,7 +91,7 @@ export function fillCommands(): void {
             address: address.toLowerCase(),
             staked: '0',
             rate: '0',
-            amount: amount.replace('0x0', '').replace('0x', ''),
+            amount: ethers.BigNumber.from(amount).toString(),
             total: tokenTotal,
             proof: JSON.stringify(proof),
             merkleRoot
