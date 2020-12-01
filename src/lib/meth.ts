@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
 
-const abi = ['function isClaimed(uint256 index) public override view returns (bool)']
+const abi = ['function isClaimed(uint256 index) public view returns (bool)']
+
 const provider = ethers.getDefaultProvider(
   process.env.TERRA_CHAIN_ID === 'columbus-4' ? 'homestead' :'ropsten'
 )
