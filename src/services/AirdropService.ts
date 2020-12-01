@@ -1,6 +1,8 @@
+import * as bluebird from 'bluebird'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions, FindOneOptions, FindManyOptions } from 'typeorm'
 import { Container, Service } from 'typedi'
+import { isAirdropClaimed } from 'lib/meth'
 import { AirdropEntity } from 'orm'
 
 @Service()
@@ -24,11 +26,26 @@ export class AirdropService {
   }
 
   async getAirdrop(network: string, address: string, repo = this.repo): Promise<AirdropEntity[]> {
-    return this.getAll({
+    const list = await this.getAll({
       select: ['address', 'stage', 'proof', 'amount'],
       where: { network, address, claimable: true },
       order: { id: 'ASC' },
     }, repo)
+
+    if (network === 'TERRA') {
+      return list
+    } else if(network === 'ETH') {
+      return bluebird.mapSeries(list, async (entity) => {
+        const isClaimed = await isAirdropClaimed(entity.stage.toString())
+        if (isClaimed) {
+          entity.claimable = false
+          await repo.save(entity)
+          return
+        }
+
+        return entity
+      }).filter(Boolean)
+    }
   }
 }
 

@@ -29,6 +29,7 @@
     "crypto-js": "^4.0.0",
     "date-fns": "^2.16.0",
     "date-fns-timezone": "^0.1.4",
+    "ethers": "^5.0.23",
     "form-data": "^3.0.0",
     "graphql": "^15.4.0",
     "graphql-request": "^3.3.0",

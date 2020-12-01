@@ -90,7 +90,7 @@ export function fillCommands(): void {
             address: address.toLowerCase(),
             staked: '0',
             rate: '0',
-            amount,
+            amount: amount.replace('0x0', '').replace('0x', ''),
             total: tokenTotal,
             proof: JSON.stringify(proof),
             merkleRoot
