@@ -1,7 +1,6 @@
-import { Coins, MsgExecuteContract } from '@terra-money/terra.js'
+import * as bluebird from 'bluebird'
 import { TxWallet, getLatestBlockHeight } from 'lib/terra'
 import { getGovPolls, getGovConfig } from 'lib/mirror'
-import { toSnakeCase } from 'lib/caseStyles'
 import * as logger from 'lib/logger'
 import { govService } from 'services'
 import { Updater } from 'lib/Updater'
@@ -18,17 +17,13 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
     return
 
   const { gov } = govService().get()
-  const sender = wallet.key.accAddress
   const { effectiveDelay, expirationPeriod } = await getGovConfig(gov)
-  const msgs = []
 
   // collect ended poll
   let polls = await getGovPolls(gov, 'in_progress', 100)
-  polls.map((poll) => {
+  await bluebird.mapSeries(polls, async (poll) => {
     if (latestHeight > poll.endHeight) {
-      msgs.push(new MsgExecuteContract(
-        sender, gov, toSnakeCase({ endPoll: { pollId: poll.id } }), new Coins([])
-      ))
+      await wallet.execute(gov, { endPoll: { pollId: poll.id } })
 
       logger.info(`end poll id: ${poll.id}`)
     }
@@ -36,13 +31,12 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
 
   // collect execute needed
   polls = await getGovPolls(gov, 'passed', 100)
-  polls.map((poll) => {
+  // polls.map((poll) => {
+  await bluebird.mapSeries(polls, async (poll) => {
     const executeHeight = poll.endHeight + effectiveDelay
     // try execute only 1 hour(600 blocks)
     if (latestHeight > executeHeight && latestHeight - executeHeight < 10 * 60 ) {
-      msgs.push(new MsgExecuteContract(
-        sender, gov, toSnakeCase({ executePoll: { pollId: poll.id } }), new Coins([])
-      ))
+      await wallet.execute(gov, { executePoll: { pollId: poll.id } })
 
       logger.info(`execute poll id: ${poll.id}`)
     }
@@ -50,17 +44,11 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
     // over expiration period, expire
     const expireHeight = poll.endHeight + expirationPeriod
     if (latestHeight > expireHeight) {
-      msgs.push(new MsgExecuteContract(
-        sender, gov, toSnakeCase({ expirePoll: { pollId: poll.id } }), new Coins([])
-      ))
+      await wallet.execute(gov, { expirePoll: { pollId: poll.id } })
 
       logger.info(`expire poll id: ${poll.id}`)
     }
   })
-
-  if (msgs.length > 0) {
-    await wallet.executeMsgs(msgs)
-  }
 
   logger.info('gov polls updated')
 }
