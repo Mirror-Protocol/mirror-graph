@@ -19,10 +19,10 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
   const { factory, collector, mirrorToken } = govService().get()
   const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
   const sender = wallet.key.accAddress
-  
-  // MIR inflation distribute every 2hour
+
+  // MIR inflation distribute every 1hour + 1min
   const distributionInfo = await getDistributionInfo(factory)
-  if (Date.now() - (+distributionInfo.lastDistributed*1000) > 60000 * 60 * 2) {
+  if (Date.now() - (+distributionInfo.lastDistributed*1000) > 60000 * 60 + 60000) {
     await wallet.execute(factory, { distribute: {} })
   }
 
