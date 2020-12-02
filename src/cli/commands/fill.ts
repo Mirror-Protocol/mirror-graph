@@ -92,7 +92,7 @@ export function fillCommands(): void {
             staked: '0',
             rate: '0',
             amount: ethers.BigNumber.from(amount).toString(),
-            total: tokenTotal,
+            total: ethers.BigNumber.from(tokenTotal).toString(),
             proof: JSON.stringify(proof),
             merkleRoot
           })
