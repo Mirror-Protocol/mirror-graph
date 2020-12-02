@@ -198,27 +198,31 @@ export class StatisticService {
   async getAssetAPR(token: string): Promise<string> {
     const asset = await this.assetService.get({ token })
 
-    const to = Date.now()
-    const from = addDays(to, -1).getTime()
+    // const to = Date.now()
+    // const from = addDays(to, -1).getTime()
+    const { mirrorToken } = this.govService.get()
 
     const price = await this.priceService.getPrice(token)
-    const mirPrice = await this.priceService.getPrice(this.govService.get().mirrorToken)
-    const reward24h = (
-      await this.rewardRepo
-        .createQueryBuilder()
-        .select('sum(amount)', 'amount')
-        .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
-        .andWhere('token = :token', { token })
-        .andWhere('is_gov_reward = false')
-        .getRawOne()
-    )?.amount
+    const mirPrice = await this.priceService.getPrice(mirrorToken)
+    // const reward24h = (
+    //   await this.rewardRepo
+    //     .createQueryBuilder()
+    //     .select('sum(amount)', 'amount')
+    //     .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+    //     .andWhere('token = :token', { token })
+    //     .andWhere('is_gov_reward = false')
+    //     .getRawOne()
+    // )?.amount
     const liquidityValue = num(asset.positions.liquidity)
       .multipliedBy(price)
       .plus(asset.positions.uusdLiquidity)
 
-    if (!reward24h || !mirPrice || !price) return '0'
+    const rewards = [3431250, 1715625, 857813, 428906]
+    const rewardPerYear = token !== mirrorToken ? rewards[0] : rewards[0] * 3
 
-    const mirValue = num(reward24h).multipliedBy(mirPrice).multipliedBy(365)
+    if (!rewardPerYear || !mirPrice || !price) return '0'
+
+    const mirValue = num(rewardPerYear).multipliedBy(mirPrice)
     const poolValue = liquidityValue.multipliedBy(
       num(asset.positions.lpStaked).dividedBy(asset.positions.lpShares)
     )
