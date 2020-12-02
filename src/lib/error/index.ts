@@ -7,7 +7,8 @@ export function init(
   } = undefined
 ): void {
   opts?.sentryDsn && sentry.init({
-    dsn: opts.sentryDsn, environment: process.env.TERRA_CHAIN_ID,
+    dsn: opts.sentryDsn,
+    environment: process.env.TERRA_CHAIN_ID,
     maxBreadcrumbs: 500,
   })
 
