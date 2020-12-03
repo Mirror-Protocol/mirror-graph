@@ -4,6 +4,13 @@
 
 The Mirror API (also known as Mirror Graph) is an GraphQL-based data service that allows anybody to query data regarding the current and aggregate application state of the Mirror Protocol. Potential consumers of data include: dashboards, mAsset arbitrage trading bots, dApp activity trackers, etc.
 
+You can access the Mirror API through the endpoints shown below:
+
+| | Chain ID | URL |
+| - | - | - |
+| Mainnet | `columbus-4` | https://graph.mirror.finance/graphql |
+| Testnet | `tequila-0004` | https://tequila-graph.mirror.finance/graphql |
+
 ## Prerequisites
 * Node.js v12
 * TypeScript v3.8
