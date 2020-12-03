@@ -26,7 +26,7 @@ const SNAPSHOT_LAST_STAGE = 53 + 1 // start stage: 2, initial stage: 1
 const updater = new Updater(60 * 60000) // 1hour
 
 async function takeSnapshot(
-  wallet: TxWallet, airdropContract: string, stage: number, height: number, airdropAmount: string, isInitialAirdrop = false
+  wallet: TxWallet, airdropContract: string, stage: number, height: number, airdropAmount: string
 ): Promise<void> {
   // take snapshot
   const snapshot = new Snapshot(config.TERRA_LCD)
@@ -51,10 +51,7 @@ async function takeSnapshot(
   delegatorAddresses.map((delegator) => {
     const staked = num(delegators[delegator].toString())
     const rate = staked.dividedBy(total).toString()
-
-    const amount = isInitialAirdrop
-      ? num(airdropAmount).dividedBy(delegatorAddresses.length).toFixed(0)
-      : num(airdropAmount).multipliedBy(rate).toFixed(0)
+    const amount = num(airdropAmount).multipliedBy(rate).toFixed(0)
 
     accounts.push({ address: delegator, amount, staked: staked.toString(), rate })
   })
@@ -117,7 +114,7 @@ export async function updateAirdrop(wallet: TxWallet): Promise<void> {
   const { latestStage } = await contractQuery(contract.address, { latestStage: {} })
   if (!latestStage) {
     // take initial airdrop snapshot
-    await takeSnapshot(wallet, contract.address, 1, INITIAL_AIRDROP_BLOCK_HEIGHT, INITIAL_AIRDROP_AMOUNT, true)
+    await takeSnapshot(wallet, contract.address, 1, INITIAL_AIRDROP_BLOCK_HEIGHT, INITIAL_AIRDROP_AMOUNT)
 
     logger.info('initial airdrop snapshot updated')
     return
@@ -128,7 +125,7 @@ export async function updateAirdrop(wallet: TxWallet): Promise<void> {
   const nextStageHeight = SNAPSHOT_BLOCK_START + ((nextStage - 2) * SNAPSHOT_BLOCK_PERIOD)
 
   if (nextStage <= SNAPSHOT_LAST_STAGE && latestBlockHeight - 10 >= nextStageHeight) {
-    await takeSnapshot(wallet, contract.address, nextStage, nextStageHeight, LUNA_STAKER_AIRDROP_AMOUNT, true)
+    await takeSnapshot(wallet, contract.address, nextStage, nextStageHeight, LUNA_STAKER_AIRDROP_AMOUNT)
   }
 
   logger.info('snapshot updated')
