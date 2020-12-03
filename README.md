@@ -1,5 +1,9 @@
 # Mirror Graph
 
+**NOTE**: Notes on how to use are available [here](https://docs.mirror.finance/developer-tools/mirror-api).
+
+The Mirror API (also known as Mirror Graph) is an GraphQL-based data service that allows anybody to query data regarding the current and aggregate application state of the Mirror Protocol. Potential consumers of data include: dashboards, mAsset arbitrage trading bots, dApp activity trackers, etc.
+
 ## Prerequisites
 * Node.js v12
 * TypeScript v3.8
