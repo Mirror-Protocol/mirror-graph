@@ -53,7 +53,9 @@ async function takeSnapshot(
     const rate = staked.dividedBy(total).toString()
     const amount = num(airdropAmount).multipliedBy(rate).toFixed(0)
 
-    accounts.push({ address: delegator, amount, staked: staked.toString(), rate })
+    if (num(amount).isGreaterThan(0)) {
+      accounts.push({ address: delegator, amount, staked: staked.toString(), rate })
+    }
   })
 
   const airdrop = new Airdrop(accounts)
