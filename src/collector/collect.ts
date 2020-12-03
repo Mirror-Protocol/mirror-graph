@@ -26,8 +26,8 @@ export async function collect(now: number): Promise<void> {
   }
 
   if (txs.length < 1) {
-    logger.info(`collected: ${config.TERRA_CHAIN_ID}, ${collectedHeight + 1}-${latestHeight}, 0 txs`)
-    await updateBlock(collectedBlock, latestHeight)
+    // logger.info(`collected: ${config.TERRA_CHAIN_ID}, ${collectedHeight + 1}-${latestHeight}, 0 txs`)
+    // await updateBlock(collectedBlock, latestHeight)
     return
   }
 
