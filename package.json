@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@koa/cors": "^3.1.0",
-    "@mirror-protocol/mirror-airdrop": "^1.0.3",
+    "@mirror-protocol/mirror-airdrop": "^1.0.4",
     "@sentry/node": "^5.27.2",
     "@terra-money/terra.js": "^1.0.2",
     "apollo-server": "^2.19.0",
