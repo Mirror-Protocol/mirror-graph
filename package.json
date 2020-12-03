@@ -2,7 +2,7 @@
   "name": "mirror-graph",
   "version": "1.0.0",
   "main": "src/main.ts",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "dev": "nodemon --signal SIGINT --exec ts-node -e ts,json,R --files -r tsconfig-paths/register src/main.ts",
     "start": "NODE_ENV=production node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
