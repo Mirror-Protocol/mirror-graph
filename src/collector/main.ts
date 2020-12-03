@@ -19,7 +19,7 @@ async function loop(): Promise<void> {
 
     await collect(now)
 
-    await bluebird.delay(100)
+    await bluebird.delay(200)
   }
 }
 

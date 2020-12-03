@@ -20,12 +20,14 @@ export async function collect(now: number): Promise<void> {
   }
   const collectedHeight = collectedBlock.height
 
-  const txs = await getTxs(collectedHeight + 1, latestHeight, 200).catch(errorHandler)
+  const txs = await getTxs(collectedHeight + 1, latestHeight, 100).catch(errorHandler)
   if (!txs) {
+    await bluebird.delay(500)
     return
   }
 
   if (txs.length < 1) {
+    await bluebird.delay(500)
     // logger.info(`collected: ${config.TERRA_CHAIN_ID}, ${collectedHeight + 1}-${latestHeight}, 0 txs`)
     // await updateBlock(collectedBlock, latestHeight)
     return
