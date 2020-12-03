@@ -20,7 +20,7 @@ export async function collect(now: number): Promise<void> {
   }
   const collectedHeight = collectedBlock.height
 
-  const txs = await getTxs(collectedHeight + 1, latestHeight, 500).catch(errorHandler)
+  const txs = await getTxs(collectedHeight + 1, latestHeight, 200).catch(errorHandler)
   if (!txs) {
     return
   }
