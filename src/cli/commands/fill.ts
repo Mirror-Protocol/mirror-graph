@@ -81,8 +81,9 @@ export function fillCommands(): void {
       const repo = getRepository(AirdropEntity)
 
       await bluebird.mapSeries(Object.keys(claims), async (address, counter) => {
-        const { index, amount, proof } = claims[address]
+        const { index, amount: ethAmount, proof } = claims[address]
 
+        const amount = ethers.BigNumber.from(ethAmount).toString()
         const record = await repo.findOne({ stage: index, network: 'ETH', address, amount })
         if (!record) {
           await repo.save({
@@ -91,7 +92,7 @@ export function fillCommands(): void {
             address: address.toLowerCase(),
             staked: '0',
             rate: '0',
-            amount: ethers.BigNumber.from(amount).toString(),
+            amount,
             total: ethers.BigNumber.from(tokenTotal).toString(),
             proof: JSON.stringify(proof),
             merkleRoot
