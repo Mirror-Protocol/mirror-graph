@@ -217,7 +217,7 @@ export class StatisticService {
       .multipliedBy(price)
       .plus(asset.positions.uusdLiquidity)
 
-    const rewards = [3431250, 1715625, 857813, 428906]
+    const rewards = [3431250000000, 1715625000000, 857813000000, 428906000000]
     const rewardPerYear = token !== mirrorToken ? rewards[0] : rewards[0] * 3
 
     if (!rewardPerYear || !mirPrice || !price) return '0'
