@@ -3,7 +3,13 @@ import { ethers } from 'ethers'
 const abi = ['function isClaimed(uint256 index) public view returns (bool)']
 
 const provider = ethers.getDefaultProvider(
-  process.env.TERRA_CHAIN_ID === 'columbus-4' ? 'homestead' :'ropsten'
+  process.env.TERRA_CHAIN_ID === 'columbus-4' ? 'homestead' :'ropsten',
+  {
+    infura: {
+      projectId: process.env.INFURA_ID,
+      projectSecret: process.env.INFURA_SECRET,
+    }
+  }
 )
 const distributorContract = new ethers.Contract(
   process.env.TERRA_CHAIN_ID === 'columbus-4'
