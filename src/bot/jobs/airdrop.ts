@@ -35,7 +35,7 @@ async function takeSnapshot(
 
   // filtering - staked luna >= 1000
   const delegatorAddresses = Object.keys(delegators)
-    .filter((delegator) => num(delegators[delegator].toString()).isGreaterThanOrEqualTo(1000000000))
+    // .filter((delegator) => num(delegators[delegator].toString()).isGreaterThanOrEqualTo(1000000000))
   if (delegatorAddresses.length < 1) {
     throw new Error('take snapshot failed. target delegators is none.')
   }
