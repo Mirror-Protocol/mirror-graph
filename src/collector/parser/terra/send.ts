@@ -19,7 +19,6 @@ export async function parse(manager: EntityManager, txInfo: TxInfo, log: TxLog):
     txHash: txInfo.txhash,
     datetime,
     govId: govService().get().id,
-    memo: txInfo.tx.memo && txInfo.tx.memo.replace('\\', ''),
   }
 
   await bluebird.mapSeries(transfers, async (transfer) => {
