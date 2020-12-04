@@ -9,7 +9,7 @@ import { AssetStatus } from 'types'
 import { num } from 'lib/num'
 import { Updater } from 'lib/Updater'
 
-const updater = new Updater(60 * 60000) // 1hour
+const updater = new Updater(5 * 60000) // 5min
 
 export async function distributeRewards(wallet: TxWallet): Promise<void> {
   if (!updater.needUpdate(Date.now())) {
