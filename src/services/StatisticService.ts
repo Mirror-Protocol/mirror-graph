@@ -8,6 +8,7 @@ import { getTokenBalance } from 'lib/mirror'
 import { GovService, AssetService, PriceService, OracleService, govService } from 'services'
 import { DailyStatisticEntity, TxEntity, RewardEntity } from 'orm'
 import { Statistic, Latest24h, ValueAt } from 'graphql/schema'
+import { getMIRAnnualRewards } from 'lib/utils'
 
 @Service()
 export class StatisticService {
@@ -197,32 +198,18 @@ export class StatisticService {
 
   async getAssetAPR(token: string): Promise<string> {
     const asset = await this.assetService.get({ token })
-
-    // const to = Date.now()
-    // const from = addDays(to, -1).getTime()
     const { mirrorToken } = this.govService.get()
 
     const price = await this.priceService.getPrice(token)
     const mirPrice = await this.priceService.getPrice(mirrorToken)
-    // const reward24h = (
-    //   await this.rewardRepo
-    //     .createQueryBuilder()
-    //     .select('sum(amount)', 'amount')
-    //     .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
-    //     .andWhere('token = :token', { token })
-    //     .andWhere('is_gov_reward = false')
-    //     .getRawOne()
-    // )?.amount
     const liquidityValue = num(asset.positions.liquidity)
       .multipliedBy(price)
       .plus(asset.positions.uusdLiquidity)
-
-    const rewards = [3431250000000, 1715625000000, 857813000000, 428906000000]
-    const rewardPerYear = token !== mirrorToken ? rewards[0] : rewards[0] * 3
+    const rewardPerYear = getMIRAnnualRewards(Date.now(), token === mirrorToken)
 
     if (!rewardPerYear || !mirPrice || !price) return '0'
 
-    const mirValue = num(rewardPerYear).multipliedBy(mirPrice)
+    const mirValue = num(rewardPerYear).multipliedBy(1000000).multipliedBy(mirPrice)
     const poolValue = liquidityValue.multipliedBy(
       num(asset.positions.lpStaked).dividedBy(asset.positions.lpShares)
     )
