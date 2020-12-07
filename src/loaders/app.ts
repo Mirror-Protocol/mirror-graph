@@ -6,7 +6,7 @@ import * as cors from '@koa/cors'
 import { apiErrorHandler, APIError, ErrorTypes } from 'lib/error'
 import { error } from 'lib/response'
 
-const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}mirrorprotocol\.com(?::\d{4,5})?(?:\/|$)/
+const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}mirror\.finance(?::\d{4,5})?(?:\/|$)/
 
 export async function initApp(): Promise<Koa> {
   const app = new Koa()
@@ -21,7 +21,25 @@ export async function initApp(): Promise<Koa> {
       ctx.set('Pragma', 'no-cache')
       ctx.set('Expires', '0')
     })
-    .use(helmet())
+    .use(
+      helmet({
+        contentSecurityPolicy: {
+          directives: {
+            'default-src': ["'self'"],
+            'base-uri': ["'self'"],
+            'block-all-mixed-content': [],
+            'font-src': ["'self'", 'https:', 'data:'],
+            'frame-ancestors': ["'self'"],
+            'img-src': ["'self'", 'data:', 'cdn.jsdelivr.net'],
+            'object-src': ["'none'"],
+            'script-src': ["'self'", 'cdn.jsdelivr.net'],
+            'script-src-attr': ["'none'"],
+            'style-src': ["'self'", 'https:', "'unsafe-inline'"],
+            'upgrade-insecure-requests': [],
+          },
+        },
+      })
+    )
     .use(apiErrorHandler(error))
     .use(
       cors({

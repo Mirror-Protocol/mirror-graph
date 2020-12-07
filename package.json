@@ -1,6 +1,6 @@
 {
   "name": "mirror-graph",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "src/main.ts",
   "license": "Apache-2.0",
   "repository": {
@@ -59,6 +59,7 @@
     "@types/bluebird": "^3.5.33",
     "@types/jest": "^26.0.16",
     "@types/koa": "^2.11.6",
+    "@types/koa-helmet": "^6.0.1",
     "@types/koa-router": "^7.4.1",
     "@types/node-fetch": "^2.5.7",
     "@types/pg": "^7.14.7",
