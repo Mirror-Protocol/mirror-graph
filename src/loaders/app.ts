@@ -32,7 +32,7 @@ export async function initApp(): Promise<Koa> {
             'frame-ancestors': ["'self'"],
             'img-src': ["'self'", 'data:', 'cdn.jsdelivr.net'],
             'object-src': ["'none'"],
-            'script-src': ["'self'", 'cdn.jsdelivr.net'],
+            'script-src': ["'self'", "'unsafe-inline'", 'cdn.jsdelivr.net'],
             'script-src-attr': ["'none'"],
             'style-src': ["'self'", 'https:', "'unsafe-inline'"],
             'upgrade-insecure-requests': [],
