@@ -4,7 +4,7 @@ import { getManager, EntityManager } from 'typeorm'
 import { lcd, TxWallet } from 'lib/terra'
 import * as logger from 'lib/logger'
 import { Updater } from 'lib/Updater'
-import { num } from 'lib/num'
+import { num, BigNumber } from 'lib/num'
 import { contractQuery } from 'lib/terra'
 import { contractService, govService } from 'services'
 import { AirdropEntity } from 'orm'
@@ -48,15 +48,23 @@ async function takeSnapshot(
 
   // calculate airdrop amount per account
   const accounts = []
-  delegatorAddresses.map((delegator) => {
-    const staked = num(delegators[delegator].toString())
-    const rate = staked.dividedBy(total).toString()
-    const amount = num(airdropAmount).multipliedBy(rate).toFixed(0)
+  try {
+    BigNumber.config({ DECIMAL_PLACES: 20 })
 
-    if (num(amount).isGreaterThan(0)) {
-      accounts.push({ address: delegator, amount, staked: staked.toString(), rate })
-    }
-  })
+    delegatorAddresses.map((delegator) => {
+      const staked = num(delegators[delegator].toString())
+      const rate = staked.dividedBy(total).toString()
+      const amount = num(airdropAmount).multipliedBy(rate).toFixed(0)
+
+      if (num(amount).isGreaterThan(0)) {
+        accounts.push({ address: delegator, amount, staked: staked.toString(), rate })
+      }
+    })
+  } catch(error) {
+    throw new Error(error)
+  } finally {
+    BigNumber.config({ DECIMAL_PLACES: config.DECIMALS })
+  }
 
   const airdrop = new Airdrop(accounts)
   await getManager().transaction(async (manager: EntityManager) => {
