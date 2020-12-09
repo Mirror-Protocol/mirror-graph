@@ -5,10 +5,13 @@ import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { num } from 'lib/num'
 import { getTokenBalance } from 'lib/mirror'
-import { GovService, AssetService, PriceService, OracleService, govService } from 'services'
+import { getContractStore } from 'lib/terra'
+import { getMethMirTokenBalance } from 'lib/meth'
+import { getMIRAnnualRewards } from 'lib/utils'
+import { GovService, AssetService, PriceService, OracleService, ContractService } from 'services'
 import { DailyStatisticEntity, TxEntity, RewardEntity } from 'orm'
 import { Statistic, Latest24h, ValueAt } from 'graphql/schema'
-import { getMIRAnnualRewards } from 'lib/utils'
+import { ContractType } from 'types'
 
 @Service()
 export class StatisticService {
@@ -17,6 +20,7 @@ export class StatisticService {
     @Inject((type) => AssetService) private readonly assetService: AssetService,
     @Inject((type) => PriceService) private readonly priceService: PriceService,
     @Inject((type) => OracleService) private readonly oracleService: OracleService,
+    @Inject((type) => ContractService) private readonly contractService: ContractService,
     @InjectRepository(DailyStatisticEntity)
     private readonly dailyRepo: Repository<DailyStatisticEntity>,
     @InjectRepository(TxEntity) private readonly txRepo: Repository<TxEntity>,
@@ -47,6 +51,32 @@ export class StatisticService {
       assetMarketCap: assetMarketCap.toFixed(0),
       totalValueLocked: totalValueLocked.toFixed(0),
       collateralRatio: totalValueLocked.dividedBy(assetMarketCap).multipliedBy(100).toFixed(2),
+      ...await this.mirSupply()
+    }
+  }
+
+  async mirSupply(): Promise<Partial<Statistic>> {
+    const gov = this.govService.get()
+    const mirrorToken = gov.mirrorToken
+    const airdropContract = (await this.contractService.get({ type: ContractType.AIRDROP, gov })).address
+    const factoryContract = (await this.contractService.get({ type: ContractType.FACTORY, gov })).address
+    const communityContract = (await this.contractService.get({ type: ContractType.COMMUNITY, gov })).address
+
+    const airdropBalance = await getTokenBalance(mirrorToken, airdropContract)
+    const factoryBalance = await getTokenBalance(mirrorToken, factoryContract)
+    const communityBalance = await getTokenBalance(mirrorToken, communityContract)
+    const methBalance = await getMethMirTokenBalance()
+
+    const { totalSupply } = await getContractStore(mirrorToken, { tokenInfo: {} })
+    const mirCirculatingSupply = num(totalSupply)
+      .minus(airdropBalance)
+      .minus(factoryBalance)
+      .minus(communityBalance)
+      .minus(methBalance)
+
+    return {
+      mirTotalSupply: totalSupply,
+      mirCirculatingSupply: mirCirculatingSupply.toFixed(0),
     }
   }
 
@@ -124,7 +154,7 @@ export class StatisticService {
       daily.tradingVolume = num(daily.tradingVolume).plus(volume).toString()
     } else {
       daily = new DailyStatisticEntity({
-        gov: govService().get(),
+        gov: this.govService.get(),
         datetime,
         tradingVolume: volume,
       })
@@ -155,7 +185,7 @@ export class StatisticService {
 
     const daily =
       (await repo.findOne({ datetime })) ||
-      new DailyStatisticEntity({ gov: govService().get(), datetime })
+      new DailyStatisticEntity({ gov: this.govService.get(), datetime })
 
     daily.cumulativeLiquidity = liquidityValue.toString()
 

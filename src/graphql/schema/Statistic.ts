@@ -36,6 +36,12 @@ export class Statistic {
   @Field()
   latest24h: Latest24h
 
+  @Field()
+  mirCirculatingSupply: string
+
+  @Field()
+  mirTotalSupply: string
+
   @Field((type) => [ValueAt], { nullable: true })
   liquidityHistory: ValueAt[]
 

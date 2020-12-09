@@ -43,3 +43,16 @@ export interface OracleAddress {
 export interface Whitelist {
   [symbol: string]: string
 }
+
+export interface EthAsset {
+  symbol: string
+  name: string
+  token: string
+  lp: string
+  pool: string
+  status: string
+}
+
+export interface EthAssets {
+  [token: string]: EthAsset
+}

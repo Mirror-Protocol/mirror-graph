@@ -1,10 +1,11 @@
 import * as fs from 'fs'
-import { CodeIds, Contracts, Asset, Assets, OracleAddress } from 'types'
+import { CodeIds, Contracts, Asset, Assets, OracleAddress, EthAsset, EthAssets } from 'types'
 import * as logger from 'lib/logger'
 
 const CODE_IDS_PATH = './data/codeIds.json'
 const CONTRACTS_PATH = './data/contracts.json'
 const ASSETS_PATH = './data/assets.json'
+const ETH_ASSETS_PATH = './data/eth_assets.json'
 const DESCRIPTION_PATH = './data/description.json'
 const ORACLE_ADDRESS_PATH = './data/address.json'
 
@@ -44,6 +45,17 @@ export function loadDescriptions(): { [symbol: string]: string } | undefined {
 
 export function getAsset(symbol: string): Asset {
   const assets = loadAssets()
+  const token = Object.keys(assets).find((token) => assets[token].symbol === symbol)
+
+  return assets[token]
+}
+
+export function loadEthAssets(): EthAssets | undefined {
+  return loadJSON(ETH_ASSETS_PATH) as EthAssets
+}
+
+export function getEthAsset(symbol: string): EthAsset {
+  const assets = loadEthAssets()
   const token = Object.keys(assets).find((token) => assets[token].symbol === symbol)
 
   return assets[token]
