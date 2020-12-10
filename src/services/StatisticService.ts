@@ -1,5 +1,6 @@
 import { addDays } from 'date-fns'
 import * as bluebird from 'bluebird'
+import * as memoizee from 'memoizee'
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
@@ -12,6 +13,31 @@ import { GovService, AssetService, PriceService, OracleService, ContractService 
 import { DailyStatisticEntity, TxEntity, RewardEntity } from 'orm'
 import { Statistic, Latest24h, ValueAt } from 'graphql/schema'
 import { ContractType } from 'types'
+
+async function fetchMirTokenSupply(
+  mirrorToken: string, airdropContract: string, factoryContract: string, communityContract: string
+): Promise<{ mirTotalSupply: string; mirCirculatingSupply: string }> {
+  const airdropBalance = await getTokenBalance(mirrorToken, airdropContract)
+  const factoryBalance = await getTokenBalance(mirrorToken, factoryContract)
+  const communityBalance = await getTokenBalance(mirrorToken, communityContract)
+  const methBalance = await getMethMirTokenBalance()
+
+  const { totalSupply } = await getContractStore(mirrorToken, { tokenInfo: {} })
+  const mirCirculatingSupply = num(totalSupply)
+    .minus(airdropBalance)
+    .minus(factoryBalance)
+    .minus(communityBalance)
+    .minus(methBalance)
+
+  return {
+    mirTotalSupply: totalSupply,
+    mirCirculatingSupply: mirCirculatingSupply.toFixed(0),
+  }
+}
+
+export const getMethMirTokenSupply = memoizee(fetchMirTokenSupply, {
+  promise: true, maxAge: 1000 * 60 * 10, // 10 minutes
+})
 
 @Service()
 export class StatisticService {
@@ -62,22 +88,7 @@ export class StatisticService {
     const factoryContract = (await this.contractService.get({ type: ContractType.FACTORY, gov })).address
     const communityContract = (await this.contractService.get({ type: ContractType.COMMUNITY, gov })).address
 
-    const airdropBalance = await getTokenBalance(mirrorToken, airdropContract)
-    const factoryBalance = await getTokenBalance(mirrorToken, factoryContract)
-    const communityBalance = await getTokenBalance(mirrorToken, communityContract)
-    const methBalance = await getMethMirTokenBalance()
-
-    const { totalSupply } = await getContractStore(mirrorToken, { tokenInfo: {} })
-    const mirCirculatingSupply = num(totalSupply)
-      .minus(airdropBalance)
-      .minus(factoryBalance)
-      .minus(communityBalance)
-      .minus(methBalance)
-
-    return {
-      mirTotalSupply: totalSupply,
-      mirCirculatingSupply: mirCirculatingSupply.toFixed(0),
-    }
+    return getMethMirTokenSupply(mirrorToken, airdropContract, factoryContract, communityContract)
   }
 
   async latest24h(): Promise<Latest24h> {

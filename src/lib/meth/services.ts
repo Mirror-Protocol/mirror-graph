@@ -23,6 +23,7 @@ export async function getMethMirTokenBalance(): Promise<string> {
   const distributorBalance = num(ethers.utils.formatEther(
     await balanceOf(mirrorToken, getDistibutorContractAddress())
   )).multipliedBy(1000000)
+
   balance = balance.plus(distributorBalance)
 
   await bluebird.map(Object.keys(assets), async (token) => {
