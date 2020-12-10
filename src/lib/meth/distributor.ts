@@ -19,5 +19,5 @@ export function getDistributorContract(): ethers.Contract {
 }
 
 export async function isAirdropClaimed(index: string): Promise<boolean> {
-  return distributorContract.isClaimed(index)
+  return getDistributorContract().isClaimed(index)
 }
