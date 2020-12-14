@@ -146,7 +146,6 @@ export class StatisticService {
       .dividedBy(7)
       .multipliedBy(365)
       .dividedBy(govStakedMir)
-      .multipliedBy(100)
 
     return {
       transactions: txs?.count || '0',
