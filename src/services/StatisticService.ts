@@ -94,6 +94,7 @@ export class StatisticService {
   async latest24h(): Promise<Latest24h> {
     const now = Date.now()
     const before24h = addDays(now, -1).getTime()
+    const before7d = addDays(now, -7).getTime()
     const before48h = addDays(now, -2).getTime()
 
     const txs = await this.txRepo
@@ -129,19 +130,23 @@ export class StatisticService {
         ? num(volume).minus(volume48h).dividedBy(volume48h).multipliedBy(100).toFixed(2)
         : '0'
 
-    // gov stake reward = (24h reward amount) / (staked to gov MIR amount)
+    // gov stake reward = ((7days reward amount) / 7 * 365) / (staked to gov MIR amount)
     const govEntity = this.govService.get()
-    const govReward24h = (
+    const govReward7d = (
       await this.rewardRepo
         .createQueryBuilder()
         .select('sum(amount)', 'amount')
-        .where('datetime BETWEEN :from AND :to', { from: new Date(before24h), to: new Date(now) })
+        .where('datetime BETWEEN :from AND :to', { from: new Date(before7d), to: new Date(now) })
         .andWhere('token = :token', { token: govEntity.mirrorToken })
         .andWhere('is_gov_reward = true')
         .getRawOne()
     )?.amount
     const govStakedMir = await getTokenBalance(govEntity.mirrorToken, govEntity.gov)
-    const govAPR = num(govReward24h).dividedBy(govStakedMir).multipliedBy(100)
+    const govAPR = num(govReward7d)
+      .dividedBy(7)
+      .multipliedBy(365)
+      .dividedBy(govStakedMir)
+      .multipliedBy(100)
 
     return {
       transactions: txs?.count || '0',
