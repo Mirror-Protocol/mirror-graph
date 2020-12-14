@@ -1,5 +1,5 @@
 import { Resolver, Query, FieldResolver, Arg } from 'type-graphql'
-import { Statistic, Latest24h, ValueAt } from 'graphql/schema'
+import { Statistic, Latest24h, ValueAt, AccountBalance } from 'graphql/schema'
 import { StatisticService } from 'services'
 
 @Resolver((of) => Statistic)
@@ -9,6 +9,18 @@ export class StatisticResolver {
   @Query((returns) => Statistic)
   async statistic(): Promise<Statistic> {
     return await this.statisticService.statistic() as Statistic
+  }
+
+  @Query((returns) => [AccountBalance])
+  async richlist(
+    @Arg('token') token: string,
+    @Arg('offset', { defaultValue: 0 }) offset: number,
+    @Arg('limit', { defaultValue: 500 }) limit: number,
+  ): Promise<AccountBalance[]> {
+    if (limit > 1000) {
+      throw new Error('limit is too high')
+    }
+    return this.statisticService.richlist(token, offset, limit)
   }
 
   @FieldResolver((type) => Latest24h)

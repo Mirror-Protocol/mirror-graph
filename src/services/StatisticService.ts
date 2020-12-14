@@ -1,7 +1,7 @@
 import { addDays } from 'date-fns'
 import * as bluebird from 'bluebird'
 import * as memoizee from 'memoizee'
-import { Repository } from 'typeorm'
+import { Repository, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { num } from 'lib/num'
@@ -11,7 +11,7 @@ import { getMethMirTokenBalance } from 'lib/meth'
 import { getMIRAnnualRewards } from 'lib/utils'
 import { GovService, AssetService, PriceService, OracleService, ContractService } from 'services'
 import { DailyStatisticEntity, TxEntity, RewardEntity } from 'orm'
-import { Statistic, Latest24h, ValueAt } from 'graphql/schema'
+import { Statistic, Latest24h, ValueAt, AccountBalance } from 'graphql/schema'
 import { ContractType } from 'types'
 
 async function fetchMirTokenSupply(
@@ -259,6 +259,31 @@ export class StatisticService {
     const apr = mirValue.dividedBy(poolValue)
 
     return apr.isNaN() ? '0' : apr.toString()
+  }
+
+  async richlist(token: string, offset: number, limit: number): Promise<AccountBalance[]> {
+    // SELECT * FROM (
+    //   SELECT DISTINCT ON (address) address,token,balance
+    //   FROM balance
+    //   WHERE token='terra14y5affaarufk3uscy2vr6pe6w6zqf2wpjzn5sh' AND balance > 0
+    //   ORDER BY address, id DESC  -- get latest balance per address
+    // ) b
+    // ORDER BY balance DESC;
+    return getConnection()
+      .createQueryBuilder()
+      .select('b.address', 'address')
+      .addSelect('b.balance', 'balance')
+      .from((subQuery) => (subQuery
+        .select('DISTINCT ON (address) address, balance')
+        .from('balance', 'balance')
+        .where('token = :token AND balance > 0', { token })
+        .orderBy('address')
+        .addOrderBy('id', 'DESC')
+      ), 'b')
+      .orderBy('balance', 'DESC')
+      .skip(offset)
+      .take(limit)
+      .getRawMany()
   }
 }
 
