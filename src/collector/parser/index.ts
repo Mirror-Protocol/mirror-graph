@@ -44,14 +44,16 @@ async function txTick(manager: EntityManager, timestamp: number): Promise<void> 
 
 export async function parseTxs(manager: EntityManager, txs: TxInfo[]): Promise<void> {
   await bluebird.mapSeries(txs, async (txInfo) => {
+    console.log('# msg', JSON.stringify(txInfo.tx.msg))
+    console.log('# logs', JSON.stringify(txInfo.logs))
     await bluebird.mapSeries(txInfo.tx.msg, async (msg, index) => {
       await parseMsg(manager, txInfo, msg, txInfo.logs[index]).catch((error) => {
         if (error) {
           error['height'] = txInfo.height
           error['txHash'] = txInfo.txhash
+          error['msg'] = JSON.stringify(msg)
           error['log index'] = index
-          error['logs'] = txInfo.logs
-          error['log'] = txInfo.logs[index]
+          error['log'] = JSON.stringify(txInfo.logs[index])
         }
         throw error
       })
