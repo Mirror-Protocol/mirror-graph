@@ -15,9 +15,9 @@ export class StatisticResolver {
   async richlist(
     @Arg('token') token: string,
     @Arg('offset', { defaultValue: 0 }) offset: number,
-    @Arg('limit', { defaultValue: 500 }) limit: number,
+    @Arg('limit', { defaultValue: 1000 }) limit: number,
   ): Promise<AccountBalance[]> {
-    if (limit > 1000) {
+    if (limit > 10000) {
       throw new Error('limit is too high')
     }
     return this.statisticService.richlist(token, offset, limit)
