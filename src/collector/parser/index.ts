@@ -46,6 +46,12 @@ export async function parseTxs(manager: EntityManager, txs: TxInfo[]): Promise<v
   await bluebird.mapSeries(txs, async (txInfo) => {
     await bluebird.mapSeries(txInfo.tx.msg, async (msg, index) => {
       await parseMsg(manager, txInfo, msg, txInfo.logs[index])
+    }).catch((error) => {
+      if (error) {
+        error['height'] = txInfo.height
+        error['txHash'] = txInfo.txhash
+      }
+      throw error
     })
 
     await txTick(manager, new Date(txInfo.timestamp).getTime())
