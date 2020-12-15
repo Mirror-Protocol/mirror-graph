@@ -12,9 +12,6 @@ export async function parse(
   const datetime = new Date(timestamp)
   let parsed = {}
 
-  console.log('log', JSON.stringify(log))
-  console.log('events', JSON.stringify(log.events))
-
   if (msg['claim']) {
     const address = findAttribute(attributes, 'address')
     const amount = findAttribute(attributes, 'amount')
