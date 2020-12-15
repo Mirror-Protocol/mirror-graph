@@ -122,7 +122,7 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
           msg: rawTx.Tx.Msg
             .map((msg) => {
               try {
-                return Msg.fromData({ type: msg.Type, value: JSON.parse(msg.Value) } as Msg.Data)?.toData()
+                return Msg.fromData({ type: msg.Type, value: JSON.parse(msg.Value) } as Msg.Data)?.toData() || {}
               } catch(error) {
                 errorHandler(error)
                 return {}
