@@ -27,7 +27,11 @@ export class AirdropService {
 
   async getAirdrop(network: string, address: string, repo = this.repo): Promise<AirdropEntity[]> {
     const list = await this.getAll({
-      where: { network, address, claimable: true },
+      where: {
+        network,
+        address: address.toLowerCase(),
+        claimable: true
+      },
       order: { id: 'ASC' },
     }, repo)
 
