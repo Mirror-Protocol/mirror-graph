@@ -46,7 +46,9 @@ export class AccountResolver {
     @Arg('from', { description: 'timestamp' }) from: number,
     @Arg('to', { description: 'timestamp' }) to: number,
   ): Promise<string> {
-    return this.txService.getTradingVolume(address, from, to)
+    // fix: hardcoded timestamp
+    return this.txService.getTradingVolume(address, 1608213600000, 1609423200000)
+    // return this.txService.getTradingVolume(address, from, to)
   }
 
   @Query((returns) => GraphQLJSON, { nullable: true })
