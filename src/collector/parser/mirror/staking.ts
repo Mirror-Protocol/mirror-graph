@@ -31,6 +31,10 @@ export async function parse(
   } else if (msg['withdraw']) {
     const amount = findAttribute(attributes, 'amount')
 
+    if (amount === '0') {
+      return
+    }
+
     parsed = {
       type: TxType.WITHDRAW_REWARDS,
       data: { amount },
