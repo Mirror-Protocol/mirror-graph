@@ -269,9 +269,10 @@ export class StatisticService {
     // SELECT * FROM (
     //   SELECT DISTINCT ON (address) address,token,balance
     //   FROM balance
-    //   WHERE token='terra14y5affaarufk3uscy2vr6pe6w6zqf2wpjzn5sh' AND balance > 0
+    //   WHERE token='terra14y5affaarufk3uscy2vr6pe6w6zqf2wpjzn5sh'
     //   ORDER BY address, id DESC  -- get latest balance per address
     // ) b
+    // WHERE balance > 0
     // ORDER BY balance DESC;
     return getConnection()
       .createQueryBuilder()
@@ -280,10 +281,11 @@ export class StatisticService {
       .from((subQuery) => (subQuery
         .select('DISTINCT ON (address) address, balance')
         .from('balance', 'balance')
-        .where('token = :token AND balance > 0', { token })
+        .where('token = :token', { token })
         .orderBy('address')
         .addOrderBy('id', 'DESC')
       ), 'b')
+      .where('balance > 0')
       .orderBy('balance', 'DESC')
       .skip(offset)
       .take(limit)
