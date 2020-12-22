@@ -30,8 +30,8 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
   })
 
   // collect execute needed
-  polls = await getGovPolls(gov, 'passed', 100)
-  // polls.map((poll) => {
+  polls = (await getGovPolls(gov, 'passed', 100))
+    .filter((poll) => Array.isArray(poll.executeData) && poll.executeData.length > 0)
   await bluebird.mapSeries(polls, async (poll) => {
     const executeHeight = poll.endHeight + effectiveDelay
     // try execute only 1 hour(600 blocks)
