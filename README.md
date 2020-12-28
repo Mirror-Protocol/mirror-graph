@@ -18,12 +18,10 @@ You can access the Mirror API through the endpoints shown below:
 **NOTE**: This is only if you want to run a local instance of Mirror API. In most cases, you will want to use the public [endpoints][#endpoints].
 
 
-### Requirements
+### Prerequisites
 
-* Node.js v12
-* TypeScript v3.8
-* GraphQL v15
-* PostgreSQL v12 (https://www.postgresql.org/download/)
+* [Node.js LTS](https://nodejs.org/)
+* [PostgreSQL](https://www.postgresql.org/download/)
 * ormconfig.json on project root
 * .envrc on project root
 * address.json, assets.json, codeIds.json, contracts.json, description.json on project root/data
