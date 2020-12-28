@@ -6,11 +6,12 @@ export function init(
     sentryDsn?: string
   } = undefined
 ): void {
-  opts?.sentryDsn && sentry.init({
-    dsn: opts.sentryDsn,
-    environment: process.env.TERRA_CHAIN_ID,
-    maxBreadcrumbs: 500,
-  })
+  opts?.sentryDsn &&
+    sentry.init({
+      dsn: opts.sentryDsn,
+      environment: process.env.TERRA_CHAIN_ID,
+      maxBreadcrumbs: 500,
+    })
 
   process.on('unhandledRejection', (error) => {
     logger.error(error)
@@ -22,7 +23,7 @@ export function init(
   })
 }
 
-export function errorHandler(error?: object): void {
+export function errorHandler(error?: Error): void {
   if (error) {
     logger.error(error)
     sentry.captureException(error)

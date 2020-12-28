@@ -1,6 +1,6 @@
 import * as FormData from 'form-data'
 
-export function toFormData(object: object): FormData {
+export function toFormData(object: Record<string, string>): FormData {
   const formData = new FormData()
   for (const key of Object.keys(object)) {
     formData.append(key, object[key])
@@ -8,7 +8,7 @@ export function toFormData(object: object): FormData {
   return formData
 }
 
-export function toQueryString(object: object): string {
+export function toQueryString(object: Record<string, string>): string {
   return Object.keys(object)
     .map((key) => `${key}=${object[key]}`)
     .join('&')

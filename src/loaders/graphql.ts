@@ -3,6 +3,7 @@ import * as TypeGraphQL from 'type-graphql'
 import * as path from 'path'
 import { Container } from 'typedi'
 import { ApolloServer } from 'apollo-server-koa'
+import * as Koa from 'koa'
 import { errorHandler } from 'lib/error'
 
 let server: ApolloServer
@@ -17,7 +18,7 @@ export const ErrorInterceptor: TypeGraphQL.MiddlewareFn<any> = async ({ context,
   }
 }
 
-export async function initGraphQL(app): Promise<void> {
+export async function initGraphQL(app: Koa): Promise<void> {
   const schema = await TypeGraphQL.buildSchema({
     resolvers: [path.dirname(require.main.filename) + '/graphql/resolvers/**/*.ts'],
     container: Container,
@@ -27,7 +28,7 @@ export async function initGraphQL(app): Promise<void> {
 
   server = new ApolloServer({
     schema,
-    context: ({ req }): object => req,
+    context: ({ req }) => req,
     debug: process.env.NODE_ENV !== 'production',
     playground: true,
     introspection: true,

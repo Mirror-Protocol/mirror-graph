@@ -12,12 +12,15 @@ export class AirdropService {
   async get(
     conditions: FindConditions<AirdropEntity>,
     options?: FindOneOptions<AirdropEntity>,
-    repo = this.repo,
+    repo = this.repo
   ): Promise<AirdropEntity> {
     return repo.findOne(conditions, options)
   }
 
-  async getAll(options?: FindManyOptions<AirdropEntity>, repo = this.repo): Promise<AirdropEntity[]> {
+  async getAll(
+    options?: FindManyOptions<AirdropEntity>,
+    repo = this.repo
+  ): Promise<AirdropEntity[]> {
     return repo.find(options)
   }
 
@@ -26,28 +29,33 @@ export class AirdropService {
   }
 
   async getAirdrop(network: string, address: string, repo = this.repo): Promise<AirdropEntity[]> {
-    const list = await this.getAll({
-      where: {
-        network,
-        address: address.toLowerCase(),
-        claimable: true
+    const list = await this.getAll(
+      {
+        where: {
+          network,
+          address: address.toLowerCase(),
+          claimable: true,
+        },
+        order: { id: 'ASC' },
       },
-      order: { id: 'ASC' },
-    }, repo)
+      repo
+    )
 
     if (network === 'TERRA') {
       return list
-    } else if(network === 'ETH') {
-      return bluebird.mapSeries(list, async (entity) => {
-        const isClaimed = await isAirdropClaimed(entity.stage.toString())
-        if (isClaimed) {
-          entity.claimable = false
-          await repo.save(entity)
-          return
-        }
+    } else if (network === 'ETH') {
+      return bluebird
+        .mapSeries(list, async (entity) => {
+          const isClaimed = await isAirdropClaimed(entity.stage.toString())
+          if (isClaimed) {
+            entity.claimable = false
+            await repo.save(entity)
+            return
+          }
 
-        return entity
-      }).filter(Boolean)
+          return entity
+        })
+        .filter(Boolean)
     }
   }
 }

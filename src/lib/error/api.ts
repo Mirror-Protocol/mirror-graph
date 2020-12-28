@@ -1,5 +1,6 @@
 import * as sentry from '@sentry/node'
 import * as logger from 'lib/logger'
+import * as Koa from 'koa'
 
 export enum ErrorTypes {
   // 400 Bad Request
@@ -48,9 +49,9 @@ export class APIError extends Error {
 }
 
 export function apiErrorHandler(
-  callback: (ctx, type: string, code?: string, message?: string) => void
+  callback: (ctx: Koa.Context, type: string, code?: string, message?: string) => void
 ) {
-  return async (ctx, next): Promise<void> => {
+  return async (ctx: Koa.Context, next: Koa.Next): Promise<void> => {
     try {
       await next()
     } catch (error) {
@@ -61,7 +62,10 @@ export function apiErrorHandler(
       } else {
         logger.error(error)
         sentry.withScope((scope) => {
-          scope.addEventProcessor((event) => sentry.Handlers.parseRequest(event, ctx.request))
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          scope.addEventProcessor((event) =>
+            sentry.Handlers.parseRequest(event, ctx.request as any)
+          )
           sentry.captureException(error)
         })
 

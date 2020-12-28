@@ -15,7 +15,10 @@ import { Statistic, Latest24h, ValueAt, AccountBalance } from 'graphql/schema'
 import { ContractType } from 'types'
 
 async function fetchMirTokenSupply(
-  mirrorToken: string, airdropContract: string, factoryContract: string, communityContract: string
+  mirrorToken: string,
+  airdropContract: string,
+  factoryContract: string,
+  communityContract: string
 ): Promise<{ mirTotalSupply: string; mirCirculatingSupply: string }> {
   const airdropBalance = await getTokenBalance(mirrorToken, airdropContract)
   const factoryBalance = await getTokenBalance(mirrorToken, factoryContract)
@@ -36,7 +39,8 @@ async function fetchMirTokenSupply(
 }
 
 export const getMethMirTokenSupply = memoizee(fetchMirTokenSupply, {
-  promise: true, maxAge: 1000 * 60 * 10, // 10 minutes
+  promise: true,
+  maxAge: 1000 * 60 * 10, // 10 minutes
 })
 
 @Service()
@@ -77,16 +81,20 @@ export class StatisticService {
       assetMarketCap: assetMarketCap.toFixed(0),
       totalValueLocked: totalValueLocked.toFixed(0),
       collateralRatio: totalValueLocked.dividedBy(assetMarketCap).multipliedBy(100).toFixed(2),
-      ...await this.mirSupply()
+      ...(await this.mirSupply()),
     }
   }
 
   async mirSupply(): Promise<Partial<Statistic>> {
     const gov = this.govService.get()
     const mirrorToken = gov.mirrorToken
-    const airdropContract = (await this.contractService.get({ type: ContractType.AIRDROP, gov })).address
-    const factoryContract = (await this.contractService.get({ type: ContractType.FACTORY, gov })).address
-    const communityContract = (await this.contractService.get({ type: ContractType.COMMUNITY, gov })).address
+    const airdropContract = (await this.contractService.get({ type: ContractType.AIRDROP, gov }))
+      .address
+    const factoryContract = (await this.contractService.get({ type: ContractType.FACTORY, gov }))
+      .address
+    const communityContract = (
+      await this.contractService.get({ type: ContractType.COMMUNITY, gov })
+    ).address
 
     return getMethMirTokenSupply(mirrorToken, airdropContract, factoryContract, communityContract)
   }
@@ -142,10 +150,7 @@ export class StatisticService {
         .getRawOne()
     )?.amount
     const govStakedMir = await getTokenBalance(govEntity.mirrorToken, govEntity.gov)
-    const govAPR = num(govReward7d)
-      .dividedBy(7)
-      .multipliedBy(365)
-      .dividedBy(govStakedMir)
+    const govAPR = num(govReward7d).dividedBy(7).multipliedBy(365).dividedBy(govStakedMir)
 
     return {
       transactions: txs?.count || '0',
@@ -278,13 +283,16 @@ export class StatisticService {
       .createQueryBuilder()
       .select('b.address', 'address')
       .addSelect('b.balance', 'balance')
-      .from((subQuery) => (subQuery
-        .select('DISTINCT ON (address) address, balance')
-        .from('balance', 'balance')
-        .where('token = :token', { token })
-        .orderBy('address')
-        .addOrderBy('id', 'DESC')
-      ), 'b')
+      .from(
+        (subQuery) =>
+          subQuery
+            .select('DISTINCT ON (address) address, balance')
+            .from('balance', 'balance')
+            .where('token = :token', { token })
+            .orderBy('address')
+            .addOrderBy('id', 'DESC'),
+        'b'
+      )
       .where('balance > 0')
       .orderBy('balance', 'DESC')
       .skip(offset)

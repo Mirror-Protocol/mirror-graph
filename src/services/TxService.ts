@@ -24,7 +24,13 @@ export class TxService {
     return repo.find(options)
   }
 
-  async getHistory(account: string, tag: string|undefined, offset: number, limit: number, repo = this.repo): Promise<TxEntity[]> {
+  async getHistory(
+    account: string,
+    tag: string | undefined,
+    offset: number,
+    limit: number,
+    repo = this.repo
+  ): Promise<TxEntity[]> {
     let qb = repo
       .createQueryBuilder()
       .where('address = :account', { account })
@@ -44,9 +50,7 @@ export class TxService {
       await this.accountService.newAccount({ address: tx.address })
     }
 
-    return manager
-      ? manager.save(new TxEntity(tx))
-      : this.repo.save(tx)
+    return manager ? manager.save(new TxEntity(tx)) : this.repo.save(tx)
   }
 
   async getTradingVolume(account: string, from: number, to: number): Promise<string> {
@@ -58,12 +62,17 @@ export class TxService {
       .getRawOne()
     const sellVolume = await this.repo
       .createQueryBuilder()
-      .select(`sum(coalesce((data->>'recvAmount')::numeric, 0))+sum(coalesce((data->>'commissionAmount')::numeric, 0))`, 'volume')
+      .select(
+        `sum(coalesce((data->>'recvAmount')::numeric, 0))+sum(coalesce((data->>'commissionAmount')::numeric, 0))`,
+        'volume'
+      )
       .where(`address = :address AND type='SELL'`, { address: account })
       .andWhere('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
       .getRawOne()
 
-    return num(buyVolume?.volume ?? '0').plus(sellVolume?.volume ?? '0').toFixed(0)
+    return num(buyVolume?.volume ?? '0')
+      .plus(sellVolume?.volume ?? '0')
+      .toFixed(0)
   }
 }
 

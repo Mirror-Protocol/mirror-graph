@@ -1,4 +1,5 @@
 import { registerEnumType } from 'type-graphql'
+import { Transfer } from 'lib/terra'
 
 export enum TxType {
   BUY = 'BUY',
@@ -33,3 +34,5 @@ export enum TxType {
 }
 
 registerEnumType(TxType, { name: 'TxType' })
+
+export type TxData = Transfer | Record<string, string>

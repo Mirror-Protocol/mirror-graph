@@ -65,7 +65,11 @@ export class TxWallet extends Wallet {
     }
   }
 
-  async instantiate(codeId: number, initMsg: object, migratable = true): Promise<string> {
+  async instantiate(
+    codeId: number,
+    initMsg: Record<string, unknown>,
+    migratable = true
+  ): Promise<string> {
     const tx = await this.transaction(
       [
         new MsgInstantiateContract(
@@ -115,7 +119,11 @@ export class TxWallet extends Wallet {
     }
   }
 
-  async execute(contract: string, msg: object, coins: Coins = new Coins([])): Promise<TxInfo> {
+  async execute(
+    contract: string,
+    msg: Record<string, unknown>,
+    coins: Coins = new Coins([])
+  ): Promise<TxInfo> {
     if (!contract) {
       throw new Error('wrong contract')
     }

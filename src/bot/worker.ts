@@ -2,18 +2,20 @@ import * as bluebird from 'bluebird'
 import { TxWallet } from 'lib/terra'
 import { errorHandler as errorHandleWithSentry } from 'lib/error'
 import { sendSlack } from 'lib/slack'
-import {
-  distributeRewards, updateCdps, updatePolls, updateNews, updateAirdrop
-} from './jobs'
+import { distributeRewards, updateCdps, updatePolls, updateNews, updateAirdrop } from './jobs'
 
-function errorHandler(job: string, error?: object): void {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function errorHandler(job: string, error?: Error & { [key: string]: any }): void {
   if (error) {
-    if (error['message']) {
-      sendSlack('mirror-bot', `${job} failed: ${error['message']}`)
-    } else if(error['response'] && error['response'].status) {
-      sendSlack('mirror-bot', `${job} failed: Request failed with status code ${error['response'].status}`)
-    } else if(error['response'] && error['response'].errors) {
-      sendSlack('mirror-bot', `${job} failed: ${JSON.stringify(error['response'].errors)}`)
+    if (error.message) {
+      sendSlack('mirror-bot', `${job} failed: ${error.message}`)
+    } else if (error.response?.status) {
+      sendSlack(
+        'mirror-bot',
+        `${job} failed: Request failed with status code ${error.response.status}`
+      )
+    } else if (error.response?.errors) {
+      sendSlack('mirror-bot', `${job} failed: ${JSON.stringify(error.response.errors)}`)
     }
 
     errorHandleWithSentry(error)
@@ -21,8 +23,7 @@ function errorHandler(job: string, error?: object): void {
 }
 
 async function tick(now: number, wallet: TxWallet): Promise<void> {
-  await distributeRewards(wallet)
-    .catch((error) => errorHandler('distributeRewards', error))
+  await distributeRewards(wallet).catch((error) => errorHandler('distributeRewards', error))
 
   await updateNews().catch((error) => errorHandler('updateNews', error))
 

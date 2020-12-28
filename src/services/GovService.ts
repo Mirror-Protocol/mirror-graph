@@ -114,7 +114,12 @@ export class GovService {
   }
 
   whitelisting(
-    govId: number, symbol: string, name: string, token: string, pair: string, lpToken: string
+    govId: number,
+    symbol: string,
+    name: string,
+    token: string,
+    pair: string,
+    lpToken: string
   ): unknown[] {
     if (!token || !pair || !lpToken) {
       throw new Error(`whitelisting failed. token(${token}), lpToken(${lpToken}), pair(${pair})`)
@@ -123,7 +128,14 @@ export class GovService {
     const description = descriptions[symbol.substring(1)]
 
     const asset = new AssetEntity({
-      govId, symbol, name, description, token, pair, lpToken, status: AssetStatus.LISTED
+      govId,
+      symbol,
+      name,
+      description,
+      token,
+      pair,
+      lpToken,
+      status: AssetStatus.LISTED,
     })
 
     const entities = [

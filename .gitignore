@@ -47,3 +47,4 @@ keystore-local.json
 environment/*
 mirror-graph.json
 data/
+dist/
