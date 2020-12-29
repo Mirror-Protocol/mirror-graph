@@ -1,11 +1,15 @@
 import {
-  Entity, PrimaryGeneratedColumn, CreateDateColumn, Column, Index, JoinColumn, ManyToOne
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  Column,
+  Index,
+  JoinColumn,
+  ManyToOne,
 } from 'typeorm'
-import { TxType } from 'types'
+import { TxType, TxData } from 'types'
 import { ContractEntity } from 'orm'
 import { HaveGovAndMaybeAsset } from '../Have'
 
-@Entity('tx')
 @Index('idx_tx_address_datetime_gov', ['address', 'datetime', 'gov'])
 export class TxEntity extends HaveGovAndMaybeAsset {
   constructor(options: Partial<TxEntity>) {
@@ -32,7 +36,7 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   type: TxType
 
   @Column({ type: 'jsonb' })
-  data: object
+  data: TxData
 
   @Column('numeric', { precision: 40, default: 0, comment: 'uusd volume' })
   volume: string

@@ -1,6 +1,6 @@
 import { ObjectType, Field, Int } from 'type-graphql'
 import GraphQLJSON from 'graphql-type-json'
-import { TxType } from 'types'
+import { TxType, TxData } from 'types'
 
 @ObjectType({ simpleResolvers: true })
 export class Tx {
@@ -22,11 +22,11 @@ export class Tx {
   @Field((type) => TxType)
   type: TxType
 
+  @Field((type) => GraphQLJSON)
+  data: TxData
+
   @Field({ nullable: true })
   token?: string
-
-  @Field((type) => GraphQLJSON)
-  data: object
 
   @Field()
   datetime: Date

@@ -41,9 +41,9 @@ export async function collect(now: number): Promise<void> {
     await updateBlock(collectedBlock, lastTx.height, manager.getRepository(BlockEntity))
   })
 
-  const txDate = formatToTimeZone(
-    new Date(lastTx.timestamp), 'YYYY-MM-DD HH:mm:ss', { timeZone: 'Asia/Seoul' }
-  )
+  const txDate = formatToTimeZone(new Date(lastTx.timestamp), 'YYYY-MM-DD HH:mm:ss', {
+    timeZone: 'Asia/Seoul',
+  })
 
   logger.info(
     `collected: ${config.TERRA_CHAIN_ID}, ${collectedHeight + 1}-${lastTx.height},`,

@@ -18,8 +18,8 @@ export class AccountService {
   ) {}
 
   async newAccount(account: Partial<AccountEntity>): Promise<AccountEntity | undefined> {
-    const accountEntity = await this.get({ address: account.address })
-      || new AccountEntity(account)
+    const accountEntity =
+      (await this.get({ address: account.address })) || new AccountEntity(account)
 
     Object.assign(accountEntity, account)
 
@@ -111,10 +111,12 @@ export class AccountService {
     to: number,
     interval: number
   ): Promise<ValueAt[]> {
-    return getConnection().query(
-      'SELECT * FROM public.balanceHistory($1, $2, $3, $4)',
-      [address, new Date(from), new Date(to), interval]
-    )
+    return getConnection().query('SELECT * FROM public.balanceHistory($1, $2, $3, $4)', [
+      address,
+      new Date(from),
+      new Date(to),
+      interval,
+    ])
   }
 
   async addBalance(

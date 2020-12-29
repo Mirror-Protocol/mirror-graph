@@ -30,18 +30,15 @@ export async function transaction(
   sequence = undefined,
   timeout = 60000
 ): Promise<TxInfo> {
-  return (
-    wallet
-      // eslint-disable-next-line @typescript-eslint/camelcase
-      .createAndSignTx({ msgs, account_number: accountNumber, sequence })
-      .then((signed) => lcd.tx.broadcast(signed))
-      .then(async (broadcastResult) => {
-        if (broadcastResult['code']) {
-          throw new Error(broadcastResult.raw_log)
-        }
-        return checkTx(broadcastResult.txhash, timeout)
-      })
-  )
+  return wallet
+    .createAndSignTx({ msgs, account_number: accountNumber, sequence })
+    .then((signed) => lcd.tx.broadcast(signed))
+    .then(async (broadcastResult) => {
+      if (broadcastResult['code']) {
+        throw new Error(broadcastResult.raw_log)
+      }
+      return checkTx(broadcastResult.txhash, timeout)
+    })
 }
 
 export async function contractInfo<T>(address: string): Promise<T> {
@@ -51,7 +48,10 @@ export async function contractInfo<T>(address: string): Promise<T> {
   return toCamelCase(await lcd.wasm.contractInfo(address)) as T
 }
 
-export async function contractQuery<T>(address: string, query: object): Promise<T> {
+export async function contractQuery<T>(
+  address: string,
+  query: Record<string, unknown>
+): Promise<T> {
   if (!address) {
     throw new Error('wrong address')
   }

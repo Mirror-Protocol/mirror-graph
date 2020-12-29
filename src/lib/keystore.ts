@@ -4,7 +4,7 @@ import { MnemonicKey, RawKey, Key } from '@terra-money/terra.js'
 import * as crypto from './crypto'
 import * as logger from 'lib/logger'
 
-export function loadKeys(path: string): object {
+export function loadKeys(path: string): Record<string, string> {
   try {
     return JSON.parse(fs.readFileSync(path, 'utf8') || '{}')
   } catch (e) {

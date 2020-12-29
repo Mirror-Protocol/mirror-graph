@@ -11,14 +11,19 @@ export async function getLastBlockFromDB(): Promise<BlockEntity> {
 
 export async function getCollectedBlock(): Promise<BlockEntity> {
   const latestBlockFromDB = await getLastBlockFromDB()
-  return latestBlockFromDB || new BlockEntity({
-    chainId: config.TERRA_CHAIN_ID,
-    height: config.START_BLOCK_HEIGHT,
-  })
+  return (
+    latestBlockFromDB ||
+    new BlockEntity({
+      chainId: config.TERRA_CHAIN_ID,
+      height: config.START_BLOCK_HEIGHT,
+    })
+  )
 }
 
 export async function updateBlock(
-  block: BlockEntity, height: number, repo = getRepository(BlockEntity)
+  block: BlockEntity,
+  height: number,
+  repo = getRepository(BlockEntity)
 ): Promise<BlockEntity> {
   block.height = height
 
