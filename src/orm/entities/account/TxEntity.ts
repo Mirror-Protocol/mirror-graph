@@ -5,11 +5,13 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  Entity
 } from 'typeorm'
 import { TxType, TxData } from 'types'
 import { ContractEntity } from 'orm'
 import { HaveGovAndMaybeAsset } from '../Have'
 
+@Entity('tx')
 @Index('idx_tx_address_datetime_gov', ['address', 'datetime', 'gov'])
 export class TxEntity extends HaveGovAndMaybeAsset {
   constructor(options: Partial<TxEntity>) {
