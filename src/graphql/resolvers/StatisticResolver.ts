@@ -1,5 +1,5 @@
-import { Resolver, Query, FieldResolver, Arg } from 'type-graphql'
-import { Statistic, Latest24h, ValueAt, AccountBalance } from 'graphql/schema'
+import { Resolver, Query, FieldResolver, Root, Arg } from 'type-graphql'
+import { Statistic, TodayStatistic, ValueAt, AccountBalance } from 'graphql/schema'
 import { StatisticService } from 'services'
 
 @Resolver((of) => Statistic)
@@ -7,8 +7,8 @@ export class StatisticResolver {
   constructor(private readonly statisticService: StatisticService) {}
 
   @Query((returns) => Statistic)
-  async statistic(): Promise<Statistic> {
-    return await this.statisticService.statistic() as Statistic
+  async statistic(@Arg('network', { defaultValue: "COMBINE" }) network: string): Promise<Statistic> {
+    return await this.statisticService.statistic(network) as Statistic
   }
 
   @Query((returns) => [AccountBalance])
@@ -23,24 +23,31 @@ export class StatisticResolver {
     return this.statisticService.richlist(token, offset, limit)
   }
 
-  @FieldResolver((type) => Latest24h)
-  async latest24h(): Promise<Latest24h> {
-    return this.statisticService.latest24h()
+  @FieldResolver((type) => TodayStatistic)
+  async today(@Root() statistic: Statistic): Promise<TodayStatistic> {
+    return this.statisticService.today(statistic.network)
+  }
+
+  @FieldResolver((type) => String)
+  async govAPR(@Root() statistic: Statistic): Promise<string> {
+    return this.statisticService.getGovAPR()
   }
 
   @FieldResolver((type) => [ValueAt])
   async liquidityHistory(
+    @Root() statistic: Statistic,
     @Arg('from', { description: 'timestamp' }) from: number,
     @Arg('to', { description: 'timestamp' }) to: number
   ): Promise<ValueAt[]> {
-    return this.statisticService.getLiquidityHistory(from, to)
+    return this.statisticService.getLiquidityHistory(statistic.network, from, to)
   }
 
   @FieldResolver((type) => [ValueAt])
   async tradingVolumeHistory(
+    @Root() statistic: Statistic,
     @Arg('from', { description: 'timestamp' }) from: number,
     @Arg('to', { description: 'timestamp' }) to: number
   ): Promise<ValueAt[]> {
-    return this.statisticService.getTradingVolumeHistory(from, to)
+    return this.statisticService.getTradingVolumeHistory(statistic.network, from, to)
   }
 }

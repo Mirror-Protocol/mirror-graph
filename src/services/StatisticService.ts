@@ -1,47 +1,20 @@
-import { addDays } from 'date-fns'
+import { addDays, startOfToday, endOfToday } from 'date-fns'
 import * as bluebird from 'bluebird'
-import * as memoizee from 'memoizee'
+import memoize from 'memoizee-decorator'
 import { Repository, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
+import { find, sortedUniq } from 'lodash'
 import { num } from 'lib/num'
 import { getTokenBalance } from 'lib/mirror'
 import { getContractStore } from 'lib/terra'
-import { getMethMirTokenBalance } from 'lib/meth'
+import { getMethMirTokenBalance, getPairsDayDatas } from 'lib/meth'
 import { getMIRAnnualRewards } from 'lib/utils'
+import { loadEthAssets } from 'lib/data'
 import { GovService, AssetService, PriceService, OracleService, ContractService } from 'services'
 import { DailyStatisticEntity, TxEntity, RewardEntity } from 'orm'
-import { Statistic, Latest24h, ValueAt, AccountBalance } from 'graphql/schema'
+import { Statistic, TodayStatistic, ValueAt, AccountBalance } from 'graphql/schema'
 import { ContractType } from 'types'
-
-async function fetchMirTokenSupply(
-  mirrorToken: string,
-  airdropContract: string,
-  factoryContract: string,
-  communityContract: string
-): Promise<{ mirTotalSupply: string; mirCirculatingSupply: string }> {
-  const airdropBalance = await getTokenBalance(mirrorToken, airdropContract)
-  const factoryBalance = await getTokenBalance(mirrorToken, factoryContract)
-  const communityBalance = await getTokenBalance(mirrorToken, communityContract)
-  const methBalance = await getMethMirTokenBalance()
-
-  const { totalSupply } = await getContractStore(mirrorToken, { tokenInfo: {} })
-  const mirCirculatingSupply = num(totalSupply)
-    .minus(airdropBalance)
-    .minus(factoryBalance)
-    .minus(communityBalance)
-    .minus(methBalance)
-
-  return {
-    mirTotalSupply: totalSupply,
-    mirCirculatingSupply: mirCirculatingSupply.toFixed(0),
-  }
-}
-
-export const getMethMirTokenSupply = memoizee(fetchMirTokenSupply, {
-  promise: true,
-  maxAge: 1000 * 60 * 10, // 10 minutes
-})
 
 @Service()
 export class StatisticService {
@@ -57,7 +30,7 @@ export class StatisticService {
     @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>
   ) {}
 
-  async statistic(): Promise<Partial<Statistic>> {
+  async statistic(network: string): Promise<Partial<Statistic>> {
     const assets = await this.assetService.getAll()
     let assetMarketCap = num(0)
     let totalValueLocked = num(0)
@@ -78,6 +51,7 @@ export class StatisticService {
     })
 
     return {
+      network,
       assetMarketCap: assetMarketCap.toFixed(0),
       totalValueLocked: totalValueLocked.toFixed(0),
       collateralRatio: totalValueLocked.dividedBy(assetMarketCap).multipliedBy(100).toFixed(2),
@@ -85,6 +59,7 @@ export class StatisticService {
     }
   }
 
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async mirSupply(): Promise<Partial<Statistic>> {
     const gov = this.govService.get()
     const mirrorToken = gov.mirrorToken
@@ -96,47 +71,101 @@ export class StatisticService {
       await this.contractService.get({ type: ContractType.COMMUNITY, gov })
     ).address
 
-    return getMethMirTokenSupply(mirrorToken, airdropContract, factoryContract, communityContract)
+    const airdropBalance = await getTokenBalance(mirrorToken, airdropContract)
+    const factoryBalance = await getTokenBalance(mirrorToken, factoryContract)
+    const communityBalance = await getTokenBalance(mirrorToken, communityContract)
+    const methBalance = await getMethMirTokenBalance()
+
+    const { totalSupply } = await getContractStore(mirrorToken, { tokenInfo: {} })
+    const mirCirculatingSupply = num(totalSupply)
+      .minus(airdropBalance)
+      .minus(factoryBalance)
+      .minus(communityBalance)
+      .minus(methBalance)
+
+    return {
+      mirTotalSupply: totalSupply,
+      mirCirculatingSupply: mirCirculatingSupply.toFixed(0),
+    }
   }
 
-  async latest24h(): Promise<Latest24h> {
-    const now = Date.now()
-    const before24h = addDays(now, -1).getTime()
-    const before7d = addDays(now, -7).getTime()
-    const before48h = addDays(now, -2).getTime()
+  async today(network: string): Promise<TodayStatistic> {
+    if (network === 'TERRA') {
+      return this.todayTerra()
+    } else if (network === 'METH') {
+      return this.todayMeth()
+    } else if (network === 'COMBINE') {
+      const terra = await this.todayTerra()
+      const meth = await this.todayMeth()
+
+      return {
+        transactions: num(terra.transactions).plus(meth.transactions).toString(),
+        volume: num(terra.volume).plus(meth.volume).toString(),
+        feeVolume: num(terra.feeVolume).plus(meth.feeVolume).toString(),
+        mirVolume: num(terra.mirVolume).plus(meth.mirVolume).toString(),
+      }
+    }
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async todayTerra(): Promise<TodayStatistic> {
+    const from = Math.floor((Date.now() - (Date.now() % 86400000))/1000)
+    const to = Math.floor(from + 86400)
 
     const txs = await this.txRepo
       .createQueryBuilder()
       .select('count(id)', 'count')
       .addSelect('sum(commission_value)', 'commission')
       .addSelect('sum(volume)', 'volume')
-      .where('datetime BETWEEN :from AND :to', { from: new Date(before24h), to: new Date(now) })
+      .where('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', { from, to })
       .getRawOne()
 
     const mir = await this.txRepo
       .createQueryBuilder()
       .select('sum(volume)', 'volume')
-      .where('datetime BETWEEN :from AND :to', { from: new Date(before24h), to: new Date(now) })
+      .where('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', { from, to })
       .andWhere('token = :token', { token: this.govService.get().mirrorToken })
       .getRawOne()
 
-    const volume48h =
-      (
-        await this.txRepo
-          .createQueryBuilder()
-          .select('sum(volume)', 'volume')
-          .where('datetime BETWEEN :from AND :to', {
-            from: new Date(before48h),
-            to: new Date(before24h),
-          })
-          .getRawOne()
-      )?.volume || '0'
+    return {
+      transactions: txs?.count || '0',
+      volume: txs?.volume || '0',
+      feeVolume: txs?.commission || '0',
+      mirVolume: mir?.volume || '0',
+    }
+  }
 
-    const volume = txs?.volume || '0'
-    const volumeChanged =
-      volume48h !== '0' && volume !== '0'
-        ? num(volume).minus(volume48h).dividedBy(volume48h).multipliedBy(100).toFixed(2)
-        : '0'
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async todayMeth(): Promise<TodayStatistic> {
+    // start of today (UTC)
+    const from = Math.floor((Date.now() - (Date.now() % 86400000)) / 1000)
+
+    const assets = loadEthAssets()
+    const datas = await getPairsDayDatas(
+      Object.keys(assets).map((token) => assets[token].pair.toLowerCase()),
+      from,
+      from
+    )
+    const transactions = datas.reduce((result, data) => result.plus(data.dailyTxns), num(0)).toString()
+    const volume = datas.reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0)).multipliedBy(1000000).toFixed(0)
+    const feeVolume = num(volume).multipliedBy(0.003).multipliedBy(1000000).toFixed(0)
+    const mirPair = find(assets, (asset) => asset.symbol === 'MIR')?.pair
+    const mirVolume = mirPair
+      ? num(find(datas, (data) => data.pairAddress === mirPair.toLowerCase())?.dailyVolumeToken1 || '0').multipliedBy(1000000).toFixed(0)
+      : '0'
+
+    return {
+      transactions,
+      volume,
+      feeVolume,
+      mirVolume,
+    }
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async getGovAPR(): Promise<string> {
+    const now = Date.now()
+    const before7d = addDays(now, -7).getTime()
 
     // gov stake reward = ((7days reward amount) / 7 * 365) / (staked to gov MIR amount)
     const govEntity = this.govService.get()
@@ -152,14 +181,7 @@ export class StatisticService {
     const govStakedMir = await getTokenBalance(govEntity.mirrorToken, govEntity.gov)
     const govAPR = num(govReward7d).dividedBy(7).multipliedBy(365).dividedBy(govStakedMir)
 
-    return {
-      transactions: txs?.count || '0',
-      volume,
-      volumeChanged,
-      feeVolume: txs?.commission || '0',
-      mirVolume: mir?.volume || '0',
-      govAPR: !govAPR.isNaN() ? govAPR.toString() : '0',
-    }
+    return !govAPR.isNaN() ? govAPR.toString() : '0'
   }
 
   async addDailyTradingVolume(
@@ -212,40 +234,122 @@ export class StatisticService {
     return repo.save(daily)
   }
 
-  async getLiquidityHistory(from: number, to: number): Promise<ValueAt[]> {
+  async getLiquidityHistory(network: string, from: number, to: number): Promise<ValueAt[]> {
+    const fromDayUTC = from - (from % 86400000)
+    const toDayUTC = to - (to % 86400000)
+
+    if (network === 'TERRA') {
+      return this.getLiquidityHistoryTerra(fromDayUTC, toDayUTC)
+    } else if (network === 'METH') {
+      return this.getLiquidityHistoryMeth(fromDayUTC, toDayUTC)
+    } else if (network === 'COMBINE') {
+      const terra = await this.getLiquidityHistoryTerra(fromDayUTC, toDayUTC)
+      const meth = await this.getLiquidityHistoryMeth(fromDayUTC, toDayUTC)
+
+      return terra.map((data) => ({
+        timestamp: data.timestamp,
+        value: num(data.value)
+          .plus(meth.find((methData) => methData.timestamp <= data.timestamp)?.value || 0)
+          .toString()
+      }))
+    }
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async getLiquidityHistoryTerra(from: number, to: number): Promise<ValueAt[]> {
     return this.dailyRepo
       .createQueryBuilder()
-      .select('datetime', 'timestamp')
+      .select('extract(epoch from datetime) * 1000', 'timestamp')
       .addSelect('cumulative_liquidity', 'value')
-      .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .where('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', { from: from/1000, to: to/1000 })
       .orderBy('datetime', 'ASC')
       .getRawMany()
   }
 
-  async getTradingVolumeHistory(from: number, to: number): Promise<ValueAt[]> {
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async getLiquidityHistoryMeth(from: number, to: number): Promise<ValueAt[]> {
+    const assets = loadEthAssets()
+    const datas = await getPairsDayDatas(
+      Object.keys(assets).map((token) => assets[token].pair.toLowerCase()),
+      from/1000,
+      to/1000
+    )
+
+    return sortedUniq(datas.map((data) => data.date)).map((date) => ({
+      timestamp: date * 1000,
+      value: datas
+        .filter((data) => data.date === date)
+        .reduce((result, data) => result
+          .plus(num(data.reserve1).dividedBy(data.reserve0).multipliedBy(data.reserve0))
+          .plus(data.reserve1), num(0)).multipliedBy(1000000).toFixed(0)
+    }))
+  }
+
+  async getTradingVolumeHistory(network: string, from: number, to: number): Promise<ValueAt[]> {
+    const fromDayUTC = from - (from % 86400000)
+    const toDayUTC = to - (to % 86400000)
+
+    if (network === 'TERRA') {
+      return this.getTradingVolumeHistoryTerra(fromDayUTC, toDayUTC)
+    } else if (network === 'METH') {
+      return this.getTradingVolumeHistoryMeth(fromDayUTC, toDayUTC)
+    } else if (network === 'COMBINE') {
+      const terra = await this.getTradingVolumeHistoryTerra(fromDayUTC, toDayUTC)
+      const meth = await this.getTradingVolumeHistoryMeth(fromDayUTC, toDayUTC)
+
+      return terra.map((data) => ({
+        timestamp: data.timestamp,
+        value: num(data.value)
+          .plus(meth.find((methData) => methData.timestamp === data.timestamp)?.value || 0)
+          .toString()
+      }))
+    }
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async getTradingVolumeHistoryTerra(from: number, to: number): Promise<ValueAt[]> {
     return this.dailyRepo
       .createQueryBuilder()
-      .select('datetime', 'timestamp')
+      .select('extract(epoch from datetime) * 1000', 'timestamp')
       .addSelect('trading_volume', 'value')
-      .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .where('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', { from: from/1000, to: to/1000 })
       .orderBy('datetime', 'ASC')
       .getRawMany()
   }
 
-  async getAssetTradingVolume24h(token: string): Promise<string> {
-    const to = Date.now()
-    const from = addDays(to, -1).getTime()
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async getTradingVolumeHistoryMeth(from: number, to: number): Promise<ValueAt[]> {
+    const assets = loadEthAssets()
+    const datas = await getPairsDayDatas(
+      Object.keys(assets).map((token) => assets[token].pair.toLowerCase()),
+      from/1000,
+      to/1000
+    )
+
+    return sortedUniq(datas.map((data) => data.date)).map((date) => ({
+      timestamp: date * 1000,
+      value: datas
+        .filter((data) => data.date === date)
+        .reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0)).multipliedBy(1000000).toFixed(0)
+    }))
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async getTodayAssetVolume(token: string): Promise<string> {
+    const todayStart = startOfToday()
+    const todayEnd = endOfToday()
 
     const txs24h = await this.txRepo
       .createQueryBuilder()
       .select('sum(volume)', 'volume')
-      .where('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .where('datetime BETWEEN :from AND :to', { from: todayStart, to: todayEnd })
       .andWhere('token = :token', { token })
       .getRawOne()
 
     return txs24h?.volume || '0'
   }
 
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async getAssetAPR(token: string): Promise<string> {
     const asset = await this.assetService.get({ token })
     const { mirrorToken } = this.govService.get()
@@ -270,6 +374,7 @@ export class StatisticService {
     return apr.isNaN() ? '0' : apr.toString()
   }
 
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async richlist(token: string, offset: number, limit: number): Promise<AccountBalance[]> {
     // SELECT * FROM (
     //   SELECT DISTINCT ON (address) address,token,balance
