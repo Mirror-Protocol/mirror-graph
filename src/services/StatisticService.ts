@@ -285,7 +285,7 @@ export class StatisticService {
         timestamp,
         value: pairAddresses.reduce(
           (result, pair) => {
-            const pairData = datas.find((data) => data.pairAddress === pair && data.timestamp <= timestamp)
+            const pairData = datas.find((data) => data.pairAddress === pair.toLowerCase() && data.timestamp <= timestamp)
             const liquidity = pairData
               ? num(pairData.reserve1).dividedBy(pairData.reserve0).multipliedBy(pairData.reserve0).plus(pairData.reserve1)
               : num(0)
