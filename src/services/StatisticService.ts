@@ -8,7 +8,7 @@ import { find, sortedUniq } from 'lodash'
 import { num } from 'lib/num'
 import { getTokenBalance } from 'lib/mirror'
 import { getContractStore } from 'lib/terra'
-import { getMethMirTokenBalance, getPairsDayDatas } from 'lib/meth'
+import { getMethMirTokenBalance, getPairDayDatas, getPairsDayDatas } from 'lib/meth'
 import { getMIRAnnualRewards } from 'lib/utils'
 import { loadEthAssets } from 'lib/data'
 import { GovService, AssetService, PriceService, OracleService, ContractService } from 'services'
@@ -109,7 +109,7 @@ export class StatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async todayTerra(): Promise<TodayStatistic> {
-    const from = Math.floor((Date.now() - (Date.now() % 86400000))/1000)
+    const from = Math.floor((Date.now() - (Date.now() % 86400000)) / 1000)
     const to = Math.floor(from + 86400)
 
     const txs = await this.txRepo
@@ -138,14 +138,11 @@ export class StatisticService {
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async todayMeth(): Promise<TodayStatistic> {
     // start of today (UTC)
-    const from = Math.floor((Date.now() - (Date.now() % 86400000)) / 1000)
+    const from = Date.now() - (Date.now() % 86400000)
 
     const assets = loadEthAssets()
-    const datas = await getPairsDayDatas(
-      Object.keys(assets).map((token) => assets[token].pair.toLowerCase()),
-      from,
-      from
-    )
+    const pairAddresses = Object.keys(assets).map((token) => assets[token].pair.toLowerCase())
+    const datas = await getPairsDayDatas(pairAddresses, from, from)
     const transactions = datas.reduce((result, data) => result.plus(data.dailyTxns), num(0)).toString()
     const volume = datas.reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0)).multipliedBy(1000000).toFixed(0)
     const feeVolume = num(volume).multipliedBy(0.003).multipliedBy(1000000).toFixed(0)
@@ -249,7 +246,7 @@ export class StatisticService {
       return terra.map((data) => ({
         timestamp: data.timestamp,
         value: num(data.value)
-          .plus(meth.find((methData) => methData.timestamp <= data.timestamp)?.value || 0)
+          .plus(meth.find((methData) => methData.timestamp === data.timestamp)?.value || 0)
           .toString()
       }))
     }
@@ -261,7 +258,7 @@ export class StatisticService {
       .createQueryBuilder()
       .select('extract(epoch from datetime) * 1000', 'timestamp')
       .addSelect('cumulative_liquidity', 'value')
-      .where('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', { from: from/1000, to: to/1000 })
+      .where('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', { from: from / 1000, to: to / 1000 })
       .orderBy('datetime', 'ASC')
       .getRawMany()
   }
@@ -269,20 +266,33 @@ export class StatisticService {
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async getLiquidityHistoryMeth(from: number, to: number): Promise<ValueAt[]> {
     const assets = loadEthAssets()
-    const datas = await getPairsDayDatas(
-      Object.keys(assets).map((token) => assets[token].pair.toLowerCase()),
-      from/1000,
-      to/1000
-    )
+    const pairAddresses = Object.keys(assets).map((token) => assets[token].pair.toLowerCase())
+    const datas = [
+      ...await bluebird.map(
+        pairAddresses,
+        async (pair) => Object.assign((await getPairDayDatas(pair, 0, from, 1, 'desc'))[0], { timestamp: from })
+      ),
+      ...await getPairsDayDatas(pairAddresses, from + 86400000, to)
+    ]
+      .sort((a, b) => b.timestamp - a.timestamp)
 
-    return sortedUniq(datas.map((data) => data.date)).map((date) => ({
-      timestamp: date * 1000,
-      value: datas
-        .filter((data) => data.date === date)
-        .reduce((result, data) => result
-          .plus(num(data.reserve1).dividedBy(data.reserve0).multipliedBy(data.reserve0))
-          .plus(data.reserve1), num(0)).multipliedBy(1000000).toFixed(0)
-    }))
+    const history = []
+    for (let timestamp = from; timestamp <= to; timestamp += 86400000) {
+      history.push({
+        timestamp,
+        value: pairAddresses.reduce(
+          (result, pair) => {
+            const pairData = datas.find((data) => data.pairAddress === pair && data.timestamp <= timestamp)
+            const liquidity = pairData
+              ? num(pairData.reserve1).dividedBy(pairData.reserve0).multipliedBy(pairData.reserve0).plus(pairData.reserve1)
+              : num(0)
+            return result.plus(liquidity)
+          },
+          num(0)
+        ).multipliedBy(1000000).toFixed(0)
+      })
+    }
+    return history
   }
 
   async getTradingVolumeHistory(network: string, from: number, to: number): Promise<ValueAt[]> {
@@ -312,7 +322,7 @@ export class StatisticService {
       .createQueryBuilder()
       .select('extract(epoch from datetime) * 1000', 'timestamp')
       .addSelect('trading_volume', 'value')
-      .where('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', { from: from/1000, to: to/1000 })
+      .where('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', { from: from / 1000, to: to / 1000 })
       .orderBy('datetime', 'ASC')
       .getRawMany()
   }
@@ -320,16 +330,13 @@ export class StatisticService {
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async getTradingVolumeHistoryMeth(from: number, to: number): Promise<ValueAt[]> {
     const assets = loadEthAssets()
-    const datas = await getPairsDayDatas(
-      Object.keys(assets).map((token) => assets[token].pair.toLowerCase()),
-      from/1000,
-      to/1000
-    )
+    const pairAddresses = Object.keys(assets).map((token) => assets[token].pair.toLowerCase())
+    const datas = await getPairsDayDatas(pairAddresses, from, to)
 
-    return sortedUniq(datas.map((data) => data.date)).map((date) => ({
-      timestamp: date * 1000,
+    return sortedUniq(datas.map((data) => data.timestamp)).map((timestamp) => ({
+      timestamp,
       value: datas
-        .filter((data) => data.date === date)
+        .filter((data) => data.timestamp === timestamp)
         .reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0)).multipliedBy(1000000).toFixed(0)
     }))
   }

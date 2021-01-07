@@ -4,7 +4,7 @@ export let client: GraphQLClient
 
 interface PairDayData {
   id: string
-  date: number
+  timestamp: number
   pairAddress: string
   reserve0: string
   reserve1: string
@@ -24,28 +24,59 @@ export function getClient(): GraphQLClient {
   return client
 }
 
-export async function getPairDayDatas(pair: string): Promise<void> {
+export async function getPairDayDatas(
+  pair: string, from: number, to: number, limit: number, orderDirection: string
+): Promise<PairDayData[]> {
   const result = await getClient().request(
-    gql`query($pair: String!) {
+    gql`query($pair: String!, $from: Int!, $to: Int!, $orderDirection: String!, $limit: Int!) {
       pairDayDatas(
-        first: 1,
+        where: {
+          pairAddress: $pair,
+          date_gte: $from,
+          date_lte: $to,
+        },
         orderBy: date,
-        orderDirection: desc,
-        where: { pairAddress: $pair }
+        orderDirection: $orderDirection,
+        first: $limit
       ) {
         id
         date
         pairAddress
-        dailyVolumeUSD
+        token0 {
+          symbol
+        }
+        token1 {
+          symbol
+        }
+        reserve0
+        reserve1
+        dailyVolumeToken0
+        dailyVolumeToken1
         dailyTxns
       }
     }`,
     {
-      pair
+      pair,
+      from: Math.floor(from / 1000),
+      to: Math.floor(to / 1000),
+      limit,
+      orderDirection,
     }
   )
+  if (!result?.pairDayDatas || result.pairDayDatas.length < 1) {
+    console.log('wrong', pair)
+  }
 
-  console.log(result)
+  return result?.pairDayDatas.map((data) => ({
+    id: data.id,
+    timestamp: data.date * 1000,
+    pairAddress: data.pairAddress,
+    reserve0: data.token1.symbol === 'UST' ? data.reserve0 : data.reserve1,
+    reserve1: data.token1.symbol === 'UST' ? data.reserve1 : data.reserve0,
+    dailyVolumeToken0: data.token1.symbol === 'UST' ? data.dailyVolumeToken0 : data.dailyVolumeToken1,
+    dailyVolumeToken1: data.token1.symbol === 'UST' ? data.dailyVolumeToken1 : data.dailyVolumeToken0,
+    dailyTxns: data.dailyTxns,
+  }))
 }
 
 export async function getPairsDayDatas(pairs: string[], from: number, to: number): Promise<PairDayData[]> {
@@ -78,14 +109,14 @@ export async function getPairsDayDatas(pairs: string[], from: number, to: number
     }`,
     {
       pairs,
-      from,
-      to,
+      from: Math.floor(from / 1000),
+      to: Math.floor(to / 1000),
     }
   )
 
   return result?.pairDayDatas.map((data) => ({
     id: data.id,
-    date: data.date,
+    timestamp: data.date * 1000,
     pairAddress: data.pairAddress,
     reserve0: data.token1.symbol === 'UST' ? data.reserve0 : data.reserve1,
     reserve1: data.token1.symbol === 'UST' ? data.reserve1 : data.reserve0,
