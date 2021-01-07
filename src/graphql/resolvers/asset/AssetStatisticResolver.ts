@@ -1,4 +1,4 @@
-import { Resolver, FieldResolver, Root } from 'type-graphql'
+import { Resolver, FieldResolver, Root, Arg } from 'type-graphql'
 import { AssetEntity } from 'orm'
 import { AssetStatistic } from 'graphql/schema'
 import { StatisticService } from 'services'
@@ -10,8 +10,13 @@ export class AssetStatisticResolver {
   ) {}
 
   @FieldResolver()
-  async volume(@Root() asset: AssetEntity): Promise<string> {
-    return this.statisticService.getTodayAssetVolume(asset.token)
+  async volume(
+    @Root() asset: AssetEntity,
+    @Arg('network', { defaultValue: "COMBINE" }) network: string
+  ): Promise<string> {
+    const fromDayUTC = Date.now() - (Date.now() % 86400000)
+
+    return this.statisticService.getAssetDayVolume(network, asset.token, fromDayUTC, fromDayUTC)
   }
 
   @FieldResolver()

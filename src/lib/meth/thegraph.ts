@@ -56,16 +56,13 @@ export async function getPairDayDatas(
       }
     }`,
     {
-      pair,
+      pair: pair.toLowerCase(),
       from: Math.floor(from / 1000),
       to: Math.floor(to / 1000),
       limit,
       orderDirection,
     }
   )
-  if (!result?.pairDayDatas || result.pairDayDatas.length < 1) {
-    console.log('wrong', pair)
-  }
 
   return result?.pairDayDatas.map((data) => ({
     id: data.id,
@@ -108,7 +105,7 @@ export async function getPairsDayDatas(pairs: string[], from: number, to: number
       }
     }`,
     {
-      pairs,
+      pairs: pairs.map((pair) => pair.toLowerCase()),
       from: Math.floor(from / 1000),
       to: Math.floor(to / 1000),
     }

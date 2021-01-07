@@ -1,4 +1,4 @@
-import { addDays, startOfToday, endOfToday } from 'date-fns'
+import { addDays } from 'date-fns'
 import * as bluebird from 'bluebird'
 import memoize from 'memoizee-decorator'
 import { Repository, getConnection } from 'typeorm'
@@ -141,14 +141,14 @@ export class StatisticService {
     const from = Date.now() - (Date.now() % 86400000)
 
     const assets = loadEthAssets()
-    const pairAddresses = Object.keys(assets).map((token) => assets[token].pair.toLowerCase())
+    const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
     const datas = await getPairsDayDatas(pairAddresses, from, from)
     const transactions = datas.reduce((result, data) => result.plus(data.dailyTxns), num(0)).toString()
     const volume = datas.reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0)).multipliedBy(1000000).toFixed(0)
     const feeVolume = num(volume).multipliedBy(0.003).multipliedBy(1000000).toFixed(0)
-    const mirPair = find(assets, (asset) => asset.symbol === 'MIR')?.pair
+    const mirPair = find(assets, (asset) => asset.symbol === 'MIR')?.pair.toLowerCase()
     const mirVolume = mirPair
-      ? num(find(datas, (data) => data.pairAddress === mirPair.toLowerCase())?.dailyVolumeToken1 || '0').multipliedBy(1000000).toFixed(0)
+      ? num(find(datas, (data) => data.pairAddress === mirPair)?.dailyVolumeToken1 || '0').multipliedBy(1000000).toFixed(0)
       : '0'
 
     return {
@@ -258,7 +258,10 @@ export class StatisticService {
       .createQueryBuilder()
       .select('extract(epoch from datetime) * 1000', 'timestamp')
       .addSelect('cumulative_liquidity', 'value')
-      .where('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', { from: from / 1000, to: to / 1000 })
+      .where(
+        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+      )
       .orderBy('datetime', 'ASC')
       .getRawMany()
   }
@@ -266,7 +269,7 @@ export class StatisticService {
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async getLiquidityHistoryMeth(from: number, to: number): Promise<ValueAt[]> {
     const assets = loadEthAssets()
-    const pairAddresses = Object.keys(assets).map((token) => assets[token].pair.toLowerCase())
+    const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
     const datas = [
       ...await bluebird.map(
         pairAddresses,
@@ -322,7 +325,10 @@ export class StatisticService {
       .createQueryBuilder()
       .select('extract(epoch from datetime) * 1000', 'timestamp')
       .addSelect('trading_volume', 'value')
-      .where('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', { from: from / 1000, to: to / 1000 })
+      .where(
+        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+      )
       .orderBy('datetime', 'ASC')
       .getRawMany()
   }
@@ -330,7 +336,7 @@ export class StatisticService {
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async getTradingVolumeHistoryMeth(from: number, to: number): Promise<ValueAt[]> {
     const assets = loadEthAssets()
-    const pairAddresses = Object.keys(assets).map((token) => assets[token].pair.toLowerCase())
+    const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
     const datas = await getPairsDayDatas(pairAddresses, from, to)
 
     return sortedUniq(datas.map((data) => data.timestamp)).map((timestamp) => ({
@@ -341,19 +347,47 @@ export class StatisticService {
     }))
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
-  async getTodayAssetVolume(token: string): Promise<string> {
-    const todayStart = startOfToday()
-    const todayEnd = endOfToday()
+  async getAssetDayVolume(network: string, token: string, from: number, to: number): Promise<string> {
+    if (network === 'TERRA') {
+      return this.getAssetDayVolumeTerra(token, from, to)
+    } else if (network === 'METH') {
+      return this.getAssetDayVolumeMeth(token, from, to)
+    } else if (network === 'COMBINE') {
+      const terra = await this.getAssetDayVolumeTerra(token, from, to)
+      const meth = await this.getAssetDayVolumeMeth(token, from, to)
 
+      return num(terra).plus(meth).toString()
+    }
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async getAssetDayVolumeTerra(token: string, from: number, to: number): Promise<string> {
     const txs24h = await this.txRepo
       .createQueryBuilder()
       .select('sum(volume)', 'volume')
-      .where('datetime BETWEEN :from AND :to', { from: todayStart, to: todayEnd })
+      .where(
+        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+      )
       .andWhere('token = :token', { token })
       .getRawOne()
 
     return txs24h?.volume || '0'
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async getAssetDayVolumeMeth(token: string, from: number, to: number): Promise<string> {
+    const asset = await this.assetService.get({ token })
+    const ethAssets = loadEthAssets()
+    const ethAsset = find(ethAssets, (ethAsset) => ethAsset.symbol === asset.symbol)
+    if (!ethAsset) {
+      return '0'
+    }
+    const datas = await getPairDayDatas(ethAsset.pair, from, to, Math.floor((to - from) / 86400000) + 1, 'desc')
+    return datas
+      .reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0))
+      .multipliedBy(1000000)
+      .toFixed(0)
   }
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
