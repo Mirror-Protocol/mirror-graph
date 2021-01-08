@@ -270,11 +270,17 @@ export class StatisticService {
   async getLiquidityHistoryMeth(from: number, to: number): Promise<ValueAt[]> {
     const assets = loadEthAssets()
     const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
+    const initialDatas = await bluebird.map(
+      pairAddresses,
+      async (pair) => {
+        const pairData = await getPairDayDatas(pair, 0, from, 1, 'desc')
+        if (pairData[0]) {
+          return Object.assign(pairData[0], { timestamp: from })
+        }
+      }
+    ).filter(Boolean)
     const datas = [
-      ...await bluebird.map(
-        pairAddresses,
-        async (pair) => Object.assign((await getPairDayDatas(pair, 0, from, 1, 'desc'))[0], { timestamp: from })
-      ),
+      ...initialDatas,
       ...await getPairsDayDatas(pairAddresses, from + 86400000, to)
     ]
       .sort((a, b) => b.timestamp - a.timestamp)
