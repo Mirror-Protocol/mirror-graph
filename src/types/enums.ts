@@ -7,3 +7,11 @@ export enum AssetStatus {
 }
 
 registerEnumType(AssetStatus, { name: 'AssetStatus' })
+
+export enum Network {
+  TERRA = 'TERRA',
+  ETH = 'ETH',
+  COMBINE = 'COMBINE',
+}
+
+registerEnumType(Network, { name: 'Network' })

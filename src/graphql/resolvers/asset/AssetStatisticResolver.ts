@@ -2,7 +2,7 @@ import { Resolver, FieldResolver, Root, Arg } from 'type-graphql'
 import { AssetEntity } from 'orm'
 import { AssetStatistic } from 'graphql/schema'
 import { StatisticService } from 'services'
-
+import { Network } from 'types'
 @Resolver((of) => AssetStatistic)
 export class AssetStatisticResolver {
   constructor(
@@ -12,7 +12,7 @@ export class AssetStatisticResolver {
   @FieldResolver()
   async volume(
     @Root() asset: AssetEntity,
-    @Arg('network', { defaultValue: "COMBINE" }) network: string
+    @Arg('network', (type) => Network, { defaultValue: Network.COMBINE }) network: Network
   ): Promise<string> {
     const fromDayUTC = Date.now() - (Date.now() % 86400000)
 

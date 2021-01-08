@@ -1,5 +1,6 @@
 import { ObjectType, Field } from 'type-graphql'
 import { ValueAt } from './common'
+import { Network } from 'types'
 
 @ObjectType({ simpleResolvers: true })
 export class TodayStatistic {
@@ -18,8 +19,8 @@ export class TodayStatistic {
 
 @ObjectType({ simpleResolvers: true })
 export class Statistic {
-  @Field()
-  network: string
+  @Field((type) => Network)
+  network: Network
 
   @Field()
   assetMarketCap: string

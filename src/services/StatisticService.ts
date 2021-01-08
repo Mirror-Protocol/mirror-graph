@@ -14,7 +14,7 @@ import { loadEthAssets } from 'lib/data'
 import { GovService, AssetService, PriceService, OracleService, ContractService } from 'services'
 import { DailyStatisticEntity, TxEntity, RewardEntity } from 'orm'
 import { Statistic, TodayStatistic, ValueAt, AccountBalance } from 'graphql/schema'
-import { ContractType } from 'types'
+import { ContractType, Network } from 'types'
 
 @Service()
 export class StatisticService {
@@ -30,7 +30,7 @@ export class StatisticService {
     @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>
   ) {}
 
-  async statistic(network: string): Promise<Partial<Statistic>> {
+  async statistic(network: Network): Promise<Partial<Statistic>> {
     const assets = await this.assetService.getAll()
     let assetMarketCap = num(0)
     let totalValueLocked = num(0)
@@ -89,12 +89,12 @@ export class StatisticService {
     }
   }
 
-  async today(network: string): Promise<TodayStatistic> {
-    if (network === 'TERRA') {
+  async today(network: Network): Promise<TodayStatistic> {
+    if (network === Network.TERRA) {
       return this.todayTerra()
-    } else if (network === 'METH') {
+    } else if (network === Network.ETH) {
       return this.todayMeth()
-    } else if (network === 'COMBINE') {
+    } else if (network === Network.COMBINE) {
       const terra = await this.todayTerra()
       const meth = await this.todayMeth()
 
@@ -231,15 +231,15 @@ export class StatisticService {
     return repo.save(daily)
   }
 
-  async getLiquidityHistory(network: string, from: number, to: number): Promise<ValueAt[]> {
+  async getLiquidityHistory(network: Network, from: number, to: number): Promise<ValueAt[]> {
     const fromDayUTC = from - (from % 86400000)
     const toDayUTC = to - (to % 86400000)
 
-    if (network === 'TERRA') {
+    if (network === Network.TERRA) {
       return this.getLiquidityHistoryTerra(fromDayUTC, toDayUTC)
-    } else if (network === 'METH') {
+    } else if (network === Network.ETH) {
       return this.getLiquidityHistoryMeth(fromDayUTC, toDayUTC)
-    } else if (network === 'COMBINE') {
+    } else if (network === Network.COMBINE) {
       const terra = await this.getLiquidityHistoryTerra(fromDayUTC, toDayUTC)
       const meth = await this.getLiquidityHistoryMeth(fromDayUTC, toDayUTC)
 
@@ -304,15 +304,15 @@ export class StatisticService {
     return history
   }
 
-  async getTradingVolumeHistory(network: string, from: number, to: number): Promise<ValueAt[]> {
+  async getTradingVolumeHistory(network: Network, from: number, to: number): Promise<ValueAt[]> {
     const fromDayUTC = from - (from % 86400000)
     const toDayUTC = to - (to % 86400000)
 
-    if (network === 'TERRA') {
+    if (network === Network.TERRA) {
       return this.getTradingVolumeHistoryTerra(fromDayUTC, toDayUTC)
-    } else if (network === 'METH') {
+    } else if (network === Network.ETH) {
       return this.getTradingVolumeHistoryMeth(fromDayUTC, toDayUTC)
-    } else if (network === 'COMBINE') {
+    } else if (network === Network.COMBINE) {
       const terra = await this.getTradingVolumeHistoryTerra(fromDayUTC, toDayUTC)
       const meth = await this.getTradingVolumeHistoryMeth(fromDayUTC, toDayUTC)
 
@@ -353,12 +353,12 @@ export class StatisticService {
     }))
   }
 
-  async getAssetDayVolume(network: string, token: string, from: number, to: number): Promise<string> {
-    if (network === 'TERRA') {
+  async getAssetDayVolume(network: Network, token: string, from: number, to: number): Promise<string> {
+    if (network === Network.TERRA) {
       return this.getAssetDayVolumeTerra(token, from, to)
-    } else if (network === 'METH') {
+    } else if (network === Network.ETH) {
       return this.getAssetDayVolumeMeth(token, from, to)
-    } else if (network === 'COMBINE') {
+    } else if (network === Network.COMBINE) {
       const terra = await this.getAssetDayVolumeTerra(token, from, to)
       const meth = await this.getAssetDayVolumeMeth(token, from, to)
 

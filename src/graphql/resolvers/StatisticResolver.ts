@@ -1,13 +1,16 @@
 import { Resolver, Query, FieldResolver, Root, Arg } from 'type-graphql'
 import { Statistic, TodayStatistic, ValueAt, AccountBalance } from 'graphql/schema'
 import { StatisticService } from 'services'
+import { Network } from 'types'
 
 @Resolver((of) => Statistic)
 export class StatisticResolver {
   constructor(private readonly statisticService: StatisticService) {}
 
   @Query((returns) => Statistic)
-  async statistic(@Arg('network', { defaultValue: "COMBINE" }) network: string): Promise<Statistic> {
+  async statistic(
+    @Arg('network', (type) => Network, { defaultValue: Network.COMBINE }) network: Network
+  ): Promise<Statistic> {
     return await this.statisticService.statistic(network) as Statistic
   }
 
