@@ -145,7 +145,7 @@ export class StatisticService {
     const datas = await getPairsDayDatas(pairAddresses, from, from)
     const transactions = datas.reduce((result, data) => result.plus(data.dailyTxns), num(0)).toString()
     const volume = datas.reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0)).multipliedBy(1000000).toFixed(0)
-    const feeVolume = num(volume).multipliedBy(0.003).multipliedBy(1000000).toFixed(0)
+    const feeVolume = num(volume).multipliedBy(0.003).toFixed(0)
     const mirPair = find(assets, (asset) => asset.symbol === 'MIR')?.pair.toLowerCase()
     const mirVolume = mirPair
       ? num(find(datas, (data) => data.pairAddress === mirPair)?.dailyVolumeToken1 || '0').multipliedBy(1000000).toFixed(0)
@@ -232,7 +232,7 @@ export class StatisticService {
   }
 
   async getLiquidityHistory(network: Network, from: number, to: number): Promise<ValueAt[]> {
-    const fromDayUTC = from - (from % 86400000)
+    const fromDayUTC = Math.max(from - (from % 86400000), 1606953600000)
     const toDayUTC = to - (to % 86400000)
 
     if (network === Network.TERRA) {
@@ -266,7 +266,7 @@ export class StatisticService {
       .getRawMany()
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 60 }) // 60 minutes
   async getLiquidityHistoryMeth(from: number, to: number): Promise<ValueAt[]> {
     const assets = loadEthAssets()
     const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
@@ -279,11 +279,15 @@ export class StatisticService {
         }
       }
     ).filter(Boolean)
-    const datas = [
-      ...initialDatas,
-      ...await getPairsDayDatas(pairAddresses, from + 86400000, to)
-    ]
-      .sort((a, b) => b.timestamp - a.timestamp)
+
+    let datas = initialDatas
+    const maxRange = 86400000 * 4
+    for (let queryFrom = from + 86400000; queryFrom <= to; queryFrom += maxRange) {
+      datas.push(...await getPairsDayDatas(
+        pairAddresses, queryFrom, Math.min(queryFrom + (maxRange - 86400000), to)
+      ))
+    }
+    datas = datas.sort((a, b) => b.timestamp - a.timestamp)
 
     const history = []
     for (let timestamp = from; timestamp <= to; timestamp += 86400000) {
@@ -295,17 +299,18 @@ export class StatisticService {
             const liquidity = pairData
               ? num(pairData.reserve1).dividedBy(pairData.reserve0).multipliedBy(pairData.reserve0).plus(pairData.reserve1)
               : num(0)
+
             return result.plus(liquidity)
           },
           num(0)
         ).multipliedBy(1000000).toFixed(0)
       })
     }
-    return history
+    return history.filter((data) => data.value !== '0')
   }
 
   async getTradingVolumeHistory(network: Network, from: number, to: number): Promise<ValueAt[]> {
-    const fromDayUTC = from - (from % 86400000)
+    const fromDayUTC = Math.max(from - (from % 86400000), 1606953600000)
     const toDayUTC = to - (to % 86400000)
 
     if (network === Network.TERRA) {
@@ -339,18 +344,25 @@ export class StatisticService {
       .getRawMany()
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 30 }) // 30 minutes
   async getTradingVolumeHistoryMeth(from: number, to: number): Promise<ValueAt[]> {
     const assets = loadEthAssets()
     const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
-    const datas = await getPairsDayDatas(pairAddresses, from, to)
 
-    return sortedUniq(datas.map((data) => data.timestamp)).map((timestamp) => ({
-      timestamp,
-      value: datas
-        .filter((data) => data.timestamp === timestamp)
-        .reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0)).multipliedBy(1000000).toFixed(0)
-    }))
+    const history = []
+    const maxRange = 86400000 * 4
+    for (let queryFrom = from; queryFrom <= to; queryFrom += maxRange) {
+      const datas = await getPairsDayDatas(
+        pairAddresses, queryFrom, Math.min(queryFrom + (maxRange - 86400000), to)
+      )
+      history.push(...sortedUniq(datas.map((data) => data.timestamp)).map((timestamp) => ({
+        timestamp,
+        value: datas
+          .filter((data) => data.timestamp === timestamp)
+          .reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0)).multipliedBy(1000000).toFixed(0)
+      })))
+    }
+    return history
   }
 
   async getAssetDayVolume(network: Network, token: string, from: number, to: number): Promise<string> {
