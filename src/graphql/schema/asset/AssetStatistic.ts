@@ -2,6 +2,9 @@ import { ObjectType, Field } from 'type-graphql'
 
 @ObjectType({ simpleResolvers: true })
 export class AssetStatistic {
+  @Field({ nullable: true, description: 'liquidity of today' })
+  liquidity?: string
+
   @Field({ nullable: true, description: 'trading volume of today' })
   volume?: string
 

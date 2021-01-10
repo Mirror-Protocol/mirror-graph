@@ -10,13 +10,19 @@ export class AssetStatisticResolver {
   ) {}
 
   @FieldResolver()
+  async liquidity(
+    @Root() asset: AssetEntity,
+    @Arg('network', (type) => Network, { defaultValue: Network.COMBINE }) network: Network
+  ): Promise<string> {
+    return this.statisticService.getAssetLiquidity(network, asset.token)
+  }
+
+  @FieldResolver()
   async volume(
     @Root() asset: AssetEntity,
     @Arg('network', (type) => Network, { defaultValue: Network.COMBINE }) network: Network
   ): Promise<string> {
-    const fromDayUTC = Date.now() - (Date.now() % 86400000)
-
-    return this.statisticService.getAssetDayVolume(network, asset.token, fromDayUTC, fromDayUTC)
+    return this.statisticService.getAssetDayVolume(network, asset.token, Date.now())
   }
 
   @FieldResolver()

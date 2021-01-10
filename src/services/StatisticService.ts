@@ -213,11 +213,8 @@ export class StatisticService {
     await bluebird.map(
       assets.filter((asset) => asset.token !== 'uusd'),
       async (asset) => {
-        const price = await this.oracleService.getPrice(asset.token)
-        if (!price) return
-
         liquidityValue = liquidityValue
-          .plus(num(asset.positions.liquidity).multipliedBy(price))
+          .plus(num(asset.positions.uusdPool).dividedBy(asset.positions.pool).multipliedBy(asset.positions.pool))
           .plus(asset.positions.uusdLiquidity)
       }
     )
@@ -365,21 +362,25 @@ export class StatisticService {
     return history
   }
 
-  async getAssetDayVolume(network: Network, token: string, from: number, to: number): Promise<string> {
+  async getAssetDayVolume(network: Network, token: string, timestamp: number): Promise<string> {
+    const dayUTC = timestamp - (timestamp % 86400000)
+
     if (network === Network.TERRA) {
-      return this.getAssetDayVolumeTerra(token, from, to)
+      return this.getAssetDayVolumeTerra(token, dayUTC)
     } else if (network === Network.ETH) {
-      return this.getAssetDayVolumeMeth(token, from, to)
+      return this.getAssetDayVolumeMeth(token, dayUTC)
     } else if (network === Network.COMBINE) {
-      const terra = await this.getAssetDayVolumeTerra(token, from, to)
-      const meth = await this.getAssetDayVolumeMeth(token, from, to)
+      const terra = await this.getAssetDayVolumeTerra(token, dayUTC)
+      const meth = await this.getAssetDayVolumeMeth(token, dayUTC)
 
       return num(terra).plus(meth).toString()
     }
   }
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
-  async getAssetDayVolumeTerra(token: string, from: number, to: number): Promise<string> {
+  async getAssetDayVolumeTerra(token: string, timestamp: number): Promise<string> {
+    const from = timestamp
+    const to = from + 86400000
     const txs24h = await this.txRepo
       .createQueryBuilder()
       .select('sum(volume)', 'volume')
@@ -394,16 +395,60 @@ export class StatisticService {
   }
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
-  async getAssetDayVolumeMeth(token: string, from: number, to: number): Promise<string> {
+  async getAssetDayVolumeMeth(token: string, timestamp: number): Promise<string> {
     const asset = await this.assetService.get({ token })
     const ethAssets = loadEthAssets()
     const ethAsset = find(ethAssets, (ethAsset) => ethAsset.symbol === asset.symbol)
     if (!ethAsset) {
       return '0'
     }
-    const datas = await getPairDayDatas(ethAsset.pair, from, to, Math.floor((to - from) / 86400000) + 1, 'desc')
+    const datas = await getPairDayDatas(ethAsset.pair, timestamp, timestamp, 1, 'desc')
     return datas
       .reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0))
+      .multipliedBy(1000000)
+      .toFixed(0)
+  }
+
+  async getAssetLiquidity(network: Network, token: string): Promise<string> {
+    if (network === Network.TERRA) {
+      return this.getAssetLiquidityTerra(token)
+    } else if (network === Network.ETH) {
+      return this.getAssetLiquidityMeth(token)
+    } else if (network === Network.COMBINE) {
+      const terra = await this.getAssetLiquidityTerra(token)
+      const meth = await this.getAssetLiquidityMeth(token)
+
+      return num(terra).plus(meth).toString()
+    }
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async getAssetLiquidityTerra(token: string): Promise<string> {
+    const asset = await this.assetService.get({ token })
+    const price = await this.priceService.getPrice(token)
+    if (!asset || !price) {
+      return '0'
+    }
+    return num(asset.positions.uusdPool).dividedBy(asset.positions.pool).multipliedBy(asset.positions.pool)
+      .plus(asset.positions.uusdPool)
+      .toFixed(0)
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 60 }) // 60 minutes
+  async getAssetLiquidityMeth(token: string): Promise<string> {
+    const asset = await this.assetService.get({ token })
+    const ethAssets = loadEthAssets()
+    const ethAsset = find(ethAssets, (ethAsset) => ethAsset.symbol === asset.symbol)
+    if (!ethAsset) {
+      return '0'
+    }
+    const datas = await getPairDayDatas(ethAsset.pair, 0, Date.now(), 1, 'desc')
+    if (!datas || datas.length < 1) {
+      return '0'
+    }
+    const pairData = datas[0]
+    return num(pairData.reserve1).dividedBy(pairData.reserve0).multipliedBy(pairData.reserve0)
+      .plus(pairData.reserve1)
       .multipliedBy(1000000)
       .toFixed(0)
   }
