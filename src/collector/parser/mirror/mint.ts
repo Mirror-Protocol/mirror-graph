@@ -172,7 +172,7 @@ export async function parse(
 
     tx = {
       type: TxType.AUCTION,
-      data: { positionIdx, liquidatedAmount, returnCollateralAmount, taxAmount },
+      data: { positionIdx, liquidatedAmount, returnCollateralAmount, taxAmount, protocolFeeAmount },
       token: liquidated.token,
       tags: [liquidated.token, returnCollateral.token],
     }
