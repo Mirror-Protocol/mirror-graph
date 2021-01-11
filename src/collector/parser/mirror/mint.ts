@@ -138,14 +138,19 @@ export async function parse(
   } else if (msg['auction']) {
     const liquidatedAmount = findAttribute(attributes, 'liquidated_amount')
     const returnCollateralAmount = findAttribute(attributes, 'return_collateral_amount')
+    const protocolFeeAmount = findAttribute(attributes, 'protocol_fee')
     const taxAmount = findAttribute(attributes, 'tax_amount')
 
     const liquidated = splitTokenAmount(liquidatedAmount)
     const returnCollateral = splitTokenAmount(returnCollateralAmount)
+    const protocolFee = splitTokenAmount(protocolFeeAmount)
 
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).minus(liquidated.amount).toString()
-    cdp.collateralAmount = num(cdp.collateralAmount).minus(returnCollateral.amount).toString()
+    cdp.collateralAmount = num(cdp.collateralAmount)
+      .minus(returnCollateral.amount)
+      .minus(protocolFee.amount)
+      .toString()
 
     if (cdp.mintAmount === '0' || cdp.collateralAmount === '0') {
       // remove asset's mint position
