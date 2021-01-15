@@ -3,9 +3,12 @@ import * as bodyParser from 'koa-body'
 import * as Router from 'koa-router'
 import * as helmet from 'koa-helmet'
 import * as cors from '@koa/cors'
+import { configureRoutes } from 'koa-joi-controllers'
+import controllers from 'endpoints'
 import { apiErrorHandler, APIError, ErrorTypes } from 'lib/error'
 import { error } from 'lib/response'
 
+const API_VERSION_PREFIX = '/v1'
 const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}mirror\.finance(?::\d{4,5})?(?:\/|$)/
 
 export async function initApp(): Promise<Koa> {
@@ -70,6 +73,8 @@ export async function initApp(): Promise<Koa> {
     ctx.status = 200
     ctx.body = 'OK'
   })
+
+  configureRoutes(app, controllers, API_VERSION_PREFIX)
 
   app.use(router.routes())
   app.use(router.allowedMethods())

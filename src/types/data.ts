@@ -57,3 +57,20 @@ export interface EthAsset {
 export interface EthAssets {
   [token: string]: EthAsset
 }
+
+export interface EthPoolInfo {
+  lpStaked: string
+  rewardRemains: string
+}
+
+export interface EthPairInfo {
+  lpSupply: string
+  ust: string
+  asset: string
+  price: string
+  total: string
+}
+
+export interface EthAssetInfos {
+  [token: string]: EthAsset & EthPoolInfo & EthPairInfo & { apr: string }
+}
