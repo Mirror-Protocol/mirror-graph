@@ -232,6 +232,22 @@ export class StatisticService {
     }
   }
 
+  async getAsset24h(network: Network, token: string): Promise<{ volume: string; transactions: string }> {
+    if (network === Network.TERRA) {
+      return this.terraStatisticService.getAsset24h(token)
+    } else if (network === Network.ETH) {
+      return this.ethStatisticService.getAsset24h(token)
+    } else if (network === Network.COMBINE) {
+      const terra = await this.terraStatisticService.getAsset24h(token)
+      const eth = await this.ethStatisticService.getAsset24h(token)
+
+      return {
+        volume: num(terra.volume).plus(eth.volume).toString(),
+        transactions: num(terra.transactions).plus(eth.transactions).toString(),
+      }
+    }
+  }
+
   async getAssetLiquidity(network: Network, token: string): Promise<string> {
     if (network === Network.TERRA) {
       return this.terraStatisticService.getAssetLiquidity(token)

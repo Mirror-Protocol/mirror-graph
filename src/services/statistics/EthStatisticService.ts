@@ -3,7 +3,7 @@ import memoize from 'memoizee-decorator'
 import { Container, Service, Inject } from 'typedi'
 import { find, sortedUniq } from 'lodash'
 import { num } from 'lib/num'
-import { getPairDayDatas, getPairsDayDatas } from 'lib/meth'
+import { getPairHourDatas, getPairDayDatas, getPairsDayDatas } from 'lib/meth'
 import { AssetService } from 'services'
 import { TodayStatistic, ValueAt } from 'graphql/schema'
 
@@ -112,6 +112,32 @@ export class EthStatisticService {
       .reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0))
       .multipliedBy(1000000)
       .toFixed(0)
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async getAsset24h(token: string): Promise<{ volume: string; transactions: string }> {
+    const ethAsset = await this.assetService.getEthAsset(token)
+    if (!ethAsset) {
+      return {
+        volume: '0',
+        transactions: '0'
+      }
+    }
+
+    const now = Date.now()
+    const to = now - (now % 3600000)
+    const from = to - 86400000
+    const datas = await getPairHourDatas(ethAsset.pair, from, to, 24, 'asc')
+
+    return {
+      volume: datas
+        .reduce((result, data) => result.plus(data.hourlyVolumeToken1), num(0))
+        .multipliedBy(1000000)
+        .toFixed(0),
+      transactions: datas
+        .reduce((result, data) => result.plus(data.hourlyTxns), num(0))
+        .toString()
+    }
   }
 
   @memoize({ promise: true, maxAge: 60000 * 60 }) // 60 minutes

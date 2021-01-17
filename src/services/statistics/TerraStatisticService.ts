@@ -79,7 +79,7 @@ export class TerraStatisticService {
   async getAssetDayVolume(token: string, timestamp: number): Promise<string> {
     const from = timestamp
     const to = from + 86400000
-    const txs24h = await this.txRepo
+    const txs = await this.txRepo
       .createQueryBuilder()
       .select('sum(volume)', 'volume')
       .where(
@@ -89,7 +89,28 @@ export class TerraStatisticService {
       .andWhere('token = :token', { token })
       .getRawOne()
 
-    return txs24h?.volume || '0'
+    return txs?.volume || '0'
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async getAsset24h(token: string): Promise<{ volume: string; transactions: string }> {
+    const from = Date.now() - (60000 * 60 * 24)
+    const to = Date.now()
+    const txs = await this.txRepo
+      .createQueryBuilder()
+      .select('sum(volume)', 'volume')
+      .addSelect('count(id)', 'count')
+      .where(
+        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+      )
+      .andWhere('token = :token', { token })
+      .getRawOne()
+
+    return {
+      volume: txs?.volume || '0',
+      transactions: txs?.count || '0',
+    }
   }
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
