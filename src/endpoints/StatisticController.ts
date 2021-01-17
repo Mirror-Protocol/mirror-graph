@@ -93,6 +93,27 @@ async function getPools(format: string): Promise<unknown> {
       ], 
       pools,
     }
+  } else if (format === 'coingecko') {
+    const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
+    const pools = {}
+    await bluebird.map(assets, async (asset) => {
+      pools[`Terra ${asset.symbol}-UST`] = {
+        poolAPY: +(await statisticService().getAssetAPR(Network.TERRA, asset.token)),
+        totalLockedVal: +num(await statisticService().getAssetLiquidity(Network.TERRA, asset.token))
+          .dividedBy(1000000)
+          .toFixed(2)
+      }
+    })
+    await bluebird.map(assets, async (asset) => {
+      pools[`Ethereum ${asset.symbol}-UST`] = {
+        poolAPY: +(await statisticService().getAssetAPR(Network.ETH, asset.token)),
+        totalLockedVal: +num(await statisticService().getAssetLiquidity(Network.ETH, asset.token))
+          .dividedBy(1000000)
+          .toFixed(2)
+      }
+    })
+
+    return pools
   }
 }
 
