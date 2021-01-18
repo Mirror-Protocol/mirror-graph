@@ -27,12 +27,6 @@ export class AssetPositionsEntity {
   @Column('numeric', { precision: 40, default: 0, comment: 'total minted amount' })
   mint: string
 
-  @Column('numeric', { precision: 40, default: 0, comment: 'total liquidity amount' })
-  liquidity: string
-
-  @Column('numeric', { precision: 40, default: 0, comment: 'total uusd liquidity amount' })
-  uusdLiquidity: string
-
   @Column('numeric', { precision: 40, default: 0, comment: 'current liquidity pool amount' })
   pool: string
 

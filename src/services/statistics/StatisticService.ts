@@ -162,7 +162,7 @@ export class StatisticService {
       async (asset) => {
         liquidityValue = liquidityValue
           .plus(num(asset.positions.uusdPool).dividedBy(asset.positions.pool).multipliedBy(asset.positions.pool))
-          .plus(asset.positions.uusdLiquidity)
+          .plus(asset.positions.uusdPool)
       }
     )
 

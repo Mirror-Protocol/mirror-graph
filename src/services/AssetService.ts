@@ -84,24 +84,14 @@ export class AssetService {
   }
 
   async addLiquidityPosition(
-    token: string,
-    tokenValue: string,
-    uusdValue: string,
-    lpShares: string,
-    datetime: Date,
-    repo = this.positionsRepo
+    token: string, lpShares: string, repo = this.positionsRepo
   ): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions(
       { token },
-      { select: ['token', 'liquidity', 'uusdLiquidity', 'pool', 'uusdPool', 'lpShares'] },
+      { select: ['token', 'pool', 'uusdPool', 'lpShares'] },
       repo
     )
 
-    positions.liquidity = BigNumber.max(num(positions.liquidity).plus(tokenValue), 0).toString()
-    positions.uusdLiquidity = BigNumber.max(
-      num(positions.uusdLiquidity).plus(uusdValue),
-      0
-    ).toString()
     positions.lpShares = BigNumber.max(num(positions.lpShares).plus(lpShares), 0).toString()
 
     return repo.save(positions)

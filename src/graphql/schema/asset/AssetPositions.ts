@@ -6,12 +6,6 @@ export class AssetPositions {
   mint: string
 
   @Field()
-  liquidity: string
-
-  @Field()
-  uusdLiquidity: string
-
-  @Field()
   pool: string
 
   @Field()

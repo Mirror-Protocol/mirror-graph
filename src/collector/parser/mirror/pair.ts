@@ -74,7 +74,7 @@ export async function parse(
 
     // add asset's liquidity position
     await assetService().addLiquidityPosition(
-      assetToken.token, assetToken.amount, uusdToken.amount, share, datetime, positionsRepo
+      assetToken.token, share, positionsRepo
     )
 
     parsed = {
@@ -91,7 +91,7 @@ export async function parse(
 
     // remove asset's liquidity position
     await assetService().addLiquidityPosition(
-      assetToken.token, `-${assetToken.amount}`, `-${uusdToken.amount}`, `-${withdrawnShare}`, datetime, positionsRepo
+      assetToken.token, `-${withdrawnShare}`, positionsRepo
     )
 
     parsed = {
