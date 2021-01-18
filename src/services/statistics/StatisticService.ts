@@ -13,7 +13,7 @@ import {
 } from 'services'
 import { DailyStatisticEntity, RewardEntity } from 'orm'
 import { Statistic, PeriodStatistic, ValueAt, AccountBalance } from 'graphql/schema'
-import { ContractType, Network } from 'types'
+import { ContractType, Network, AssetStatus } from 'types'
 
 @Service()
 export class StatisticService {
@@ -172,15 +172,19 @@ export class StatisticService {
     repo = this.dailyRepo
   ): Promise<DailyStatisticEntity> {
     const datetime = new Date(timestamp - (timestamp % 86400000))
-    const assets = await this.assetService.getAll()
+    const assets = await this.assetService.getAll({ where: { status: AssetStatus.LISTED }})
     let liquidityValue = num(0)
 
     await bluebird.map(
       assets.filter((asset) => asset.token !== 'uusd'),
       async (asset) => {
-        liquidityValue = liquidityValue
-          .plus(num(asset.positions.uusdPool).dividedBy(asset.positions.pool).multipliedBy(asset.positions.pool))
-          .plus(asset.positions.uusdPool)
+        const { pool, uusdPool } = asset.positions
+
+        if (pool !== '0' && uusdPool != '0') {
+          liquidityValue = liquidityValue
+              .plus(num(uusdPool).dividedBy(pool).multipliedBy(pool))
+              .plus(uusdPool)
+        }
       }
     )
 
