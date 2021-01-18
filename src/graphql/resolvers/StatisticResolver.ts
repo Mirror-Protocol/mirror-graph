@@ -1,5 +1,5 @@
 import { Resolver, Query, FieldResolver, Root, Arg } from 'type-graphql'
-import { Statistic, TodayStatistic, ValueAt, AccountBalance } from 'graphql/schema'
+import { Statistic, PeriodStatistic, ValueAt, AccountBalance } from 'graphql/schema'
 import { StatisticService } from 'services'
 import { Network } from 'types'
 
@@ -26,9 +26,14 @@ export class StatisticResolver {
     return this.statisticService.richlist(token, offset, limit)
   }
 
-  @FieldResolver((type) => TodayStatistic)
-  async today(@Root() statistic: Statistic): Promise<TodayStatistic> {
+  @FieldResolver((type) => PeriodStatistic)
+  async today(@Root() statistic: Statistic): Promise<PeriodStatistic> {
     return this.statisticService.today(statistic.network)
+  }
+
+  @FieldResolver((type) => PeriodStatistic)
+  async latest24h(@Root() statistic: Statistic): Promise<PeriodStatistic> {
+    return this.statisticService.latest24h(statistic.network)
   }
 
   @FieldResolver((type) => String)

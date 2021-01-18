@@ -5,7 +5,8 @@ import { find, sortedUniq } from 'lodash'
 import { num } from 'lib/num'
 import { getPairHourDatas, getPairDayDatas, getPairsDayDatas } from 'lib/meth'
 import { AssetService } from 'services'
-import { TodayStatistic, ValueAt } from 'graphql/schema'
+import { PeriodStatistic, ValueAt } from 'graphql/schema'
+import { AssetStatus } from 'types'
 
 @Service()
 export class EthStatisticService {
@@ -14,7 +15,7 @@ export class EthStatisticService {
   ) {}
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
-  async today(): Promise<TodayStatistic> {
+  async today(): Promise<PeriodStatistic> {
     // start of today (UTC)
     const from = Date.now() - (Date.now() % 86400000)
 
@@ -34,6 +35,33 @@ export class EthStatisticService {
       volume,
       feeVolume,
       mirVolume,
+    }
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async latest24h(): Promise<PeriodStatistic> {
+    const assets = this.assetService.getAll({ where: { status: AssetStatus.LISTED }})
+
+    let volume = num(0)
+    let transactions = num(0)
+    let mirVolume = num(0)
+
+    await bluebird.map(assets, async (asset) => {
+      const asset24h = await this.getAsset24h(asset.token)
+
+      volume = volume.plus(asset24h.volume)
+      transactions = transactions.plus(asset24h.transactions)
+
+      if (asset.symbol === 'MIR') {
+        mirVolume = num(asset24h.volume)
+      }
+    })
+
+    return {
+      transactions: transactions.toString(),
+      volume: volume.toFixed(0),
+      feeVolume: volume.multipliedBy(0.003).toFixed(0),
+      mirVolume: mirVolume.toFixed(0),
     }
   }
 

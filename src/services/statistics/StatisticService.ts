@@ -12,7 +12,7 @@ import {
   GovService, AssetService, OracleService, ContractService, TerraStatisticService, EthStatisticService,
 } from 'services'
 import { DailyStatisticEntity, RewardEntity } from 'orm'
-import { Statistic, TodayStatistic, ValueAt, AccountBalance } from 'graphql/schema'
+import { Statistic, PeriodStatistic, ValueAt, AccountBalance } from 'graphql/schema'
 import { ContractType, Network } from 'types'
 
 @Service()
@@ -88,7 +88,7 @@ export class StatisticService {
     }
   }
 
-  async today(network: Network): Promise<TodayStatistic> {
+  async today(network: Network): Promise<PeriodStatistic> {
     if (network === Network.TERRA) {
       return this.terraStatisticService.today()
     } else if (network === Network.ETH) {
@@ -96,6 +96,24 @@ export class StatisticService {
     } else if (network === Network.COMBINE) {
       const terra = await this.terraStatisticService.today()
       const eth = await this.ethStatisticService.today()
+
+      return {
+        transactions: num(terra.transactions).plus(eth.transactions).toString(),
+        volume: num(terra.volume).plus(eth.volume).toString(),
+        feeVolume: num(terra.feeVolume).plus(eth.feeVolume).toString(),
+        mirVolume: num(terra.mirVolume).plus(eth.mirVolume).toString(),
+      }
+    }
+  }
+
+  async latest24h(network: Network): Promise<PeriodStatistic> {
+    if (network === Network.TERRA) {
+      return this.terraStatisticService.latest24h()
+    } else if (network === Network.ETH) {
+      return this.ethStatisticService.latest24h()
+    } else if (network === Network.COMBINE) {
+      const terra = await this.terraStatisticService.latest24h()
+      const eth = await this.ethStatisticService.latest24h()
 
       return {
         transactions: num(terra.transactions).plus(eth.transactions).toString(),

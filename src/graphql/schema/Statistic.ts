@@ -3,7 +3,7 @@ import { ValueAt } from './common'
 import { Network } from 'types'
 
 @ObjectType({ simpleResolvers: true })
-export class TodayStatistic {
+export class PeriodStatistic {
   @Field()
   transactions: string
 
@@ -32,7 +32,7 @@ export class Statistic {
   collateralRatio: string
 
   @Field()
-  latest24h: TodayStatistic
+  latest24h: PeriodStatistic
 
   @Field()
   mirCirculatingSupply: string

@@ -22,7 +22,7 @@ export class AssetStatisticResolver {
     @Root() asset: AssetEntity,
     @Arg('network', (type) => Network, { defaultValue: Network.COMBINE }) network: Network
   ): Promise<string> {
-    return this.statisticService.getAssetDayVolume(network, asset.token, Date.now())
+    return (await this.statisticService.getAsset24h(network, asset.token)).volume
   }
 
   @FieldResolver()

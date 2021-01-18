@@ -6,7 +6,7 @@ import { num } from 'lib/num'
 import { getMIRAnnualRewards } from 'lib/utils'
 import { GovService, AssetService, PriceService } from 'services'
 import { DailyStatisticEntity, TxEntity } from 'orm'
-import { TodayStatistic, ValueAt } from 'graphql/schema'
+import { PeriodStatistic, ValueAt } from 'graphql/schema'
 
 @Service()
 export class TerraStatisticService {
@@ -20,22 +20,62 @@ export class TerraStatisticService {
   ) {}
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
-  async today(): Promise<TodayStatistic> {
-    const from = Math.floor((Date.now() - (Date.now() % 86400000)) / 1000)
-    const to = Math.floor(from + 86400)
+  async today(): Promise<PeriodStatistic> {
+    const from = Date.now() - (Date.now() % 86400000)
+    const to = from + 86400000
 
     const txs = await this.txRepo
       .createQueryBuilder()
       .select('count(id)', 'count')
       .addSelect('sum(commission_value)', 'commission')
       .addSelect('sum(volume)', 'volume')
-      .where('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', { from, to })
+      .where(
+        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+      )
       .getRawOne()
 
     const mir = await this.txRepo
       .createQueryBuilder()
       .select('sum(volume)', 'volume')
-      .where('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', { from, to })
+      .where(
+        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+      )
+      .andWhere('token = :token', { token: this.govService.get().mirrorToken })
+      .getRawOne()
+
+    return {
+      transactions: txs?.count || '0',
+      volume: txs?.volume || '0',
+      feeVolume: txs?.commission || '0',
+      mirVolume: mir?.volume || '0',
+    }
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async latest24h(): Promise<PeriodStatistic> {
+    const to = Date.now()
+    const from = to - 86400000
+
+    const txs = await this.txRepo
+      .createQueryBuilder()
+      .select('count(id)', 'count')
+      .addSelect('sum(commission_value)', 'commission')
+      .addSelect('sum(volume)', 'volume')
+      .where(
+        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+      )
+      .getRawOne()
+
+    const mir = await this.txRepo
+      .createQueryBuilder()
+      .select('sum(volume)', 'volume')
+      .where(
+        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+      )
       .andWhere('token = :token', { token: this.govService.get().mirrorToken })
       .getRawOne()
 
