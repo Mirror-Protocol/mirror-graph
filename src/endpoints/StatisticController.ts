@@ -10,6 +10,8 @@ import { AssetStatus, Network } from 'types'
 const Joi = Validator.Joi
 
 async function getPools(format: string): Promise<unknown> {
+  const aprToApy = (apr) => +(num(1).plus(num(apr).dividedBy(365)).pow(365).minus(1).toFixed(4))
+
   if (format === 'cmc-dex') {
     const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
     const pools = {}
@@ -56,6 +58,7 @@ async function getPools(format: string): Promise<unknown> {
     return pools
   } else if (format === 'cmc-yield-farming') {
     const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
+
     const pools = [
       ...await bluebird.map(assets, async (asset) => ({
         name: `Terra ${asset.symbol}-UST LP`,
@@ -63,7 +66,7 @@ async function getPools(format: string): Promise<unknown> {
         pairLink: 'https://terra.mirror.finance/stake',
         logo: `https://whitelist.mirror.finance/icon/MIR/100x100.png`,
         poolRewards: ['MIR'],
-        apr: +(await statisticService().getAssetAPR(Network.TERRA, asset.token)), // APY, 1.1 means 110%
+        apr: aprToApy(await statisticService().getAssetAPR(Network.TERRA, asset.token)), // APY, 1.1 means 110%
         totalStaked: +num(await statisticService().getAssetLiquidity(Network.TERRA, asset.token))
           .dividedBy(1000000)
           .toFixed(2), // Total valued lock in USD 
@@ -74,7 +77,7 @@ async function getPools(format: string): Promise<unknown> {
         pairLink: 'https://eth.mirror.finance/',
         logo: `https://whitelist.mirror.finance/icon/MIR/100x100.png`,
         poolRewards: ['MIR'],
-        apr: +(await statisticService().getAssetAPR(Network.ETH, asset.token)), // APY, 1.1 means 110%
+        apr: aprToApy(await statisticService().getAssetAPR(Network.ETH, asset.token)), // APY, 1.1 means 110%
         totalStaked: +num(await statisticService().getAssetLiquidity(Network.ETH, asset.token))
           .dividedBy(1000000)
           .toFixed(2), // Total valued lock in USD 
@@ -98,7 +101,7 @@ async function getPools(format: string): Promise<unknown> {
     const pools = {}
     await bluebird.map(assets, async (asset) => {
       pools[`Terra ${asset.symbol}-UST`] = {
-        poolAPY: +(await statisticService().getAssetAPR(Network.TERRA, asset.token)),
+        poolAPY: aprToApy(await statisticService().getAssetAPR(Network.TERRA, asset.token)),
         totalLockedVal: +num(await statisticService().getAssetLiquidity(Network.TERRA, asset.token))
           .dividedBy(1000000)
           .toFixed(2)
@@ -106,7 +109,7 @@ async function getPools(format: string): Promise<unknown> {
     })
     await bluebird.map(assets, async (asset) => {
       pools[`Ethereum ${asset.symbol}-UST`] = {
-        poolAPY: +(await statisticService().getAssetAPR(Network.ETH, asset.token)),
+        poolAPY: aprToApy(await statisticService().getAssetAPR(Network.ETH, asset.token)),
         totalLockedVal: +num(await statisticService().getAssetLiquidity(Network.ETH, asset.token))
           .dividedBy(1000000)
           .toFixed(2)
