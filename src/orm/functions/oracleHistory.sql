@@ -16,7 +16,7 @@ BEGIN
     SELECT
       timeIterator as "timestamp",
       p.close as price
-    FROM price p
+    FROM oracle_price p
     WHERE p.token = _token AND p.datetime <= timeIteratorNext
     ORDER BY p.datetime DESC LIMIT 1;
 

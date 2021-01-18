@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class OracleHistory1603980051959 implements MigrationInterface {
+export class OracleHistory1610961215511 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query('DROP FUNCTION IF EXISTS public.oracleHistory;')
     await queryRunner.query(`
@@ -20,7 +20,7 @@ BEGIN
     SELECT
       timeIterator as "timestamp",
       p.close as price
-    FROM price p
+    FROM oracle_price p
     WHERE p.token = _token AND p.datetime <= timeIteratorNext
     ORDER BY p.datetime DESC LIMIT 1;
 
