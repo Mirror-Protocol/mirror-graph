@@ -9,6 +9,23 @@ import { AssetStatus, Network } from 'types'
 
 const Joi = Validator.Joi
 
+async function getStatistic(): Promise<{
+  totalValueLocked: string
+  users24h: string
+  transactions24h: string
+  volume24h: string
+}> {
+  const statistic = await statisticService().statistic(Network.COMBINE)
+  const latest24h = await statisticService().latest24h(Network.COMBINE)
+
+  return {
+    totalValueLocked: num(statistic.totalValueLocked).dividedBy(1000000).toFixed(6),
+    users24h: latest24h.activeUsers,
+    transactions24h: latest24h.transactions,
+    volume24h: num(latest24h.volume).dividedBy(1000000).toFixed(6),
+  }
+}
+
 async function getPools(format: string): Promise<unknown> {
   const aprToApy = (apr) => +(num(1).plus(num(apr).dividedBy(365)).pow(365).minus(1).toFixed(4))
 
@@ -122,6 +139,11 @@ async function getPools(format: string): Promise<unknown> {
 
 @Controller('/statistic')
 export default class StatisticController extends KoaController {
+  @Get('/')
+  async getStatistic(ctx: Koa.Context): Promise<void> {
+    success(ctx, await getStatistic())
+  }
+
   @Get('/pools')
   @Validate({
     query: {

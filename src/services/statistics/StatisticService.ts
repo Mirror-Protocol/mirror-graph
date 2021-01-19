@@ -9,7 +9,14 @@ import { getTokenBalance } from 'lib/mirror'
 import { getContractStore } from 'lib/terra'
 import { getMethMirTokenBalance } from 'lib/meth'
 import {
-  GovService, AssetService, OracleService, ContractService, TerraStatisticService, EthStatisticService,
+  GovService,
+  AssetService,
+  AccountService,
+  PriceService,
+  OracleService,
+  ContractService,
+  TerraStatisticService,
+  EthStatisticService,
 } from 'services'
 import { DailyStatisticEntity, RewardEntity } from 'orm'
 import { Statistic, PeriodStatistic, ValueAt, AccountBalance } from 'graphql/schema'
@@ -20,7 +27,9 @@ export class StatisticService {
   constructor(
     @Inject((type) => GovService) private readonly govService: GovService,
     @Inject((type) => AssetService) private readonly assetService: AssetService,
+    @Inject((type) => AccountService) private readonly accountService: AccountService,
     @Inject((type) => OracleService) private readonly oracleService: OracleService,
+    @Inject((type) => PriceService) private readonly priceService: PriceService,
     @Inject((type) => ContractService) private readonly contractService: ContractService,
     @Inject((type) => TerraStatisticService) private readonly terraStatisticService: TerraStatisticService,
     @Inject((type) => EthStatisticService) private readonly ethStatisticService: EthStatisticService,
@@ -29,31 +38,47 @@ export class StatisticService {
     @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>
   ) {}
 
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async statistic(network: Network): Promise<Partial<Statistic>> {
     const assets = await this.assetService.getAll()
+    const gov = this.govService.get()
+    const mintContract = await this.contractService.get({ type: ContractType.MINT, gov })
     let assetMarketCap = num(0)
     let totalValueLocked = num(0)
 
     await bluebird.map(assets, async (asset) => {
       if (asset.token === 'uusd') {
-        totalValueLocked = totalValueLocked.plus(asset.positions.asCollateral)
+        const { balance } = await this.accountService.getBalance(mintContract.address, 'uusd')
+        totalValueLocked = totalValueLocked.plus(balance)
         return
       }
+
+      // add liquidity value to tvl
+      const liquidity = await this.getAssetLiquidity(Network.COMBINE, asset.token)
+      totalValueLocked = totalValueLocked.plus(liquidity)
 
       const price = await this.oracleService.getPrice(asset.token)
       if (!price) return
 
+      // add asset market cap
       assetMarketCap = assetMarketCap.plus(num(asset.positions.mint).multipliedBy(price))
-      totalValueLocked = totalValueLocked.plus(
-        num(asset.positions.asCollateral).multipliedBy(price)
-      )
+
+      // add collateral value to tvl
+      const balance = await getTokenBalance(asset.token, mintContract.address)
+      totalValueLocked = totalValueLocked.plus(num(balance).multipliedBy(price))
     })
+    // add MIR gov staked value to tvl
+    const mirBalance = await getTokenBalance(gov.mirrorToken, gov.gov)
+    const mirPrice = await this.priceService.getPrice(gov.mirrorToken)
+    if (mirPrice && mirBalance) {
+      totalValueLocked = totalValueLocked.plus(num(mirBalance).multipliedBy(mirPrice))
+    }
 
     return {
       network,
       assetMarketCap: assetMarketCap.toFixed(0),
       totalValueLocked: totalValueLocked.toFixed(0),
-      collateralRatio: totalValueLocked.dividedBy(assetMarketCap).multipliedBy(100).toFixed(2),
+      collateralRatio: totalValueLocked.dividedBy(assetMarketCap).toFixed(4),
       ...(await this.mirSupply()),
     }
   }
@@ -102,6 +127,7 @@ export class StatisticService {
         volume: num(terra.volume).plus(eth.volume).toString(),
         feeVolume: num(terra.feeVolume).plus(eth.feeVolume).toString(),
         mirVolume: num(terra.mirVolume).plus(eth.mirVolume).toString(),
+        activeUsers: num(terra.activeUsers).plus(eth.activeUsers).toString(),
       }
     }
   }
@@ -120,6 +146,7 @@ export class StatisticService {
         volume: num(terra.volume).plus(eth.volume).toString(),
         feeVolume: num(terra.feeVolume).plus(eth.feeVolume).toString(),
         mirVolume: num(terra.mirVolume).plus(eth.mirVolume).toString(),
+        activeUsers: num(terra.activeUsers).plus(eth.activeUsers).toString(),
       }
     }
   }
@@ -274,9 +301,7 @@ export class StatisticService {
     if (network === Network.TERRA) {
       return this.terraStatisticService.getAssetLiquidity(token)
     } else if (network === Network.ETH) {
-      const result = await this.ethStatisticService.getAssetLiquidity(token)
-      console.log(token, result)
-      return result
+      return this.ethStatisticService.getAssetLiquidity(token)
     } else if (network === Network.COMBINE) {
       const terra = await this.terraStatisticService.getAssetLiquidity(token)
       const eth = await this.ethStatisticService.getAssetLiquidity(token)

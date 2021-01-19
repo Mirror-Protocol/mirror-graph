@@ -26,9 +26,10 @@ export class TerraStatisticService {
 
     const txs = await this.txRepo
       .createQueryBuilder()
-      .select('count(id)', 'count')
-      .addSelect('sum(commission_value)', 'commission')
-      .addSelect('sum(volume)', 'volume')
+      .select('COUNT(id)', 'count')
+      .addSelect('COUNT(DISTINCT address)', 'users')
+      .addSelect('SUM(commission_value)', 'commission')
+      .addSelect('SUM(volume)', 'volume')
       .where(
         'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
         { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
@@ -37,7 +38,7 @@ export class TerraStatisticService {
 
     const mir = await this.txRepo
       .createQueryBuilder()
-      .select('sum(volume)', 'volume')
+      .select('SUM(volume)', 'volume')
       .where(
         'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
         { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
@@ -50,6 +51,7 @@ export class TerraStatisticService {
       volume: txs?.volume || '0',
       feeVolume: txs?.commission || '0',
       mirVolume: mir?.volume || '0',
+      activeUsers: txs?.users || '0'
     }
   }
 
@@ -60,9 +62,10 @@ export class TerraStatisticService {
 
     const txs = await this.txRepo
       .createQueryBuilder()
-      .select('count(id)', 'count')
-      .addSelect('sum(commission_value)', 'commission')
-      .addSelect('sum(volume)', 'volume')
+      .select('COUNT(id)', 'count')
+      .addSelect('COUNT(DISTINCT address)', 'users')
+      .addSelect('SUM(commission_value)', 'commission')
+      .addSelect('SUM(volume)', 'volume')
       .where(
         'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
         { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
@@ -71,7 +74,7 @@ export class TerraStatisticService {
 
     const mir = await this.txRepo
       .createQueryBuilder()
-      .select('sum(volume)', 'volume')
+      .select('SUM(volume)', 'volume')
       .where(
         'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
         { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
@@ -84,6 +87,7 @@ export class TerraStatisticService {
       volume: txs?.volume || '0',
       feeVolume: txs?.commission || '0',
       mirVolume: mir?.volume || '0',
+      activeUsers: txs?.users || '0'
     }
   }
 

@@ -35,6 +35,7 @@ export class EthStatisticService {
       volume,
       feeVolume,
       mirVolume,
+      activeUsers: '0'
     }
   }
 
@@ -62,6 +63,7 @@ export class EthStatisticService {
       volume: volume.toFixed(0),
       feeVolume: volume.multipliedBy(0.003).toFixed(0),
       mirVolume: mirVolume.toFixed(0),
+      activeUsers: '0'
     }
   }
 

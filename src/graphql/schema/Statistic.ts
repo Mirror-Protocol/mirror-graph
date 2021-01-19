@@ -15,6 +15,9 @@ export class PeriodStatistic {
 
   @Field()
   mirVolume: string
+
+  @Field()
+  activeUsers: string
 }
 
 @ObjectType({ simpleResolvers: true })
