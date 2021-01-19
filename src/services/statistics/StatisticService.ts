@@ -45,11 +45,13 @@ export class StatisticService {
     const mintContract = await this.contractService.get({ type: ContractType.MINT, gov })
     let assetMarketCap = num(0)
     let totalValueLocked = num(0)
+    let collateralValue = num(0)
 
     await bluebird.map(assets, async (asset) => {
       if (asset.token === 'uusd') {
         const { balance } = await this.accountService.getBalance(mintContract.address, 'uusd')
         totalValueLocked = totalValueLocked.plus(balance)
+        collateralValue = collateralValue.plus(balance)
         return
       }
 
@@ -65,7 +67,9 @@ export class StatisticService {
 
       // add collateral value to tvl
       const balance = await getTokenBalance(asset.token, mintContract.address)
-      totalValueLocked = totalValueLocked.plus(num(balance).multipliedBy(price))
+      const collateral = num(balance).multipliedBy(price)
+      totalValueLocked = totalValueLocked.plus(collateral)
+      collateralValue = collateralValue.plus(collateral)
     })
     // add MIR gov staked value to tvl
     const mirBalance = await getTokenBalance(gov.mirrorToken, gov.gov)
@@ -78,7 +82,7 @@ export class StatisticService {
       network,
       assetMarketCap: assetMarketCap.toFixed(0),
       totalValueLocked: totalValueLocked.toFixed(0),
-      collateralRatio: totalValueLocked.dividedBy(assetMarketCap).toFixed(4),
+      collateralRatio: collateralValue.dividedBy(assetMarketCap).toFixed(4),
       ...(await this.mirSupply()),
     }
   }
