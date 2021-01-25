@@ -10,4 +10,7 @@ export class AssetStatistic {
 
   @Field({ nullable: true, description: 'lp token APR' })
   apr?: string
+
+  @Field({ nullable: true, description: 'lp token APY' })
+  apy?: string
 }

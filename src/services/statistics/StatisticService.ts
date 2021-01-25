@@ -4,7 +4,7 @@ import memoize from 'memoizee-decorator'
 import { Repository, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
-import { num } from 'lib/num'
+import { num, aprToApy } from 'lib/num'
 import { getTokenBalance } from 'lib/mirror'
 import { getContractStore } from 'lib/terra'
 import { getMethMirTokenBalance } from 'lib/meth'
@@ -319,6 +319,14 @@ export class StatisticService {
       return this.terraStatisticService.getAssetAPR(token)
     } else if (network === Network.ETH) {
       return this.ethStatisticService.getAssetAPR(token)
+    }
+  }
+
+  async getAssetAPY(network: Network, token: string): Promise<string> {
+    if (network === Network.TERRA) {
+      return aprToApy(await this.terraStatisticService.getAssetAPR(token))
+    } else if (network === Network.ETH) {
+      return aprToApy(await this.ethStatisticService.getAssetAPR(token))
     }
   }
 

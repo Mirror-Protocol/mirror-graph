@@ -29,7 +29,7 @@ export function ownerCommands(): void {
     .action(async () => {
       const contracts = loadContracts()
       const assetList = await assetService().getAll({
-        where: { status: AssetStatus.LISTED, token: Not(contracts.mirrorToken) },
+        where: { status: AssetStatus.LISTED, symbol: Not('MIR') },
         order: { symbol: 'ASC' },
       })
 

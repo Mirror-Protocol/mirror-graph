@@ -32,4 +32,12 @@ export class AssetStatisticResolver {
   ): Promise<string> {
     return this.statisticService.getAssetAPR(network, asset.token)
   }
+
+  @FieldResolver()
+  async apy(
+    @Root() asset: AssetEntity,
+    @Arg('network', (type) => Network, { defaultValue: Network.TERRA }) network: Network
+  ): Promise<string> {
+    return this.statisticService.getAssetAPY(network, asset.token)
+  }
 }
