@@ -1,5 +1,6 @@
 import { Resolver, Query, FieldResolver, Root, Arg } from 'type-graphql'
 import { Statistic, PeriodStatistic, ValueAt, AccountBalance } from 'graphql/schema'
+import { aprToApy } from 'lib/num'
 import { StatisticService } from 'services'
 import { Network } from 'types'
 
@@ -39,6 +40,11 @@ export class StatisticResolver {
   @FieldResolver((type) => String)
   async govAPR(): Promise<string> {
     return this.statisticService.getGovAPR()
+  }
+
+  @FieldResolver((type) => String)
+  async govAPY(): Promise<string> {
+    return aprToApy(await this.statisticService.getGovAPR())
   }
 
   @FieldResolver((type) => [ValueAt])

@@ -46,6 +46,9 @@ export class Statistic {
   @Field()
   govAPR: string
 
+  @Field()
+  govAPY: string
+
   @Field((type) => [ValueAt], { nullable: true })
   liquidityHistory: ValueAt[]
 
