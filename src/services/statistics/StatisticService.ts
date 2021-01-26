@@ -1,4 +1,3 @@
-import { addDays } from 'date-fns'
 import * as bluebird from 'bluebird'
 import memoize from 'memoizee-decorator'
 import { Repository, getConnection } from 'typeorm'
@@ -157,8 +156,8 @@ export class StatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async getGovAPR(): Promise<string> {
-    const now = Date.now()
-    const before7d = addDays(now, -7).getTime()
+    const to = Date.now()
+    const from = Date.now() - (60000 * 60 * 24 * 7) // 7days ago
 
     // gov stake reward = ((7days reward amount) / 7 * 365) / (staked to gov MIR amount)
     const govEntity = this.govService.get()
@@ -166,7 +165,10 @@ export class StatisticService {
       await this.rewardRepo
         .createQueryBuilder()
         .select('sum(amount)', 'amount')
-        .where('datetime BETWEEN :from AND :to', { from: new Date(before7d), to: new Date(now) })
+        .where(
+          'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+          { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+        )
         .andWhere('token = :token', { token: govEntity.mirrorToken })
         .andWhere('is_gov_reward = true')
         .getRawOne()

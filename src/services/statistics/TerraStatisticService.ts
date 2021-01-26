@@ -3,9 +3,8 @@ import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { num } from 'lib/num'
-import { getMIRAnnualRewards } from 'lib/utils'
 import { GovService, AssetService, PriceService } from 'services'
-import { DailyStatisticEntity, TxEntity } from 'orm'
+import { DailyStatisticEntity, TxEntity, RewardEntity } from 'orm'
 import { PeriodStatistic, ValueAt } from 'graphql/schema'
 
 @Service()
@@ -17,6 +16,7 @@ export class TerraStatisticService {
     @InjectRepository(DailyStatisticEntity)
     private readonly dailyRepo: Repository<DailyStatisticEntity>,
     @InjectRepository(TxEntity) private readonly txRepo: Repository<TxEntity>,
+    @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>
   ) {}
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
@@ -180,11 +180,23 @@ export class TerraStatisticService {
       .dividedBy(positions.pool)
       .multipliedBy(positions.pool)
       .plus(asset.positions.uusdPool)
-    const rewardPerYear = getMIRAnnualRewards(Date.now(), token === mirrorToken)
 
-    if (!rewardPerYear || !mirPrice) return '0'
+    const from = Date.now() - (60000 * 60 * 24) // 24h ago
+    const to = Date.now()
+    const reward24h = (
+      await this.rewardRepo
+        .createQueryBuilder()
+        .select('sum(amount)', 'amount')
+        .where(
+          'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+          { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+        )
+        .andWhere('token = :token', { token })
+        .andWhere('is_gov_reward = false')
+        .getRawOne()
+    )?.amount || '0'
+    const mirValue = num(reward24h).multipliedBy(mirPrice).multipliedBy(365)
 
-    const mirValue = num(rewardPerYear).multipliedBy(1000000).multipliedBy(mirPrice)
     const poolValue = liquidityValue.multipliedBy(
       num(asset.positions.lpStaked).dividedBy(asset.positions.lpShares)
     )
