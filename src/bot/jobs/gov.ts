@@ -17,7 +17,7 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
     return
 
   const { gov } = govService().get()
-  const { effectiveDelay, expirationPeriod } = await getGovConfig(gov)
+  const { effectiveDelay/*, expirationPeriod*/ } = await getGovConfig(gov)
 
   // collect ended poll
   let polls = await getGovPolls(gov, 'in_progress', 100)
@@ -43,12 +43,12 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
     }
 
     // over expiration period, expire
-    const expireHeight = poll.endHeight + expirationPeriod
-    if (latestHeight > expireHeight) {
-      await wallet.execute(gov, { expirePoll: { pollId: poll.id } })
+    // const expireHeight = poll.endHeight + expirationPeriod
+    // if (latestHeight > expireHeight) {
+    //   await wallet.execute(gov, { expirePoll: { pollId: poll.id } })
 
-      logger.info(`expire poll id: ${poll.id}`)
-    }
+    //   logger.info(`expire poll id: ${poll.id}`)
+    // }
   })
 
   logger.info('gov polls updated')
