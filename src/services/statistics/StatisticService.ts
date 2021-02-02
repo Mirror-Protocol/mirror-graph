@@ -155,7 +155,7 @@ export class StatisticService {
   }
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
-  async getGovAPR(): Promise<string> {
+  async getGovAPY(): Promise<string> {
     const to = Date.now()
     const from = Date.now() - (60000 * 60 * 24 * 7) // 7days ago
 
@@ -174,9 +174,9 @@ export class StatisticService {
         .getRawOne()
     )?.amount
     const govStakedMir = await getTokenBalance(govEntity.mirrorToken, govEntity.gov)
-    const govAPR = num(govReward7d).dividedBy(7).multipliedBy(365).dividedBy(govStakedMir)
+    const govAPY = num(govReward7d).dividedBy(7).multipliedBy(365).dividedBy(govStakedMir)
 
-    return !govAPR.isNaN() ? govAPR.toString() : '0'
+    return !govAPY.isNaN() ? govAPY.toString() : '0'
   }
 
   async addDailyTradingVolume(
