@@ -17,7 +17,7 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
     return
 
   const { gov } = govService().get()
-  const { /*effectiveDelay, */expirationPeriod } = await getGovConfig(gov)
+  const { effectiveDelay/*, expirationPeriod*/ } = await getGovConfig(gov)
 
   // collect ended poll
   let polls = await getGovPolls(gov, 'in_progress', 100)
@@ -34,21 +34,21 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
     .filter((poll) => poll.executeData)
 
   await bluebird.mapSeries(polls, async (poll) => {
-    // const executeHeight = poll.endHeight + effectiveDelay
+    const executeHeight = poll.endHeight + effectiveDelay
     // try execute only 1 hour(600 blocks)
-    // if (latestHeight > executeHeight && latestHeight - executeHeight < 10 * 60 ) {
-    //   await wallet.execute(gov, { executePoll: { pollId: poll.id } })
+    if (latestHeight > executeHeight && latestHeight - executeHeight < 10 * 60 ) {
+      await wallet.execute(gov, { executePoll: { pollId: poll.id } })
 
-    //   logger.info(`execute poll id: ${poll.id}`)
-    // }
+      logger.info(`execute poll id: ${poll.id}`)
+    }
 
     // over expiration period, expire
-    const expireHeight = poll.endHeight + expirationPeriod
-    if (latestHeight > expireHeight) {
-      await wallet.execute(gov, { expirePoll: { pollId: poll.id } })
+    // const expireHeight = poll.endHeight + expirationPeriod
+    // if (latestHeight > expireHeight) {
+    //   await wallet.execute(gov, { expirePoll: { pollId: poll.id } })
 
-      logger.info(`expire poll id: ${poll.id}`)
-    }
+    //   logger.info(`expire poll id: ${poll.id}`)
+    // }
   })
 
   logger.info('gov polls updated')
