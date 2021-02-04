@@ -68,6 +68,16 @@ export async function parse(args: ParseArgs): Promise<void> {
       data: { amount },
       token: mirrorToken,
     }
+  } else if (msg['cast_vote']) {
+    const pollId = findAttribute(attributes, 'poll_id')
+    const amount = findAttribute(attributes, 'amount')
+    const vote = findAttribute(attributes, 'vote')
+
+    parsed = {
+      type: TxType.GOV_CAST_POLL,
+      data: { pollId, amount, vote },
+      token: mirrorToken,
+    }
   } else {
     return
   }
