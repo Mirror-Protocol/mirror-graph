@@ -75,7 +75,7 @@ export class AccountService {
   async getBalance(address: string, token: string): Promise<AssetBalance> {
     if (token === 'uusd') {
       const coin = (await lcd.bank.balance(address)).get(token)
-      return { token, balance: coin?.amount?.toString() || '0', averagePrice: '0' }
+      return { token, balance: coin?.amount?.toString() || '0', averagePrice: '1' }
     }
 
     const balanceEntity = await this.getBalanceEntity(
@@ -98,9 +98,12 @@ export class AccountService {
       .addSelect('balance')
       .addSelect('average_price', 'averagePrice')
       .where('address = :address', { address })
+      .andWhere(`token != 'uusd'`)
       .orderBy('token')
       .addOrderBy('id', 'DESC')
       .getRawMany()
+
+    balances.push(await this.getBalance(address, 'uusd'))
 
     return balances.filter((row) => num(row.balance).isGreaterThan(0))
   }
