@@ -11,11 +11,11 @@ export async function parse(
 ): Promise<void> {
   const { token, govId } = contract
   const datetime = new Date(timestamp)
-  const attributes = findAttributes(log.events, 'from_contract')
   const positionsRepo = manager.getRepository(AssetPositionsEntity)
   let parsed = {}
 
   if (msg['swap']) {
+    const attributes = findAttributes(log.events, 'from_contract', { key: 'action', value: 'swap' })
     const offerAsset = findAttribute(attributes, 'offer_asset')
     const askAsset = findAttribute(attributes, 'ask_asset')
     const offerAmount = findAttribute(attributes, 'offer_amount')
@@ -66,6 +66,7 @@ export async function parse(
     await statisticService().addDailyTradingVolume(datetime.getTime(), volume, dailyStatRepo)
 
   } else if (msg['provide_liquidity']) {
+    const attributes = findAttributes(log.events, 'from_contract', { key: 'action', value: 'provide_liquidity' })
     const assets = findAttribute(attributes, 'assets')
     const share = findAttribute(attributes, 'share')
     const liquidities = assets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
@@ -83,6 +84,7 @@ export async function parse(
       tags: [assetToken.token, uusdToken.token],
     }
   } else if (msg['withdraw_liquidity']) {
+    const attributes = findAttributes(log.events, 'from_contract', { key: 'action', value: 'withdraw_liquidity' })
     const refundAssets = findAttribute(attributes, 'refund_assets')
     const withdrawnShare = findAttribute(attributes, 'withdrawn_share')
     const liquidities = refundAssets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))

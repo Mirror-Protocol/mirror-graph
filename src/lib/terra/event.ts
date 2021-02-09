@@ -12,7 +12,12 @@ export interface Transfer {
   amount: string
 }
 
-export function findAttributes(events: Event[], type: string): EventKV[] {
+export function findAttributes(events: Event[], type: string, attribute?: EventKV): EventKV[] {
+  if (attribute) {
+    return events.find(
+      (event) => event.type === type && findAttribute(event.attributes, attribute.key) === attribute.value
+    )?.attributes
+  }
   return events.find((event) => event.type === type)?.attributes
 }
 
