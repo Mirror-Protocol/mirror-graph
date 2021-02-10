@@ -50,6 +50,8 @@ async function getPools(format: string): Promise<unknown> {
     const wrappedUstToken = '0xa47c8bf37f92aBed4A126BDA807A7b7498661acD'
     await bluebird.map(assets, async (asset) => {
       const ethAsset = await assetService().getEthAsset(asset.token)
+      if (!ethAsset || !ethAssetInfos[ethAsset.token])
+        return
       const { price } = ethAssetInfos[ethAsset.token]
       const statistic = await statisticService().getAsset24h(Network.ETH, asset.token)
       const uusdVolume = num(statistic.volume).dividedBy(1000000).toFixed(6)
