@@ -84,7 +84,7 @@ export async function parse(
       tags: [assetToken.token, uusdToken.token],
     }
   } else if (msg['withdraw_liquidity']) {
-    const attributes = findAttributes(log.events, 'from_contract')
+    const attributes = findAttributes(log.events, 'from_contract', { key: 'action', value: 'withdraw_liquidity' })
     const refundAssets = findAttribute(attributes, 'refund_assets')
     const withdrawnShare = findAttribute(attributes, 'withdrawn_share')
     const liquidities = refundAssets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))

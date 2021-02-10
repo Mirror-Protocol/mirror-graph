@@ -14,10 +14,18 @@ export interface Transfer {
 
 export function findAttributes(events: Event[], type: string, attribute?: EventKV): EventKV[] {
   if (attribute) {
-    return events.find(
-      (event) => event.type === type && findAttribute(event.attributes, attribute.key) === attribute.value
-    )?.attributes
+    for (const event of events) {
+      if (event.type === type) {
+        for (const attr of event.attributes) {
+          if (attr.key === attribute.key && attr.value === attribute.value) {
+            return event.attributes
+          }
+        }
+      }
+    }
+    return undefined
   }
+
   return events.find((event) => event.type === type)?.attributes
 }
 
