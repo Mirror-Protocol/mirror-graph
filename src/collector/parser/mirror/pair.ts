@@ -1,7 +1,6 @@
 import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
-import { sendSlack } from 'lib/slack'
 import { assetService, statisticService, txService } from 'services'
 import { AssetPositionsEntity, DailyStatisticEntity } from 'orm'
 import { TxType } from 'types'
@@ -31,19 +30,15 @@ export async function parse(
       ? offerAmount
       : num(returnAmount).plus(spreadAmount).plus(commissionAmount).toString()
 
+    if (offerAmount === '0' || returnAmount === '0') {
+      return
+    }
+
     // buy price: offer / return
     // sell price: return / offer
-    let price = type === TxType.BUY
+    const price = type === TxType.BUY
       ? num(offerAmount).dividedBy(returnAmount).toString()
       : num(returnAmount).dividedBy(offerAmount).toString()
-    if (num(price).isNaN()) {
-      price = '0'
-      sendSlack(
-        'mirror-bot',
-        `wrong log: ${JSON.stringify(log.events)}`
-      )
-
-    }
 
     // buy fee: buy price * commission
     const commissionValue = type === TxType.BUY
