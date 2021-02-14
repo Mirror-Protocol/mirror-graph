@@ -26,12 +26,13 @@ export async function checkTx(txHash: string, timeout = 60000): Promise<TxInfo> 
 export async function transaction(
   wallet: Wallet,
   msgs: Msg[],
+  fee: undefined,
   accountNumber = undefined,
   sequence = undefined,
   timeout = 60000
 ): Promise<TxInfo> {
   return wallet
-    .createAndSignTx({ msgs, account_number: accountNumber, sequence })
+    .createAndSignTx({ msgs, account_number: accountNumber, sequence, fee })
     .then((signed) => lcd.tx.broadcast(signed))
     .then(async (broadcastResult) => {
       if (broadcastResult['code']) {

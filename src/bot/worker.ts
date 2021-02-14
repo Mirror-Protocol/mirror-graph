@@ -32,8 +32,6 @@ async function tick(now: number, wallet: TxWallet): Promise<void> {
   await updatePolls(wallet).catch((error) => errorHandler('updatePolls', error))
 
   await updateAirdrop(wallet).catch((error) => errorHandler('updateAirdrop', error))
-
-  // await adjust().catch((error) => errorHandler('adjust', error))
 }
 
 export async function loop(wallet: TxWallet): Promise<void> {

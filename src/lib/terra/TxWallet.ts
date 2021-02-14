@@ -22,7 +22,7 @@ export class TxWallet extends Wallet {
     super(lcd, key)
   }
 
-  async transaction(msgs: Msg[], timeout = 60000): Promise<TxInfo> {
+  async transaction(msgs: Msg[], fee = undefined, timeout = 60000): Promise<TxInfo> {
     if (!this.managedAccountNumber && !this.managedSequence) {
       const { account_number: accountNumber, sequence } = await this.accountNumberAndSequence()
 
@@ -30,7 +30,7 @@ export class TxWallet extends Wallet {
       this.managedSequence = sequence
     }
 
-    return transaction(this, msgs, this.managedAccountNumber, this.managedSequence, timeout)
+    return transaction(this, msgs, fee, this.managedAccountNumber, this.managedSequence, timeout)
       .then((txInfo) => {
         this.managedSequence += 1
         return txInfo
@@ -80,6 +80,7 @@ export class TxWallet extends Wallet {
           migratable
         ),
       ],
+      undefined,
       300000
     )
 
@@ -100,8 +101,8 @@ export class TxWallet extends Wallet {
     }
   }
 
-  async executeMsgs(msgs: Msg[]): Promise<TxInfo> {
-    const tx = await this.transaction(msgs)
+  async executeMsgs(msgs: Msg[], fee = undefined): Promise<TxInfo> {
+    const tx = await this.transaction(msgs, fee)
 
     if (tx.code) {
       throw new Error(`[${tx.code}] ${tx.raw_log}`)
@@ -122,7 +123,8 @@ export class TxWallet extends Wallet {
   async execute(
     contract: string,
     msg: Record<string, unknown>,
-    coins: Coins = new Coins([])
+    coins: Coins = new Coins([]),
+    fee = undefined
   ): Promise<TxInfo> {
     if (!contract) {
       throw new Error('wrong contract')
@@ -130,7 +132,7 @@ export class TxWallet extends Wallet {
 
     return this.executeMsgs([
       new MsgExecuteContract(this.key.accAddress, contract, toSnakeCase(msg), coins),
-    ])
+    ], fee)
   }
 
   async migrate(contract: string, newCodeId: number): Promise<TxInfo> {

@@ -1,4 +1,3 @@
-export * from './adjust'
 export * from './airdrop'
 export * from './assetNews'
 export * from './cdp'

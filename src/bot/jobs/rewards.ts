@@ -1,5 +1,5 @@
 import * as bluebird from 'bluebird'
-import { Coins, MsgExecuteContract } from '@terra-money/terra.js'
+import { Coins, MsgExecuteContract, StdFee } from '@terra-money/terra.js'
 import { TxWallet } from 'lib/terra'
 import { toSnakeCase } from 'lib/caseStyles'
 import * as logger from 'lib/logger'
@@ -23,7 +23,12 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
   // MIR inflation distribute every 1hour
   const distributionInfo = await getDistributionInfo(factory)
   if (Date.now() - (+distributionInfo.lastDistributed*1000) >= 60000 * 60) {
-    await wallet.execute(factory, { distribute: {} })
+    await wallet.execute(
+      factory,
+      { distribute: {} },
+      new Coins([]),
+      new StdFee(2500000, { uusd: 3750 })
+    )
   }
 
   // cdp close fee(mAsset) > convert mir
@@ -49,7 +54,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
 
   if (convertMsgs.length > 0) {
     // execute convert fee
-    await wallet.executeMsgs(convertMsgs)
+    await wallet.executeMsgs(convertMsgs, new StdFee(2500000, { uusd: 3750 }))
 
     // execute distribute converted fee
     await wallet.execute(collector, { distribute: {} })
