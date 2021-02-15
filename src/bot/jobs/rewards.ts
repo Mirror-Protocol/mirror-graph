@@ -27,7 +27,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
       factory,
       { distribute: {} },
       new Coins([]),
-      new StdFee(2500000, { uusd: 3750 })
+      new StdFee(3000000, { uusd: 4500 })
     )
   }
 
@@ -54,7 +54,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
 
   if (convertMsgs.length > 0) {
     // execute convert fee
-    await wallet.executeMsgs(convertMsgs, new StdFee(2500000, { uusd: 3750 }))
+    await wallet.executeMsgs(convertMsgs, new StdFee(3000000, { uusd: 4500 }))
 
     // execute distribute converted fee
     await wallet.execute(collector, { distribute: {} })
