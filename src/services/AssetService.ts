@@ -12,7 +12,7 @@ import { addMonths } from 'date-fns'
 import { find } from 'lodash'
 import { loadEthAssets } from 'lib/data'
 import { num, BigNumber } from 'lib/num'
-import { queryAssetInfos } from 'lib/meth'
+import { queryAssetInfos } from 'lib/eth'
 import { AssetEntity, AssetPositionsEntity, AssetNewsEntity, PriceEntity } from 'orm'
 import { EthAsset, EthAssetInfos, EthAssets } from 'types'
 

@@ -2,7 +2,7 @@ import * as bluebird from 'bluebird'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Repository, FindConditions, FindOneOptions, FindManyOptions } from 'typeorm'
 import { Container, Service } from 'typedi'
-import { isAirdropClaimed } from 'lib/meth'
+import { isAirdropClaimed } from 'lib/eth'
 import { AirdropEntity } from 'orm'
 
 @Service()

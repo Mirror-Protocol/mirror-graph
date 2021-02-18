@@ -6,7 +6,7 @@ import { Container, Service, Inject } from 'typedi'
 import { num, aprToApy } from 'lib/num'
 import { getTokenBalance } from 'lib/mirror'
 import { getContractStore } from 'lib/terra'
-import { getMethMirTokenBalance } from 'lib/meth'
+import { getMethMirTokenBalance } from 'lib/eth'
 import {
   GovService,
   AssetService,
