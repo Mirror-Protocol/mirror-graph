@@ -4,7 +4,7 @@ import * as bluebird from 'bluebird'
 import { KoaController, Controller, Validator, Validate, Get } from 'koa-joi-controllers'
 import { success } from 'lib/response'
 import { num } from 'lib/num'
-import { assetService, statisticService, priceService } from 'services'
+import { assetService, statisticService, priceService, ethService } from 'services'
 import { AssetStatus, Network } from 'types'
 
 const Joi = Validator.Joi
@@ -46,10 +46,10 @@ async function getPools(format: string): Promise<unknown> {
         quote_volume: uusdVolume
       }
     })
-    const ethAssetInfos = await assetService().getEthAssetInfos()
+    const ethAssetInfos = await ethService().getEthInfos()
     const wrappedUstToken = '0xa47c8bf37f92aBed4A126BDA807A7b7498661acD'
     await bluebird.map(assets, async (asset) => {
-      const ethAsset = await assetService().getEthAsset(asset.token)
+      const ethAsset = await ethService().getAsset(asset.token)
       if (!ethAsset || !ethAssetInfos[ethAsset.token])
         return
       const { price } = ethAssetInfos[ethAsset.token]

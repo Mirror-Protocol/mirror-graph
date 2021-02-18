@@ -49,8 +49,7 @@ export interface EthAsset {
   name: string
   token: string
   pair: string
-  lp: string
-  pool: string
+  pool?: string
   status: string
 }
 

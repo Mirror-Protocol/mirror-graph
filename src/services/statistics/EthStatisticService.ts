@@ -4,7 +4,7 @@ import { Container, Service, Inject } from 'typedi'
 import { find, sortedUniq } from 'lodash'
 import { num } from 'lib/num'
 import { getPairHourDatas, getPairDayDatas, getPairsDayDatas } from 'lib/eth'
-import { AssetService } from 'services'
+import { AssetService, EthService } from 'services'
 import { PeriodStatistic, ValueAt } from 'graphql/schema'
 import { AssetStatus } from 'types'
 
@@ -12,6 +12,7 @@ import { AssetStatus } from 'types'
 export class EthStatisticService {
   constructor(
     @Inject((type) => AssetService) private readonly assetService: AssetService,
+    @Inject((type) => EthService) private readonly ethService: EthService,
   ) {}
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
@@ -19,7 +20,7 @@ export class EthStatisticService {
     // start of today (UTC)
     const from = Date.now() - (Date.now() % 86400000)
 
-    const assets = this.assetService.getEthAssets()
+    const assets = this.ethService.getAssets()
     const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
     const datas = await getPairsDayDatas(pairAddresses, from, from)
     const transactions = datas.reduce((result, data) => result.plus(data.dailyTxns), num(0)).toString()
@@ -69,7 +70,7 @@ export class EthStatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 60 }) // 60 minutes
   async getLiquidityHistory(from: number, to: number): Promise<ValueAt[]> {
-    const assets = this.assetService.getEthAssets()
+    const assets = this.ethService.getAssets()
     const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
     const initialDatas = await bluebird.map(
       pairAddresses,
@@ -112,7 +113,7 @@ export class EthStatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 30 }) // 30 minutes
   async getTradingVolumeHistory(from: number, to: number): Promise<ValueAt[]> {
-    const assets = this.assetService.getEthAssets()
+    const assets = this.ethService.getAssets()
     const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
 
     const history = []
@@ -133,7 +134,7 @@ export class EthStatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async getAssetDayVolume(token: string, timestamp: number): Promise<string> {
-    const ethAsset = await this.assetService.getEthAsset(token)
+    const ethAsset = await this.ethService.getAsset(token)
     if (!ethAsset) {
       return '0'
     }
@@ -146,7 +147,7 @@ export class EthStatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async getAsset24h(token: string): Promise<{ volume: string; transactions: string }> {
-    const ethAsset = await this.assetService.getEthAsset(token)
+    const ethAsset = await this.ethService.getAsset(token)
     if (!ethAsset) {
       return {
         volume: '0',
@@ -172,7 +173,7 @@ export class EthStatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 60 }) // 60 minutes
   async getAssetLiquidity(token: string): Promise<string> {
-    const ethAsset = await this.assetService.getEthAsset(token)
+    const ethAsset = await this.ethService.getAsset(token)
     if (!ethAsset) {
       return '0'
     }
@@ -189,8 +190,8 @@ export class EthStatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async getAssetAPR(token: string): Promise<string> {
-    const ethAsset = await this.assetService.getEthAsset(token)
-    const ethAssetInfos = await this.assetService.getEthAssetInfos()
+    const ethAsset = await this.ethService.getAsset(token)
+    const ethAssetInfos = await this.ethService.getEthInfos()
 
     return ethAssetInfos[ethAsset?.token]?.apr || '0'
   }

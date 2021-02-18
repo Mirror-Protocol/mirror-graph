@@ -8,6 +8,7 @@ export * from './OracleService'
 export * from './PriceService'
 export * from './TxService'
 
+export * from './cross-chains/EthService'
 export * from './statistics/StatisticService'
 export * from './statistics/TerraStatisticService'
 export * from './statistics/EthStatisticService'
