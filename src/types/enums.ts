@@ -11,6 +11,7 @@ registerEnumType(AssetStatus, { name: 'AssetStatus' })
 export enum Network {
   TERRA = 'TERRA',
   ETH = 'ETH',
+  BSC = 'BSC',
   COMBINE = 'COMBINE',
 }
 

@@ -46,7 +46,7 @@ async function getPools(format: string): Promise<unknown> {
         quote_volume: uusdVolume
       }
     })
-    const ethAssetInfos = await ethService().getEthInfos()
+    const ethAssetInfos = await ethService().getAssetInfos()
     const wrappedUstToken = '0xa47c8bf37f92aBed4A126BDA807A7b7498661acD'
     await bluebird.map(assets, async (asset) => {
       const ethAsset = await ethService().getAsset(asset.token)

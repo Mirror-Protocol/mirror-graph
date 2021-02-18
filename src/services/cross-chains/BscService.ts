@@ -1,20 +1,20 @@
 import memoize from 'memoizee-decorator'
 import { Container, Service, Inject } from 'typedi'
 import { find } from 'lodash'
-import { loadEthAssets } from 'lib/data'
+import { loadBscAssets } from 'lib/data'
 import { queryAssetInfos } from 'lib/eth'
 import { AssetService } from 'services'
 import { EthAsset, EthAssetInfos, EthAssets } from 'types'
 
 @Service()
-export class EthService {
+export class BscService {
   constructor(
     @Inject((type) => AssetService) private readonly assetService: AssetService,
   ) {}
 
   @memoize({})
   getAssets(): EthAssets {
-    return loadEthAssets()
+    return loadBscAssets()
   }
 
   @memoize({})
@@ -30,6 +30,6 @@ export class EthService {
   }
 }
 
-export function ethService(): EthService {
-  return Container.get(EthService)
+export function bscService(): BscService {
+  return Container.get(BscService)
 }
