@@ -13,3 +13,14 @@ export function toAssetAmount(token: string, amount: string): unknown {
 
   return { info, amount }
 }
+
+export function limitedRange(
+  from: number, to: number, interval: number, limit: number
+) : { from: number; to: number } {
+  const count = Math.min(Math.floor((to - from) / interval))
+
+  return {
+    from,
+    to: count > limit ? from + (interval * limit) : to
+  }
+}

@@ -1,4 +1,5 @@
 import { Resolver, Query, FieldResolver, Root, Arg } from 'type-graphql'
+import { limitedRange } from 'lib/utils'
 import { Statistic, PeriodStatistic, ValueAt, AccountBalance } from 'graphql/schema'
 import { StatisticService } from 'services'
 import { Network } from 'types'
@@ -52,7 +53,9 @@ export class StatisticResolver {
     @Arg('from', { description: 'timestamp' }) from: number,
     @Arg('to', { description: 'timestamp' }) to: number
   ): Promise<ValueAt[]> {
-    return this.statisticService.getLiquidityHistory(statistic.network, from, to)
+    const { to: limitedTo } = limitedRange(from, to, 86400000, 365) // limit 365days
+
+    return this.statisticService.getLiquidityHistory(statistic.network, from, limitedTo)
   }
 
   @FieldResolver((type) => [ValueAt])
@@ -61,6 +64,8 @@ export class StatisticResolver {
     @Arg('from', { description: 'timestamp' }) from: number,
     @Arg('to', { description: 'timestamp' }) to: number
   ): Promise<ValueAt[]> {
-    return this.statisticService.getTradingVolumeHistory(statistic.network, from, to)
+    const { to: limitedTo } = limitedRange(from, to, 86400000, 365) // limit 365days
+
+    return this.statisticService.getTradingVolumeHistory(statistic.network, from, limitedTo)
   }
 }
