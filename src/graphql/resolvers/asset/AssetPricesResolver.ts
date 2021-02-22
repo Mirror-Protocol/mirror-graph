@@ -31,7 +31,7 @@ export class AssetPricesResolver {
     @Arg('to', { description: 'timestamp' }) to: number,
     @Arg('interval', { description: 'unit is minute' }) interval: number,
   ): Promise<PriceAt[]> {
-    const { to: limitedTo } = limitedRange(from, to, interval * 60000, 1000)
+    const { to: limitedTo } = limitedRange(from, to, interval * 60000, 500)
 
     return this.priceService.getHistory(asset.token, from, limitedTo, interval)
   }
@@ -68,7 +68,7 @@ export class AssetPricesResolver {
       throw new Error('interval range must be 1-43200')
     }
 
-    const { to: limitedTo } = limitedRange(from, to, interval * 60000, 1000)
+    const { to: limitedTo } = limitedRange(from, to, interval * 60000, 500)
     return this.oracleService.getHistory(asset.token, from, limitedTo, interval)
   }
 }

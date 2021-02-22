@@ -1,3 +1,4 @@
+import memoize from 'memoizee-decorator'
 import { Container, Service } from 'typedi'
 import { Repository, FindConditions, FindOneOptions, LessThanOrEqual, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
@@ -66,6 +67,7 @@ export class PriceService {
     return getOHLC<PriceEntity>(repo, token, from, to)
   }
 
+  @memoize({ promise: true, maxAge: 60000 }) // 1 minute
   async getHistory(
     token: string | string[],
     from: number,
