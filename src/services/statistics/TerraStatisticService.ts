@@ -1,23 +1,111 @@
+import * as bluebird from 'bluebird'
 import memoize from 'memoizee-decorator'
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
+import { getTokenBalance } from 'lib/mirror'
+import { getContractStore } from 'lib/terra'
+import { getMethMirTokenBalance } from 'lib/eth'
 import { num } from 'lib/num'
-import { GovService, AssetService, PriceService } from 'services'
+import {
+  GovService, AssetService, AccountService, PriceService, OracleService, ContractService
+} from 'services'
 import { DailyStatisticEntity, TxEntity, RewardEntity } from 'orm'
-import { PeriodStatistic, ValueAt } from 'graphql/schema'
+import { ContractType } from 'types'
+import { PeriodStatistic, ValueAt, Statistic } from 'graphql/schema'
 
 @Service()
 export class TerraStatisticService {
   constructor(
     @Inject((type) => GovService) private readonly govService: GovService,
     @Inject((type) => AssetService) private readonly assetService: AssetService,
+    @Inject((type) => AccountService) private readonly accountService: AccountService,
     @Inject((type) => PriceService) private readonly priceService: PriceService,
+    @Inject((type) => OracleService) private readonly oracleService: OracleService,
+    @Inject((type) => ContractService) private readonly contractService: ContractService,
     @InjectRepository(DailyStatisticEntity)
     private readonly dailyRepo: Repository<DailyStatisticEntity>,
     @InjectRepository(TxEntity) private readonly txRepo: Repository<TxEntity>,
     @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>
   ) {}
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async statistic(): Promise<Partial<Statistic>> {
+    const assets = await this.assetService.getAll()
+    const gov = this.govService.get()
+    const mintContract = await this.contractService.get({ type: ContractType.MINT, gov })
+    let assetMarketCap = num(0)
+    let totalValueLocked = num(0)
+    let collateralValue = num(0)
+
+    await bluebird.map(assets, async (asset) => {
+      if (asset.token === 'uusd') {
+        const { balance } = await this.accountService.getBalance(mintContract.address, 'uusd')
+        totalValueLocked = totalValueLocked.plus(balance)
+        collateralValue = collateralValue.plus(balance)
+        return
+      }
+
+      // add liquidity value to tvl
+      const liquidity = await this.getAssetLiquidity(asset.token)
+      totalValueLocked = totalValueLocked.plus(liquidity)
+
+      const price = await this.oracleService.getPrice(asset.token)
+      if (!price) return
+
+      // add asset market cap
+      assetMarketCap = assetMarketCap.plus(num(asset.positions.mint).multipliedBy(price))
+
+      // add collateral value to tvl
+      const balance = await getTokenBalance(asset.token, mintContract.address)
+      const collateral = num(balance).multipliedBy(price)
+      totalValueLocked = totalValueLocked.plus(collateral)
+      collateralValue = collateralValue.plus(collateral)
+    })
+    // add MIR gov staked value to tvl
+    const mirBalance = await getTokenBalance(gov.mirrorToken, gov.gov)
+    const mirPrice = await this.priceService.getPrice(gov.mirrorToken)
+    if (mirPrice && mirBalance) {
+      totalValueLocked = totalValueLocked.plus(num(mirBalance).multipliedBy(mirPrice))
+    }
+
+    return {
+      assetMarketCap: assetMarketCap.toFixed(0),
+      totalValueLocked: totalValueLocked.toFixed(0),
+      collateralRatio: collateralValue.dividedBy(assetMarketCap).toFixed(4),
+      ...(await this.mirSupply()),
+    }
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async mirSupply(): Promise<Partial<Statistic>> {
+    const gov = this.govService.get()
+    const mirrorToken = gov.mirrorToken
+    const airdropContract = (await this.contractService.get({ type: ContractType.AIRDROP, gov }))
+      .address
+    const factoryContract = (await this.contractService.get({ type: ContractType.FACTORY, gov }))
+      .address
+    const communityContract = (
+      await this.contractService.get({ type: ContractType.COMMUNITY, gov })
+    ).address
+
+    const airdropBalance = await getTokenBalance(mirrorToken, airdropContract)
+    const factoryBalance = await getTokenBalance(mirrorToken, factoryContract)
+    const communityBalance = await getTokenBalance(mirrorToken, communityContract)
+    const methBalance = await getMethMirTokenBalance()
+
+    const { totalSupply } = await getContractStore(mirrorToken, { tokenInfo: {} })
+    const mirCirculatingSupply = num(totalSupply)
+      .minus(airdropBalance)
+      .minus(factoryBalance)
+      .minus(communityBalance)
+      .minus(methBalance)
+
+    return {
+      mirTotalSupply: totalSupply,
+      mirCirculatingSupply: mirCirculatingSupply.toFixed(0),
+    }
+  }
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async today(): Promise<PeriodStatistic> {
