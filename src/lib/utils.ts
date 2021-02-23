@@ -17,7 +17,12 @@ export function toAssetAmount(token: string, amount: string): unknown {
 export function limitedRange(
   from: number, to: number, interval: number, limit: number
 ) : { from: number; to: number } {
-  const count = Math.min(Math.floor((to - from) / interval))
+  if (to < from || interval < 1000) {
+    throw new Error('wrong range & interval')
+  }
+  const count = to !== from
+    ? Math.min(Math.floor((to - from) / interval))
+    : 0
 
   return {
     from,
