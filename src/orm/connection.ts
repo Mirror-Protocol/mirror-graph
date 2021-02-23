@@ -9,10 +9,9 @@ import {
 } from 'typeorm'
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
 import { values } from 'lodash'
+import * as logger from 'lib/logger'
 import * as entities from './entities'
 import * as CamelToSnakeNamingStrategy from './utils/namingStrategy'
-
-const debug = require('debug')('orm') // eslint-disable-line
 
 export const staticOptions = {
   supportBigNumbers: true,
@@ -26,7 +25,7 @@ function initConnection(
   container: ContainerInterface = undefined
 ): Promise<Connection> {
   const pgOpts = options as PostgresConnectionOptions
-  debug(
+  logger.info(
     `creating connection ${pgOpts.name || 'default'} to ${pgOpts.username}@${pgOpts.host}:${
       pgOpts.port || 5432
     }`
@@ -43,6 +42,8 @@ function initConnection(
 }
 
 export async function initORM(container: ContainerInterface = undefined): Promise<Connection[]> {
+  logger.info('Initialize ORM')
+
   const reader = new ConnectionOptionsReader()
   const options = await reader.all()
 

@@ -5,7 +5,9 @@ import { govService } from 'services'
 import config from 'config'
 
 export async function initMirror(): Promise<void> {
+  logger.info('Initialize lcd')
   initLCD(config.TERRA_LCD, config.TERRA_CHAIN_ID)
+  logger.info('Initialize mantle')
   initMantle(config.TERRA_MANTLE)
 
   const gov = await govService().load(config.CONTRACT_ID)

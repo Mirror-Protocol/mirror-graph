@@ -4,6 +4,7 @@ import { Container, Service, Inject } from 'typedi'
 import { getLatestBlockHeight, lcd } from 'lib/terra'
 import { errorHandler } from 'lib/error'
 import { num, BigNumber } from 'lib/num'
+import * as logger from 'lib/logger'
 import { AssetBalance, ValueAt } from 'graphql/schema'
 import { GovService, txService } from 'services'
 import { AccountEntity, BalanceEntity } from 'orm'
@@ -103,7 +104,8 @@ export class AccountService {
       .addOrderBy('id', 'DESC')
       .getRawMany()
 
-    balances.push(await this.getBalance(address, 'uusd'))
+    const uusdBalance = await this.getBalance(address, 'uusd').catch(logger.error)
+    uusdBalance && balances.push(uusdBalance)
 
     return balances.filter((row) => num(row.balance).isGreaterThan(0))
   }
