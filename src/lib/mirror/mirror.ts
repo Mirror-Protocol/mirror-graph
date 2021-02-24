@@ -1,7 +1,14 @@
 import { getContractStore } from 'lib/terra'
 import { num } from 'lib/num'
 import {
-  PairPool, OraclePrice, GovConfig, GovPoll, MintAssetConfig, StakingPool, DistributionInfo
+  PairPool,
+  OraclePrice,
+  GovConfig,
+  GovPoll,
+  MintAssetConfig,
+  StakingPool,
+  DistributionInfo,
+  TokenInfo,
 } from './types'
 
 export async function getPairPool(pair: string):
@@ -39,6 +46,10 @@ export async function getTokenBalance(token: string, address: string): Promise<s
   const { balance } = await getContractStore(token, { balance: { address } })
 
   return balance
+}
+
+export async function getTokenInfo(token: string): Promise<TokenInfo> {
+  return getContractStore(token, { tokenInfo: {} })
 }
 
 export async function getStakingPool(staking: string, token: string): Promise<StakingPool> {

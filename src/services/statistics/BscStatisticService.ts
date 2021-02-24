@@ -2,8 +2,9 @@ import * as bluebird from 'bluebird'
 import memoize from 'memoizee-decorator'
 import { Container, Service, Inject } from 'typedi'
 import { find, sortedUniq } from 'lodash'
+import { ethers } from 'ethers'
 import { num } from 'lib/num'
-import { getPairHourDatas, getPairDayDatas, getPairsDayDatas } from 'lib/bsc'
+import { getPairHourDatas, getPairDayDatas, getPairsDayDatas, totalSupply } from 'lib/bsc'
 import { AssetService, BscService } from 'services'
 import { PeriodStatistic, ValueAt } from 'graphql/schema'
 import { AssetStatus } from 'types'
@@ -16,6 +17,42 @@ export class BscStatisticService {
     @Inject((type) => AssetService) private readonly assetService: AssetService,
     @Inject((type) => BscService) private readonly bscService: BscService,
   ) {}
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async totalValueLocked(): Promise<string> {
+    const assets = this.bscService.getAssets()
+    let totalValueLocked = num(0)
+
+    await bluebird.map(Object.keys(assets), async (token) => {
+      const { pair } = assets[token]
+      const liquidity = await this.getAssetLiquidity(pair)
+
+      totalValueLocked = totalValueLocked.plus(liquidity)
+    })
+
+    return totalValueLocked.toFixed(0)
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  async assetMarketCap(): Promise<string> {
+    const assets = this.bscService.getAssets()
+    let assetMarketCap = num(0)
+
+    await bluebird.map(Object.keys(assets).filter((token) => assets[token]?.symbol !== 'MIR'), async (token) => {
+      const { pair } = assets[token]
+      const datas = await getPairDayDatas(pair, 0, Date.now(), 1, 'desc')
+      if (!datas || datas.length < 1) {
+        return
+      }
+      const pairData = datas[0]
+      const price = num(pairData.reserve1).dividedBy(pairData.reserve0)
+      const supply = num(ethers.utils.formatEther(await totalSupply(token))).multipliedBy(1000000)
+
+      assetMarketCap = assetMarketCap.plus(supply.multipliedBy(price))
+    })
+
+    return assetMarketCap.toFixed(0)
+  }
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async today(): Promise<PeriodStatistic> {
@@ -175,12 +212,12 @@ export class BscStatisticService {
   }
 
   @memoize({ promise: true, maxAge: 60000 * 60 }) // 60 minutes
-  async getAssetLiquidity(token: string): Promise<string> {
-    const asset = await this.bscService.getAsset(token)
-    if (!asset) {
+  async getAssetLiquidity(pair: string): Promise<string> {
+    if (!pair) {
       return '0'
     }
-    const datas = await getPairDayDatas(asset.pair, 0, Date.now(), 1, 'desc')
+
+    const datas = await getPairDayDatas(pair, 0, Date.now(), 1, 'desc')
     if (!datas || datas.length < 1) {
       return '0'
     }

@@ -6,7 +6,13 @@ import { Container, Service, Inject } from 'typedi'
 import { num, aprToApy } from 'lib/num'
 import { getTokenBalance } from 'lib/mirror'
 import {
-  GovService, AssetService, TerraStatisticService, EthStatisticService, BscStatisticService,
+  GovService,
+  AssetService,
+  EthService,
+  BscService,
+  TerraStatisticService,
+  EthStatisticService,
+  BscStatisticService,
 } from 'services'
 import { DailyStatisticEntity, RewardEntity } from 'orm'
 import { Statistic, PeriodStatistic, ValueAt, AccountBalance } from 'graphql/schema'
@@ -17,6 +23,8 @@ export class StatisticService {
   constructor(
     @Inject((type) => GovService) private readonly govService: GovService,
     @Inject((type) => AssetService) private readonly assetService: AssetService,
+    @Inject((type) => EthService) private readonly ethService: EthService,
+    @Inject((type) => BscService) private readonly bscService: BscService,
     @Inject((type) => TerraStatisticService) private readonly terraStatisticService: TerraStatisticService,
     @Inject((type) => EthStatisticService) private readonly ethStatisticService: EthStatisticService,
     @Inject((type) => BscStatisticService) private readonly bscStatisticService: BscStatisticService,
@@ -27,13 +35,47 @@ export class StatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async statistic(network: Network): Promise<Partial<Statistic>> {
-    const basicStat = {
+    const stat = {
       network,
-      ...await this.terraStatisticService.mirSupply()
+      collateralRatio: await this.terraStatisticService.collateralRatio(),
+      ...await this.terraStatisticService.mirSupply(),
     }
 
     if (network === Network.TERRA) {
-      return Object.assign(await this.terraStatisticService.statistic(), basicStat)
+      return {
+        ...stat,
+        totalValueLocked: await this.terraStatisticService.totalValueLocked(),
+        assetMarketCap: await this.terraStatisticService.assetMarketCap(),
+      }
+    } else if (network === Network.ETH) {
+      return {
+        ...stat,
+        totalValueLocked: await this.ethStatisticService.totalValueLocked(),
+        assetMarketCap: await this.ethStatisticService.assetMarketCap(),
+      }
+    } else if (network === Network.BSC) {
+      return {
+        totalValueLocked: await this.bscStatisticService.totalValueLocked(),
+        assetMarketCap: await this.bscStatisticService.assetMarketCap(),
+        ...stat,
+      }
+    } else if (network === Network.COMBINE) {
+      const tvls = [
+        await this.terraStatisticService.totalValueLocked(),
+        await this.ethStatisticService.totalValueLocked(),
+        await this.bscStatisticService.totalValueLocked(),
+      ]
+      const assetMarketCaps = [
+        await this.terraStatisticService.assetMarketCap(),
+        await this.ethStatisticService.assetMarketCap(),
+        await this.bscStatisticService.assetMarketCap(),
+      ]
+
+      return {
+        ...stat,
+        totalValueLocked: tvls.reduce((result, tvl) => result.plus(tvl), num(0)).toString(),
+        assetMarketCap: assetMarketCaps.reduce((result, assetMarketCap) => result.plus(assetMarketCap), num(0)).toString(),
+      }
     }
   }
 
@@ -253,14 +295,20 @@ export class StatisticService {
     if (network === Network.TERRA) {
       return this.terraStatisticService.getAssetLiquidity(token)
     } else if (network === Network.ETH) {
-      return this.ethStatisticService.getAssetLiquidity(token)
+      const asset = await this.ethService.getAsset(token)
+
+      return this.ethStatisticService.getAssetLiquidity(asset?.pair)
     } else if (network === Network.BSC) {
-      return this.bscStatisticService.getAssetLiquidity(token)
+      const asset = await this.bscService.getAsset(token)
+
+      return this.bscStatisticService.getAssetLiquidity(asset?.pair)
     } else if (network === Network.COMBINE) {
+      const ethAsset = await this.ethService.getAsset(token)
+      const bscAsset = await this.bscService.getAsset(token)
       const statistics = [
         await this.terraStatisticService.getAssetLiquidity(token),
-        await this.ethStatisticService.getAssetLiquidity(token),
-        await this.bscStatisticService.getAssetLiquidity(token),
+        await this.ethStatisticService.getAssetLiquidity(ethAsset?.pair),
+        await this.bscStatisticService.getAssetLiquidity(bscAsset?.pair),
       ]
 
       return statistics.reduce((result, stat) => result.plus(stat), num(0)).toString()

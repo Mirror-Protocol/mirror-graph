@@ -38,6 +38,8 @@ export function getClient(): GraphQLClient {
 export async function getPairDayDatas(
   pair: string, from: number, to: number, limit: number, orderDirection: string
 ): Promise<PairDayData[]> {
+  if (!pair) return
+
   const result = await getClient().request(
     gql`query($pair: String!, $from: Int!, $to: Int!, $orderDirection: String!, $limit: Int!) {
       pairDayDatas(
@@ -90,6 +92,8 @@ export async function getPairDayDatas(
 export async function getPairHourDatas(
   pair: string, from: number, to: number, limit: number, orderDirection: string
 ): Promise<PairHourData[]> {
+  if (!pair) return
+
   const result = await getClient().request(
     gql`query($pair: String!, $from: Int!, $to: Int!, $orderDirection: String!, $limit: Int!) {
       pairHourDatas(
