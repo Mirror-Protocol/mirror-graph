@@ -1,17 +1,19 @@
 import * as bluebird from 'bluebird'
-import { EntityManager } from 'typeorm'
+import { getRepository } from 'typeorm'
+import { getLatestBlockHeight } from 'lib/terra'
 import { sendSlack } from 'lib/slack'
 import { getPairPool } from 'lib/mirror'
 import { assetService } from 'services'
-import { AssetEntity, AssetPositionsEntity } from 'orm'
+import { AssetPositionsEntity } from 'orm'
 import { AssetStatus } from 'types'
 
-export async function syncPairs(manager: EntityManager, height: number): Promise<void> {
-  const assets = await assetService().getAll(
-    { where: { status: AssetStatus.LISTED } },
-    manager.getRepository(AssetEntity)
-  )
-  const positionsRepo = manager.getRepository(AssetPositionsEntity)
+export async function syncPairs(height: number): Promise<void> {
+  const latestHeight = await getLatestBlockHeight().catch(() => undefined)
+  if (height !== latestHeight) {
+    return
+  }
+
+  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED } })
 
   await bluebird.map(assets, async (asset) => {
     const { symbol } = asset
@@ -28,6 +30,6 @@ export async function syncPairs(manager: EntityManager, height: number): Promise
       asset.positions.uusdPool = collateralAmount
     }
 
-    await positionsRepo.save(asset.positions)
+    await getRepository(AssetPositionsEntity).save(asset.positions)
   })
 }

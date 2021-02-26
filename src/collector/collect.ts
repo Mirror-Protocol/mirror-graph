@@ -33,10 +33,9 @@ export async function collect(now: number): Promise<void> {
     await parseTxs(manager, txs)
 
     await updateBlock(collectedBlock, lastTx.height, manager.getRepository(BlockEntity))
-
-    // if collected height === latest height, sync pair's pool size
-    lastTx.height === latestHeight && await syncPairs(manager)
   })
+
+  await syncPairs(lastTx.height)
 
   const txDate = formatToTimeZone(
     new Date(lastTx.timestamp), 'YYYY-MM-DD HH:mm:ss', { timeZone: 'Asia/Seoul' }
