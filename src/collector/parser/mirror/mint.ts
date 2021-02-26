@@ -19,6 +19,7 @@ export async function parse(
 
   let cdp: CdpEntity
   let tx = {}
+  let address = sender
 
   const attributes = findAttributes(log.events, 'from_contract')
   const positionIdx = findAttribute(attributes, 'position_idx')
@@ -33,7 +34,7 @@ export async function parse(
     // create cdp
     cdp = new CdpEntity({
       id: positionIdx,
-      address: sender,
+      address,
       token: mint.token,
       mintAmount: mint.amount,
       collateralToken: collateral.token,
@@ -151,6 +152,7 @@ export async function parse(
       .minus(returnCollateral.amount)
       .minus(protocolFee.amount)
       .toString()
+    address = cdp.address
 
     if (cdp.mintAmount === '0' || cdp.collateralAmount === '0') {
       // remove asset's mint position
@@ -172,7 +174,7 @@ export async function parse(
 
     tx = {
       type: TxType.AUCTION,
-      data: { positionIdx, liquidatedAmount, returnCollateralAmount, taxAmount, protocolFeeAmount },
+      data: { positionIdx, liquidatedAmount, returnCollateralAmount, taxAmount, protocolFeeAmount, liquidator: sender },
       token: liquidated.token,
       tags: [liquidated.token, returnCollateral.token],
     }
@@ -200,6 +202,6 @@ export async function parse(
   await manager.save(cdp)
 
   await txService().newTx({
-    ...tx, height, txHash, address: sender, datetime, govId, contract, fee
+    ...tx, height, txHash, address, datetime, govId, contract, fee
   }, manager)
 }

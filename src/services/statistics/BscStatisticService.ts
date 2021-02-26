@@ -18,7 +18,7 @@ export class BscStatisticService {
     @Inject((type) => BscService) private readonly bscService: BscService,
   ) {}
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async totalValueLocked(): Promise<string> {
     const assets = this.bscService.getAssets()
     let totalValueLocked = num(0)
@@ -33,7 +33,7 @@ export class BscStatisticService {
     return totalValueLocked.toFixed(0)
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async assetMarketCap(): Promise<string> {
     const assets = this.bscService.getAssets()
     let assetMarketCap = num(0)
@@ -54,7 +54,7 @@ export class BscStatisticService {
     return assetMarketCap.toFixed(0)
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async today(): Promise<PeriodStatistic> {
     // start of today (UTC)
     const from = Date.now() - (Date.now() % 86400000)
@@ -79,7 +79,7 @@ export class BscStatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async latest24h(): Promise<PeriodStatistic> {
     const assets = this.assetService.getAll({ where: { status: AssetStatus.LISTED }})
 
@@ -107,7 +107,7 @@ export class BscStatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 60 }) // 60 minutes
+  @memoize({ promise: true, maxAge: 60000 * 60, preFetch: 0.1 }) // 60 minutes
   async getLiquidityHistory(from: number, to: number): Promise<ValueAt[]> {
     const assets = this.bscService.getAssets()
     const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
@@ -151,7 +151,7 @@ export class BscStatisticService {
     return history.filter((data) => data.value !== '0')
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 30 }) // 30 minutes
+  @memoize({ promise: true, maxAge: 60000 * 30, preFetch: 0.2 }) // 30 minutes
   async getTradingVolumeHistory(from: number, to: number): Promise<ValueAt[]> {
     const assets = this.bscService.getAssets()
     const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
@@ -172,7 +172,7 @@ export class BscStatisticService {
     return history
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async getAssetDayVolume(token: string, timestamp: number): Promise<string> {
     const ethAsset = await this.bscService.getAsset(token)
     if (!ethAsset) {
@@ -185,7 +185,7 @@ export class BscStatisticService {
       .toFixed(0)
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async getAsset24h(token: string): Promise<{ volume: string; transactions: string }> {
     const asset = await this.bscService.getAsset(token)
     if (!asset) {
@@ -211,7 +211,7 @@ export class BscStatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 60 }) // 60 minutes
+  @memoize({ promise: true, maxAge: 60000 * 60, preFetch: 0.1 }) // 60 minutes
   async getAssetLiquidity(pair: string): Promise<string> {
     if (!pair) {
       return '0'

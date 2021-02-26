@@ -1,4 +1,5 @@
 import { Resolver, FieldResolver, Root, Arg } from 'type-graphql'
+import { limitedRange } from 'lib/utils'
 import { AssetEntity } from 'orm'
 import { AssetPrices, AssetOHLC, PriceAt } from 'graphql/schema'
 import { PriceService, OracleService } from 'services'
@@ -30,7 +31,9 @@ export class AssetPricesResolver {
     @Arg('to', { description: 'timestamp' }) to: number,
     @Arg('interval', { description: 'unit is minute' }) interval: number,
   ): Promise<PriceAt[]> {
-    return this.priceService.getHistory(asset.token, from, to, interval)
+    const { to: limitedTo } = limitedRange(from, to, interval * 60000, 500)
+
+    return this.priceService.getHistory(asset.token, from, limitedTo, interval)
   }
 
   @FieldResolver()
@@ -61,6 +64,11 @@ export class AssetPricesResolver {
     @Arg('to', { description: 'timestamp' }) to: number,
     @Arg('interval', { description: 'unit is minute' }) interval: number,
   ): Promise<PriceAt[]> {
-    return this.oracleService.getHistory(asset.token, from, to, interval)
+    if (interval < 1 || interval > 43200) {
+      throw new Error('interval range must be 1-43200')
+    }
+
+    const { to: limitedTo } = limitedRange(from, to, interval * 60000, 500)
+    return this.oracleService.getHistory(asset.token, from, limitedTo, interval)
   }
 }

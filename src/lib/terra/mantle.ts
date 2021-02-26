@@ -7,7 +7,11 @@ import { errorHandler } from 'lib/error'
 export let mantle: GraphQLClient
 
 export function initMantle(URL: string): GraphQLClient {
-  mantle = new GraphQLClient(URL, { timeout: 60000, keepalive: true })
+  mantle = new GraphQLClient(URL, {
+    timeout: 60000,
+    keepalive: true,
+    cache: 'no-cache'
+  })
 
   return mantle
 }
@@ -137,4 +141,28 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
   })
 
   return txs
+}
+
+export async function getContractStoreWithHeight<T>(address: string, query: unknown): Promise<{ height: number; result: T }> {
+  const response = await mantle.request(
+    gql`query($address: String!, $query: String!) {
+      WasmContractsContractAddressStore(ContractAddress: $address, QueryMsg: $query) {
+        Height
+        Result
+      }
+    }`,
+    {
+      address,
+      query: JSON.stringify(toSnakeCase(query))
+    }
+  )
+
+  if (!response?.WasmContractsContractAddressStore?.Result) {
+    return undefined
+  }
+
+  return {
+    height: +response.WasmContractsContractAddressStore.Height,
+    result: toCamelCase(JSON.parse(response.WasmContractsContractAddressStore.Result))
+  }
 }
