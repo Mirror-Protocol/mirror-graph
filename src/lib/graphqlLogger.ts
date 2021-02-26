@@ -14,22 +14,20 @@ export const GraphQLLogger: ApolloServerPlugin  = {
           return
         }
 
-        const {
-          operation: { operation, name: { value } },
-          queryHash,
-        } = context
+        const { operation, operationName, queryHash } = context
 
-        logger.info(`${queryHash.substr(-6)} ${operation} ${value}: ${JSON.stringify(context.request.variables)}`)
+        logger.info(`${queryHash.substr(-6)} ${operation?.operation} ${operationName}: ${JSON.stringify(context.request.variables)}`)
       },
 
       didEncounterErrors(context) {
         const {
-          operation: { operation, name: { value } },
+          operation,
+          operationName,
           queryHash,
           errors,
         } = context
 
-        logger.info(`${queryHash.substr(-6)} ${operation} ${value} error: ${JSON.stringify(errors)}`)
+        logger.info(`${queryHash.substr(-6)} ${operation?.operation} ${operationName} error: ${JSON.stringify(errors)}`)
       },
 
       willSendResponse(context) {
@@ -38,14 +36,15 @@ export const GraphQLLogger: ApolloServerPlugin  = {
         }
 
         const {
-          operation: { operation, name: { value } },
+          operation,
+          operationName,
           queryHash,
         } = context
 
         const elapsed = Date.now() - start
         const size = JSON.stringify(context.response).length * 2
 
-        logger.info(`${queryHash.substr(-6)} ${operation} ${value} response duration=${elapsed}ms bytes=${size}`)
+        logger.info(`${queryHash.substr(-6)} ${operation?.operation} ${operationName} response duration=${elapsed}ms bytes=${size}`)
       }
     }
   },
