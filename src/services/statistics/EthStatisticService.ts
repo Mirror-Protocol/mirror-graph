@@ -14,7 +14,7 @@ export class EthStatisticService {
     @Inject((type) => AssetService) private readonly assetService: AssetService,
   ) {}
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async today(): Promise<PeriodStatistic> {
     // start of today (UTC)
     const from = Date.now() - (Date.now() % 86400000)
@@ -39,7 +39,7 @@ export class EthStatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async latest24h(): Promise<PeriodStatistic> {
     const assets = this.assetService.getAll({ where: { status: AssetStatus.LISTED }})
 
@@ -67,7 +67,7 @@ export class EthStatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 60 }) // 60 minutes
+  @memoize({ promise: true, maxAge: 60000 * 60, preFetch: true }) // 60 minutes
   async getLiquidityHistory(from: number, to: number): Promise<ValueAt[]> {
     const assets = this.assetService.getEthAssets()
     const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
@@ -110,7 +110,7 @@ export class EthStatisticService {
     return history.filter((data) => data.value !== '0')
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 30 }) // 30 minutes
+  @memoize({ promise: true, maxAge: 60000 * 30, preFetch: true }) // 30 minutes
   async getTradingVolumeHistory(from: number, to: number): Promise<ValueAt[]> {
     const assets = this.assetService.getEthAssets()
     const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
@@ -131,7 +131,7 @@ export class EthStatisticService {
     return history
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async getAssetDayVolume(token: string, timestamp: number): Promise<string> {
     const ethAsset = await this.assetService.getEthAsset(token)
     if (!ethAsset) {
@@ -144,7 +144,7 @@ export class EthStatisticService {
       .toFixed(0)
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async getAsset24h(token: string): Promise<{ volume: string; transactions: string }> {
     const ethAsset = await this.assetService.getEthAsset(token)
     if (!ethAsset) {
@@ -170,7 +170,7 @@ export class EthStatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 60 }) // 60 minutes
+  @memoize({ promise: true, maxAge: 60000 * 60, preFetch: true }) // 60 minutes
   async getAssetLiquidity(token: string): Promise<string> {
     const ethAsset = await this.assetService.getEthAsset(token)
     if (!ethAsset) {
