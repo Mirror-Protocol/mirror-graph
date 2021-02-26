@@ -142,3 +142,27 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
 
   return txs
 }
+
+export async function getContractStoreWithHeight<T>(address: string, query: unknown): Promise<{ height: number; result: T }> {
+  const response = await mantle.request(
+    gql`query($address: String!, $query: String!) {
+      WasmContractsContractAddressStore(ContractAddress: $address, QueryMsg: $query) {
+        Height
+        Result
+      }
+    }`,
+    {
+      address,
+      query: JSON.stringify(toSnakeCase(query))
+    }
+  )
+
+  if (!response?.WasmContractsContractAddressStore?.Result) {
+    return undefined
+  }
+
+  return {
+    height: +response.WasmContractsContractAddressStore.Height,
+    result: toCamelCase(JSON.parse(response.WasmContractsContractAddressStore.Result))
+  }
+}

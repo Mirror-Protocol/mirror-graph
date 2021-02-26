@@ -35,7 +35,7 @@ export async function collect(now: number): Promise<void> {
     await updateBlock(collectedBlock, lastTx.height, manager.getRepository(BlockEntity))
   })
 
-  await syncPairs(lastTx.height)
+  await syncPairs(lastTx.height).catch(errorHandler)
 
   const txDate = formatToTimeZone(
     new Date(lastTx.timestamp), 'YYYY-MM-DD HH:mm:ss', { timeZone: 'Asia/Seoul' }
