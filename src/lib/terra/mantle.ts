@@ -7,7 +7,11 @@ import { errorHandler } from 'lib/error'
 export let mantle: GraphQLClient
 
 export function initMantle(URL: string): GraphQLClient {
-  mantle = new GraphQLClient(URL, { timeout: 60000, keepalive: true })
+  mantle = new GraphQLClient(URL, {
+    timeout: 60000,
+    keepalive: true,
+    cache: 'no-cache'
+  })
 
   return mantle
 }
