@@ -228,12 +228,12 @@ export class BscStatisticService {
       .toFixed(0)
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async getAssetAPR(token: string): Promise<string> {
-    const ethAsset = await this.bscService.getAsset(token)
-    const ethAssetInfos = await this.bscService.getAssetInfos()
+    const asset = await this.bscService.getAsset(token)
+    const assetInfos = await this.bscService.getAssetInfos()
 
-    return ethAssetInfos[ethAsset?.token]?.apr || '0'
+    return assetInfos[asset?.token]?.apr || '0'
   }
 }
 

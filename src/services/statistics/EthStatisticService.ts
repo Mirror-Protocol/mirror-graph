@@ -227,12 +227,12 @@ export class EthStatisticService {
       .toFixed(0)
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async getAssetAPR(token: string): Promise<string> {
-    const ethAsset = await this.ethService.getAsset(token)
-    const ethAssetInfos = await this.ethService.getAssetInfos()
+    const asset = await this.ethService.getAsset(token)
+    const assetInfos = await this.ethService.getAssetInfos()
 
-    return ethAssetInfos[ethAsset?.token]?.apr || '0'
+    return assetInfos[asset?.token]?.apr || '0'
   }
 }
 
