@@ -54,4 +54,7 @@ export class Statistic {
 
   @Field((type) => [ValueAt], { nullable: true })
   tradingHistory: ValueAt[]
+
+  @Field((type) => [ValueAt], { nullable: true })
+  feeHistory: ValueAt[]
 }

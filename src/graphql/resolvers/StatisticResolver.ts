@@ -59,6 +59,17 @@ export class StatisticResolver {
   }
 
   @FieldResolver((type) => [ValueAt])
+  async feeHistory(
+    @Root() statistic: Statistic,
+    @Arg('from', { description: 'timestamp' }) from: number,
+    @Arg('to', { description: 'timestamp' }) to: number
+  ): Promise<ValueAt[]> {
+    const { to: limitedTo } = limitedRange(from, to, 86400000, 365) // limit 365days
+
+    return this.statisticService.getFeeHistory(statistic.network, from, limitedTo)
+  }
+
+  @FieldResolver((type) => [ValueAt])
   async tradingVolumeHistory(
     @Root() statistic: Statistic,
     @Arg('from', { description: 'timestamp' }) from: number,
