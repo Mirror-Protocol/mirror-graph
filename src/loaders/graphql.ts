@@ -5,6 +5,7 @@ import { Container } from 'typedi'
 import { ApolloServer } from 'apollo-server-koa'
 import * as Koa from 'koa'
 import { errorHandler } from 'lib/error'
+import { GraphQLLogger } from 'lib/graphqlLogger'
 
 let server: ApolloServer
 
@@ -32,6 +33,7 @@ export async function initGraphQL(app: Koa): Promise<void> {
     debug: process.env.NODE_ENV !== 'production',
     playground: true,
     introspection: true,
+    plugins: [GraphQLLogger],
   })
 
   server.applyMiddleware({ app, path: '/graphql' })

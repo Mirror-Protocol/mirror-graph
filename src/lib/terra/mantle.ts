@@ -10,7 +10,6 @@ export function initMantle(URL: string): GraphQLClient {
   mantle = new GraphQLClient(URL, {
     timeout: 60000,
     keepalive: true,
-    cache: 'no-cache'
   })
 
   return mantle

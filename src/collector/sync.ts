@@ -12,7 +12,7 @@ export async function getPairPool(targetHeight: number, pair: string):
   for (let i = 0; i < 5; i += 1) {
     const queryResult = await getContractStoreWithHeight<PairPool>(pair, { pool: {} })
     const { result: pool, height } = queryResult
-    if (height < targetHeight) {
+    if (height !== targetHeight) {
       await bluebird.delay(200)
       continue
     }

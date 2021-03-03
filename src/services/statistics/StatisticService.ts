@@ -250,6 +250,33 @@ export class StatisticService {
     }
   }
 
+  async getFeeHistory(network: Network, from: number, to: number): Promise<ValueAt[]> {
+    const fromDayUTC = Math.max(from - (from % 86400000), 1606953600000)
+    const toDayUTC = to - (to % 86400000)
+    let values = []
+
+    if (network === Network.TERRA) {
+      values = await this.terraStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
+    } else if (network === Network.ETH) {
+      values = await this.ethStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
+    } else if (network === Network.COMBINE) {
+      const terra = await this.terraStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
+      const eth = await this.ethStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
+
+      values = terra.map((data) => ({
+        timestamp: data.timestamp,
+        value: num(data.value)
+          .plus(eth.find((ethData) => ethData.timestamp === data.timestamp)?.value || 0)
+          .toString()
+      }))
+    }
+
+    return values.map((data) => ({
+      timestamp: data.timestamp,
+      value: num(data.value).multipliedBy(0.003).toFixed(0)
+    }))
+  }
+
   async getAssetDayVolume(network: Network, token: string, timestamp: number): Promise<string> {
     const dayUTC = timestamp - (timestamp % 86400000)
 
