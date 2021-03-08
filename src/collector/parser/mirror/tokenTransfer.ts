@@ -2,7 +2,7 @@ import * as bluebird from 'bluebird'
 import { EntityManager } from 'typeorm'
 import { ContractActions, findAttributes, parseContractActions } from 'lib/terra'
 import { num, BigNumber } from 'lib/num'
-import { contractService, accountService, assetService, priceService, txService } from 'services'
+import { contractService, accountService, assetService, priceService, txService, govService } from 'services'
 import { BalanceEntity, AssetEntity, PriceEntity, ContractEntity, AssetPositionsEntity } from 'orm'
 import { ContractType, TxType } from 'types'
 import { ParseArgs } from './parseArgs'
@@ -13,7 +13,7 @@ async function getBuyPrice(
   const { manager, contract, timestamp, msg } = args
 
   // calculate buy price when buying
-  if (contract.type === ContractType.PAIR &&
+  if (contract?.type === ContractType.PAIR &&
     msg['swap'] &&
     contractActions?.swap[0]?.offerAsset === 'uusd'
   ) {
@@ -56,7 +56,7 @@ async function contractTransfer(
 }
 
 export async function parse(args: ParseArgs): Promise<void> {
-  const { manager, contract, height, txHash, timestamp, msg, log, fee } = args
+  const { manager, contract, height, txHash, timestamp, log, fee } = args
   const attributes = findAttributes(log.events, 'from_contract')
   if (!attributes) {
     return
@@ -74,9 +74,6 @@ export async function parse(args: ParseArgs): Promise<void> {
   Array.isArray(contractActions.transferFrom) && transfers.push(...contractActions.transferFrom)
   Array.isArray(contractActions.sendFrom) && transfers.push(...contractActions.sendFrom)
 
-  const needRecordTx = msg['transfer']
-    && (contract.type === ContractType.TOKEN || contract.type === ContractType.LP_TOKEN)
-
   await bluebird.mapSeries(transfers, async (action) => {
     const { contract: token, from, to, amount } = action
     if (amount === '0' || !from || !to)
@@ -87,6 +84,8 @@ export async function parse(args: ParseArgs): Promise<void> {
       return
     const receiverContract = await contractService().get({ address: to }, undefined, contractRepo)
     const senderContract = await contractService().get({ address: from }, undefined, contractRepo)
+    const tx = { height, txHash, datetime, token, contract, tags: [token], govId: govService().get().id }
+    const data = { from, to, amount }
 
     if (receiverContract) { // receiver is contract
       await contractTransfer(receiverContract, token, amount, manager, datetime)
@@ -97,19 +96,12 @@ export async function parse(args: ParseArgs): Promise<void> {
 
     if (senderContract) {
       await contractTransfer(senderContract, token, `-${amount}`, manager, datetime)
+
+      await txService().newTx({ ...tx, address: to, type: TxType.RECEIVE, data }, manager)
     } else if (asset) {
       await accountService().removeBalance(from, token, amount, datetime, balanceRepo)
-    }
-
-    // record tx entity
-    if (needRecordTx) {
-      const { govId } = contract
-
-      const tx = { height, txHash, datetime, govId, token, contract, tags: [token] }
-      const data = { from, to, amount }
 
       await txService().newTx({ ...tx, address: from, type: TxType.SEND, data, fee }, manager)
-      await txService().newTx({ ...tx, address: to, type: TxType.RECEIVE, data }, manager)
     }
   })
 }

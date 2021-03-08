@@ -23,9 +23,6 @@ export async function parseMirrorMsg(
   const contractRepo = manager.getRepository(ContractEntity)
   const contract = await contractService().get({ address: msg.contract }, undefined, contractRepo)
 
-  if (!contract)
-    return
-
   const args: ParseArgs = {
     manager,
     height: txInfo.height,
@@ -39,46 +36,45 @@ export async function parseMirrorMsg(
     contract,
   }
 
-  switch (contract.type) {
-    case ContractType.GOV:
-      await gov.parse(args)
-      break
+  if (contract) {
+    switch (contract.type) {
+      case ContractType.GOV:
+        await gov.parse(args)
+        break
 
-    case ContractType.FACTORY:
-      await factory.parse(args)
-      break
+      case ContractType.FACTORY:
+        await factory.parse(args)
+        break
 
-    case ContractType.ORACLE:
-      await oracle.parse(args)
-      break
+      case ContractType.ORACLE:
+        await oracle.parse(args)
+        break
 
-    case ContractType.PAIR:
-      await pair.parse(args)
-      break
+      case ContractType.PAIR:
+        await pair.parse(args)
+        break
 
-    case ContractType.TOKEN:
-    case ContractType.LP_TOKEN:
-      await token.parse(args)
-      break
+      case ContractType.TOKEN:
+      case ContractType.LP_TOKEN:
+        await token.parse(args)
+        break
 
-    case ContractType.MINT:
-      await mint.parse(args)
-      break
+      case ContractType.MINT:
+        await mint.parse(args)
+        break
 
-    case ContractType.STAKING:
-      await staking.parse(args)
-      break
+      case ContractType.STAKING:
+        await staking.parse(args)
+        break
 
-    case ContractType.COLLECTOR:
-      await collector.parse(args)
-      break
+      case ContractType.COLLECTOR:
+        await collector.parse(args)
+        break
 
-    case ContractType.AIRDROP:
-      await airdrop.parse(args)
-      break
-
-    default:
-      return
+      case ContractType.AIRDROP:
+        await airdrop.parse(args)
+        break
+    }
   }
 
   // tracking token balance
