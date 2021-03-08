@@ -26,10 +26,10 @@ export class AccountService {
       const { address } = account
 
       // adjust uusd balance (because unknown transaction)
-      const dbAmount = (await this.getBalanceEntity({ address, token: 'uusd' }))?.balance || '0'
+      const dbAmount = (await this.getBalanceEntity({ address, token: 'uusd' }, { order: { id: 'DESC' } }))?.balance || '0'
       const { balance: chainAmount } = await this.getBalance(address, 'uusd')
-      const diff = num(chainAmount).minus(dbAmount).toString()
 
+      const diff = num(chainAmount).minus(dbAmount).toString()
       if (diff !== '0') {
         await this.addBalance(address, 'uusd', '1', diff, new Date(Date.now()))
       }
