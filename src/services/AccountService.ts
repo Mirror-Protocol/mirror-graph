@@ -1,14 +1,12 @@
 import { Repository, FindConditions, FindOneOptions, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
-import { getLatestBlockHeight, lcd } from 'lib/terra'
-import { errorHandler } from 'lib/error'
+import { lcd } from 'lib/terra'
 import { num, BigNumber } from 'lib/num'
 import * as logger from 'lib/logger'
 import { AssetBalance, ValueAt } from 'graphql/schema'
-import { GovService, txService } from 'services'
+import { GovService } from 'services'
 import { AccountEntity, BalanceEntity } from 'orm'
-import { TxType } from 'types'
 
 @Service()
 export class AccountService {
@@ -27,26 +25,12 @@ export class AccountService {
     if (accountEntity.isAppUser) {
       const { address } = account
 
-      // if uusd balance is null but have uusd, record uusd balance
-      const balanceEntity = await this.getBalanceEntity({ address, token: 'uusd' })
-      if (!balanceEntity) {
-        const { balance: uusdAmount } = await this.getBalance(address, 'uusd')
+      // adjust uusd balance (because unknown transaction)
+      const dbAmount = (await this.getBalanceEntity({ address, token: 'uusd' }))?.balance || '0'
+      const { balance: chainAmount } = await this.getBalance(address, 'uusd')
 
-        if (uusdAmount && num(uusdAmount).isGreaterThan(0)) {
-          const latestHeight = await getLatestBlockHeight().catch(errorHandler)
-          const datetime = new Date(Date.now())
-          await txService().newTx({
-            height: latestHeight || -1,
-            txHash: '',
-            datetime,
-            govId: this.govService.get().id,
-            type: TxType.REGISTRATION,
-            address,
-            data: { uusdBalance: uusdAmount },
-            uusdChange: uusdAmount,
-          })
-          await this.addBalance(address, 'uusd', '1', uusdAmount, datetime)
-        }
+      if (dbAmount !== chainAmount) {
+        await this.addBalance(address, 'uusd', '1', num(chainAmount).minus(dbAmount).toString(), new Date(Date.now()))
       }
     }
 
