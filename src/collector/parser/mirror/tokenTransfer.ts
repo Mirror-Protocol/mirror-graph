@@ -74,6 +74,9 @@ export async function parse(args: ParseArgs): Promise<void> {
   Array.isArray(contractActions.transferFrom) && transfers.push(...contractActions.transferFrom)
   Array.isArray(contractActions.sendFrom) && transfers.push(...contractActions.sendFrom)
 
+  const needRecordTx = !contract
+    || (contract.type === ContractType.TOKEN || contract.type === ContractType.LP_TOKEN)
+
   await bluebird.mapSeries(transfers, async (action) => {
     const { contract: token, from, to, amount } = action
     if (amount === '0' || !from || !to)
@@ -97,11 +100,11 @@ export async function parse(args: ParseArgs): Promise<void> {
     if (senderContract) {
       await contractTransfer(senderContract, token, `-${amount}`, manager, datetime)
 
-      await txService().newTx({ ...tx, address: to, type: TxType.RECEIVE, data }, manager)
+      needRecordTx && await txService().newTx({ ...tx, address: to, type: TxType.RECEIVE, data }, manager)
     } else if (asset) {
       await accountService().removeBalance(from, token, amount, datetime, balanceRepo)
 
-      await txService().newTx({ ...tx, address: from, type: TxType.SEND, data, fee }, manager)
+      needRecordTx && await txService().newTx({ ...tx, address: from, type: TxType.SEND, data, fee }, manager)
     }
   })
 }
