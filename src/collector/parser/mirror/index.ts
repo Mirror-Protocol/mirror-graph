@@ -8,6 +8,7 @@ import * as factory from './factory'
 import * as oracle from './oracle'
 import * as pair from './pair'
 import * as token from './token'
+import * as limitOrder from './limitOrder'
 import * as mint from './mint'
 import * as staking from './staking'
 import * as gov from './gov'
@@ -73,6 +74,10 @@ export async function parseMirrorMsg(
 
       case ContractType.AIRDROP:
         await airdrop.parse(args)
+        break
+
+      case ContractType.LIMIT_ORDER:
+        await limitOrder.parse(args)
         break
     }
   }

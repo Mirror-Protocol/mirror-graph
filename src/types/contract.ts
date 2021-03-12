@@ -2,6 +2,7 @@ export enum ContractType {
   COLLECTOR = 'collector',
   FACTORY = 'factory',
   GOV = 'gov',
+  LIMIT_ORDER = 'limitOrder',
   MINT = 'mint',
   ORACLE = 'oracle',
   STAKING = 'staking',

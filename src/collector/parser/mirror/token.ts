@@ -6,6 +6,7 @@ import * as mint from './mint'
 import * as pair from './pair'
 import * as staking from './staking'
 import * as gov from './gov'
+import * as limitOrder from './limitOrder'
 
 export async function parseHook(args: ParseArgs): Promise<void> {
   const { contract } = args
@@ -22,6 +23,9 @@ export async function parseHook(args: ParseArgs): Promise<void> {
 
     case ContractType.GOV:
       return gov.parse(args)
+
+    case ContractType.LIMIT_ORDER:
+      return limitOrder.parse(args)
   }
 }
 
