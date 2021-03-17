@@ -27,7 +27,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
       factory,
       { distribute: {} },
       new Coins([]),
-      new StdFee(3000000, { uusd: process.env.TERRA_CHAIN_ID.includes('columbus') ? 4500 : 450000 })
+      new StdFee(3000000, { uusd: 450000 })
     )
   }
 
@@ -54,7 +54,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
 
   if (convertMsgs.length > 0) {
     // execute convert fee
-    await wallet.executeMsgs(convertMsgs, new StdFee(3000000, { uusd: process.env.TERRA_CHAIN_ID.includes('columbus') ? 4500 : 450000 }))
+    await wallet.executeMsgs(convertMsgs, new StdFee(3000000, { uusd: 450000 }))
 
     // execute distribute converted fee
     await wallet.execute(collector, { distribute: {} })
