@@ -27,7 +27,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
       factory,
       { distribute: {} },
       new Coins([]),
-      new StdFee(3500000, { uusd: 450000 })
+      new StdFee(3500000, { uusd: 550000 })
     )
   }
 
