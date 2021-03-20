@@ -15,3 +15,10 @@ export enum Network {
 }
 
 registerEnumType(Network, { name: 'Network' })
+
+export enum LimitOrderType {
+  ASK = 'ASK',
+  BID = 'BID',
+}
+
+registerEnumType(LimitOrderType, { name: 'LimitOrderType' })

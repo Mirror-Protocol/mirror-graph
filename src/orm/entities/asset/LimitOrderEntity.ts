@@ -7,6 +7,7 @@ import {
   Index,
 } from 'typeorm'
 import { HaveAsset } from '../Have'
+import { LimitOrderType } from 'types'
 
 @Entity('limit_order')
 export class LimitOrderEntity extends HaveAsset {
@@ -29,15 +30,21 @@ export class LimitOrderEntity extends HaveAsset {
   @Index()
   address: string
 
-  @Column('numeric', { precision: 40, default: 0 })
-  mintAmount: string
+  @Column({ type: 'enum', enum: LimitOrderType })
+  type: LimitOrderType
 
-  @Column()
-  collateralToken: string
+  @Column('decimal', { precision: 40, scale: 6 })
+  price: string
 
-  @Column('numeric', { precision: 40, default: 0 })
-  collateralAmount: string
+  @Column('decimal', { precision: 40 })
+  amount: string
 
-  @Column('decimal', { precision: 40, scale: 6, default: 0 })
-  collateralRatio: string
+  @Column('decimal', { precision: 40 })
+  uusdAmount: string
+
+  @Column('decimal', { precision: 40, default: 0 })
+  filledAmount: string
+
+  @Column('decimal', { precision: 40, default: 0 })
+  filledUusdAmount: string
 }
