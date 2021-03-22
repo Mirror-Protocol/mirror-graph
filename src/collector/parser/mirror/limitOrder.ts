@@ -103,7 +103,7 @@ export async function parse(
       return
     }
 
-    const { token, type } = limitOrder
+    const { token, type, address } = limitOrder
     const filled = splitTokenAmount(type === LimitOrderType.ASK ? executorReceive : bidderReceive)
     const filledUusd = splitTokenAmount(type === LimitOrderType.ASK ? bidderReceive : executorReceive)
 
@@ -139,6 +139,11 @@ export async function parse(
       volume: filledUusd.amount,
       tags: [token, 'uusd']
     }
+
+    // save order owner's tx
+    await txService().newTx({
+      ...parsed, height, txHash, address, datetime, govId, contract, fee
+    }, manager)
   } else {
     return
   }
