@@ -111,7 +111,8 @@ export async function parse(
     limitOrder.filledUusdAmount = num(limitOrder.filledUusdAmount).plus(filledUusd.amount).toFixed(0)
 
     if (num(limitOrder.filledAmount).isGreaterThanOrEqualTo(limitOrder.amount) ||
-      num(limitOrder.filledUusdAmount).isGreaterThanOrEqualTo(limitOrder.uusdAmount)) {
+      num(limitOrder.filledUusdAmount).isGreaterThanOrEqualTo(limitOrder.uusdAmount) ||
+      num(limitOrder.uusdAmount).minus(limitOrder.filledUusdAmount).isLessThan(1000000)) {
       // remove limit order entity
       await limitOrderRepo.remove(limitOrder)
     } else {
