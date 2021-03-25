@@ -1,8 +1,19 @@
+
+import * as bluebird from 'bluebird'
 import { Raw } from 'typeorm'
-import { Resolver, Query, Arg } from 'type-graphql'
+import { Resolver, Query, Arg, InputType, Field } from 'type-graphql'
 import { LimitOrder } from 'graphql/schema'
 import { LimitOrderService } from 'services'
 import { LimitOrderType } from 'types'
+
+@InputType()
+class LimitOrderFilterOption {
+  @Field()
+  token: string
+
+  @Field()
+  price: string
+}
 
 @Resolver((of) => LimitOrder)
 export class LimitOrderResolver {
@@ -10,25 +21,25 @@ export class LimitOrderResolver {
 
   @Query((returns) => [LimitOrder], { description: 'Limit orders of token' })
   async limitOrders(
-    @Arg('token') token: string,
     @Arg('type', (type) => LimitOrderType) type: LimitOrderType,
-    @Arg('price') price: string,
-    @Arg('limit', { defaultValue: 10 }) limit: number,
+    @Arg('options', type => [LimitOrderFilterOption]) options: LimitOrderFilterOption[],
   ): Promise<LimitOrder[]> {
-    if (limit < 1 || limit > 100) {
-      throw new Error('limit range is 1-100')
-    }
+    const orders = []
 
-    return this.limitOrderService.getAll({
-      where: {
-        token,
-        type,
-        price: type === LimitOrderType.ASK
-          ? Raw((alias) => `${alias} <= ${price}`)
-          : Raw((alias) => `${alias} >= ${price}`),
-      },
-      order: { price: type === LimitOrderType.ASK ? 'ASC' : 'DESC' },
-      take: limit
+    await bluebird.map(options, async (option) => {
+      orders.push(...await this.limitOrderService.getAll({
+        where: {
+          token: option.token,
+          type,
+          price: type === LimitOrderType.ASK
+            ? Raw((alias) => `${alias} <= ${option.price}`)
+            : Raw((alias) => `${alias} >= ${option.price}`),
+        },
+        order: { price: type === LimitOrderType.ASK ? 'ASC' : 'DESC' },
+        take: 10
+      }))
     })
+
+    return orders
   }
 }
