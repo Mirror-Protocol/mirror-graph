@@ -57,6 +57,7 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
           GasWanted
           GasUsed
           Timestamp
+          TimestampUTC
 
           RawLog
           Logs {
@@ -113,8 +114,9 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
     Block.Txs?.filter(rawTx => rawTx.Success).map((rawTx) => {
       const infos = toSnakeCase(pick(
         rawTx,
-        ['Height', 'GasWanted', 'GasUsed', 'RawLog', 'Logs', 'Events', 'Timestamp']
+        ['Height', 'GasWanted', 'GasUsed', 'RawLog', 'Logs', 'Events']
       ))
+      infos.timestamp = new Date((+rawTx.TimestampUTC) * 1000).toUTCString()
 
       const txValue = toSnakeCase(pick(rawTx.Tx, ['Fee', 'Signatures', 'Memo']))
       const tx = {
