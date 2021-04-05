@@ -29,6 +29,7 @@
     "bluebird": "^3.7.2",
     "class-validator": "^0.12.2",
     "commander": "^6.2.1",
+    "csv-writer": "^1.6.0",
     "date-fns": "^2.16.1",
     "date-fns-timezone": "^0.1.4",
     "ethers": "^5.0.24",
