@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, CreateDateColumn, Column, Index } from 'typeorm'
-import { HaveGov } from '../Have'
+import { HaveGov } from '../have/HaveGov'
 
 @Entity('balance')
 export class BalanceEntity extends HaveGov {
@@ -29,7 +29,7 @@ export class BalanceEntity extends HaveGov {
   @Column('numeric', { precision: 40, default: 0 })
   balance: string
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Index()
   datetime: Date
 }

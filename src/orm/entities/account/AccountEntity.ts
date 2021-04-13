@@ -15,6 +15,6 @@ export class AccountEntity {
   @Column({ default: false })
   isAppUser: boolean
 
-  @Column({ nullable: true, default: null })
+  @Column({ nullable: true })
   email?: string
 }

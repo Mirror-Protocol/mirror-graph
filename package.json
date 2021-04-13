@@ -14,6 +14,9 @@
     "bot": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/bot/main.ts",
     "collect": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/collector/main.ts",
     "collect-dev": "nodemon --signal SIGINT --exec ts-node -e ts,json,R --files -r tsconfig-paths/register src/collector/main.ts",
+    "migration-gen": "node --require ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -c migration -d src/orm/migrations -n",
+    "migration-revert": "node --require ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -c migration -d src/orm/migrations",
+    "migration-run": "node --require ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -c migration -d src/orm/migrations",
     "test": "jest",
     "lint": "eslint src --ext .js,.ts",
     "prettier": "prettier --write src/**/*.ts"

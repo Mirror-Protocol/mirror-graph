@@ -4,7 +4,7 @@ import {
   CreateDateColumn,
   Column,
 } from 'typeorm'
-import { HaveAsset } from '../Have'
+import { HaveAsset } from '../have/HaveAsset'
 
 @Entity('asset_news')
 export class AssetNewsEntity extends HaveAsset {
