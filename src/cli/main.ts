@@ -14,7 +14,7 @@ bluebird.config({ longStackTraces: true, warnings: { wForgottenReturn: false } }
 global.Promise = bluebird as any // eslint-disable-line
 
 async function main(): Promise<void> {
-  logger.info('initialize cli')
+  logger.info('Initialize cli')
 
   initErrorHandler({ sentryDsn: process.env.SENTRY })
 

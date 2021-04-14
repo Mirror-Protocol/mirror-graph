@@ -48,6 +48,7 @@ export interface EthAsset {
   symbol: string
   name: string
   token: string
+  terraToken: string
   pair: string
   lp: string
   pool: string

@@ -4,7 +4,7 @@ import { createObjectCsvWriter } from 'csv-writer'
 import { format } from 'date-fns'
 import { num } from 'lib/num'
 import * as logger from 'lib/logger'
-import { assetService, priceService, oracleService } from 'services'
+import { assetService, priceService, oracleService, ethStatisticService } from 'services'
 import { AssetStatus } from 'types'
 
 export function statisticCommands(): void {
@@ -56,6 +56,26 @@ export function statisticCommands(): void {
 
         await writer.writeRecords([record])
       }
+
+      logger.info('completed')
+    })
+
+  program
+    .command('collect-liquidity')
+    .action(async () => {
+      const assets = (await assetService().getAll({
+        where: { status: AssetStatus.LISTED },
+        order: { symbol: 'ASC' },
+      }))
+
+      const latest = await ethStatisticService().getDailyStatistic(undefined, { order: { id: 'DESC' }})
+      const from = latest?.datetime.getTime() || 1606953600000
+
+      await bluebird.mapSeries(assets, async (asset) => {
+        await ethStatisticService().collectDailyStatistic(asset.token, from, Date.now())
+
+        await bluebird.delay(1000)
+      })
 
       logger.info('completed')
     })
