@@ -6,7 +6,7 @@ import {
   Column,
   Index,
 } from 'typeorm'
-import { HaveAsset } from '../Have'
+import { HaveAsset } from '../have/HaveAsset'
 import { LimitOrderType } from 'types'
 
 @Entity('limit_order')

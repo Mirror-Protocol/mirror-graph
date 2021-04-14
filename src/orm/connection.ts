@@ -26,9 +26,7 @@ function initConnection(
 ): Promise<Connection> {
   const pgOpts = options as PostgresConnectionOptions
   logger.info(
-    `creating connection ${pgOpts.name || 'default'} to ${pgOpts.username}@${pgOpts.host}:${
-      pgOpts.port || 5432
-    }`
+    `Connecting to ${pgOpts.username}@${pgOpts.host}:${pgOpts.port || 5432} (${pgOpts.name || 'default'})`
   )
 
   container && useContainer(container)
@@ -45,13 +43,42 @@ export async function initORM(container: ContainerInterface = undefined): Promis
   logger.info('Initialize ORM')
 
   const reader = new ConnectionOptionsReader()
-  const options = await reader.all()
+  const options = (await reader.all()).filter((o) => o.name !== 'migration')
 
   if (options.length && !options.filter((o) => o.name === 'default').length) {
     options[0]['name' as string] = 'default'
   }
 
-  connections = await bluebird.map(options, (opt) => initConnection(opt, container))
+  const {
+    TYPEORM_HOST, TYPEORM_HOST_RO, TYPEORM_USERNAME, TYPEORM_PASSWORD, TYPEORM_DATABASE
+  } = process.env
+
+  if (TYPEORM_HOST_RO) {
+    const replicaOptions = options.map((option) => ({
+      ...option,
+      replication: {
+        master: {
+          host: TYPEORM_HOST,
+          username: TYPEORM_USERNAME,
+          password: TYPEORM_PASSWORD,
+          database: TYPEORM_DATABASE
+        },
+        slaves: [
+          {
+            host: TYPEORM_HOST_RO,
+            username: TYPEORM_USERNAME,
+            password: TYPEORM_PASSWORD,
+            database: TYPEORM_DATABASE
+          }
+        ]
+      }
+    }))
+
+    connections = await bluebird.map(replicaOptions, (opt) => initConnection(opt, container))
+  } else {
+    connections = await bluebird.map(options, (opt) => initConnection(opt, container))
+  }
+
   return connections
 }
 

@@ -1,7 +1,7 @@
 import {
   Column, Entity, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, Index
 } from 'typeorm'
-import { HaveAsset } from '../Have'
+import { HaveAsset } from '../have/HaveAsset'
 
 @Entity('oracle_price')
 @Index('idx_oracle_price_datetime_asset', ['datetime', 'asset'], {

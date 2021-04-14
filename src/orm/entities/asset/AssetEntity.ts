@@ -8,7 +8,7 @@ import {
 } from 'typeorm'
 import { AssetStatus } from 'types'
 import { AssetPositionsEntity } from './AssetPositionsEntity'
-import { HaveGov } from '../Have'
+import { HaveGov } from '../have/HaveGov'
 
 @Entity('asset')
 export class AssetEntity extends HaveGov {
