@@ -25,17 +25,17 @@ function errorHandler(job: string, error?: Error & { [key: string]: any }): void
 }
 
 async function tick(now: number, wallet: TxWallet): Promise<void> {
-  // await distributeRewards(wallet).catch((error) => errorHandler('distributeRewards', error))
+  await distributeRewards(wallet).catch((error) => errorHandler('distributeRewards', error))
 
-  // await updateCdps().catch((error) => errorHandler('updateCdps', error))
+  await updateCdps().catch((error) => errorHandler('updateCdps', error))
 
-  // await updatePolls(wallet).catch((error) => errorHandler('updatePolls', error))
+  await updatePolls(wallet).catch((error) => errorHandler('updatePolls', error))
 
   await updateStatistic().catch((error) => errorHandler('updateStatistic', error))
 
-  // await updateNews().catch((error) => errorHandler('updateNews', error))
+  await updateNews().catch((error) => errorHandler('updateNews', error))
 
-  // await updateAirdrop(wallet).catch((error) => errorHandler('updateAirdrop', error))
+  await updateAirdrop(wallet).catch((error) => errorHandler('updateAirdrop', error))
 }
 
 export async function loop(wallet: TxWallet): Promise<void> {
