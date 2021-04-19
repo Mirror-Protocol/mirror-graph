@@ -156,12 +156,13 @@ export class StatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async getGovAPY(): Promise<string> {
+    const period = 15 // days
     const to = Date.now()
-    const from = Date.now() - (60000 * 60 * 24 * 7) // 7days ago
+    const from = Date.now() - (60000 * 60 * 24 * period) // 15days ago
 
     // gov stake reward = ((7days reward amount) / 7 * 365) / (staked to gov MIR amount)
     const govEntity = this.govService.get()
-    const govReward7d = (
+    const reward = (
       await this.rewardRepo
         .createQueryBuilder()
         .select('sum(amount)', 'amount')
@@ -174,7 +175,7 @@ export class StatisticService {
         .getRawOne()
     )?.amount
     const govStakedMir = await getTokenBalance(govEntity.mirrorToken, govEntity.gov)
-    const govAPY = num(govReward7d).dividedBy(7).multipliedBy(365).dividedBy(govStakedMir)
+    const govAPY = num(reward).dividedBy(period).multipliedBy(365).dividedBy(govStakedMir)
 
     return !govAPY.isNaN() ? govAPY.toString() : '0'
   }
