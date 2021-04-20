@@ -169,9 +169,9 @@ export class EthStatisticService {
   }
 
   async collectDailyStatistic(token: string, from: number, to: number, repo = this.dailyRepo): Promise<void> {
-    const todayUTC = Date.now() - (Date.now() % 86400000)
-    const fromUTC = Math.min(from - (from % 86400000), todayUTC)
-    const toUTC = Math.min(to - (to % 86400000), todayUTC)
+    const currentUTC = Date.now() - (Date.now() % 86400000)
+    const fromUTC = Math.min(from - (from % 86400000), currentUTC)
+    const toUTC = Math.min(to - (to % 86400000), currentUTC)
 
     const ethAsset = await this.assetService.getEthAsset(token)
     const pair = ethAsset?.pair
@@ -187,11 +187,11 @@ export class EthStatisticService {
     pairData[0] && datas.push(Object.assign(pairData[0], { timestamp: fromUTC }))
 
     // fill datas
-    const maxRange = 86400000 * 100
+    const maxRange = 86400000 * 900
     for (let queryFrom = fromUTC + 86400000; queryFrom <= toUTC; queryFrom += maxRange) {
-      datas.push(...await getPairDayDatas(
-        pair, queryFrom, Math.min(queryFrom + (maxRange - 86400000), toUTC), 1000, 'asc')
-      )
+      const queryTo = Math.min(queryFrom + maxRange, toUTC)
+
+      datas.push(...await getPairDayDatas(pair, queryFrom, queryTo, 1000, 'asc'))
     }
 
     // sort with desc
@@ -216,9 +216,73 @@ export class EthStatisticService {
         .plus(pairData.reserve1)
         .multipliedBy(1000000)
         .toFixed(0)
-      record.volume = num(pairData.dailyVolumeToken1).multipliedBy(1000000).toFixed(0)
-      record.fee = num(record.volume).multipliedBy(0.003).toFixed(0)
-      record.transactions = pairData.dailyTxns
+
+      if (pairData.timestamp === timestamp) {
+        record.volume = num(pairData.dailyVolumeToken1).multipliedBy(1000000).toFixed(0)
+        record.fee = num(record.volume).multipliedBy(0.003).toFixed(0)
+        record.transactions = pairData.dailyTxns
+      }
+
+      records.push(record)
+    }
+
+    await repo.save(records)
+  }
+
+  async collectHourlyStatistic(token: string, from: number, to: number, repo = this.hourlyRepo): Promise<void> {
+    const currentUTC = Date.now() - (Date.now() % 3600000)
+    const fromUTC = Math.min(from - (from % 3600000), currentUTC)
+    const toUTC = Math.min(to - (to % 3600000), currentUTC)
+
+    const ethAsset = await this.assetService.getEthAsset(token)
+    const pair = ethAsset?.pair
+    if (!pair) {
+      return
+    }
+
+    let datas = []
+    const records = []
+
+    // make initial data
+    const pairData = await getPairHourDatas(pair, 0, fromUTC, 1, 'desc')
+    pairData[0] && datas.push(Object.assign(pairData[0], { timestamp: fromUTC }))
+
+    // fill datas
+    const maxRange = 3600000 * 900
+    for (let queryFrom = fromUTC + 3600000; queryFrom <= toUTC; queryFrom += maxRange) {
+      const queryTo = Math.min(queryFrom + maxRange, toUTC)
+
+      datas.push(...await getPairHourDatas(pair, queryFrom, queryTo, 1000, 'asc'))
+    }
+
+    // sort with desc
+    datas = datas.sort((a, b) => b.timestamp - a.timestamp)
+
+    for (let timestamp = fromUTC; timestamp <= toUTC; timestamp += 3600000) {
+      const pairData = datas.find((data) => data.timestamp <= timestamp)
+      if (!pairData) {
+        continue
+      }
+
+      const network = Network.ETH
+      const datetime = convertToTimeZone(timestamp, { timeZone: 'UTC' })
+      const record = (await repo.findOne({ network, token, datetime }))
+        || new AssetHourlyEntity({ network, token, datetime })
+
+      record.pool = num(pairData.reserve0).multipliedBy(1000000).toFixed(0)
+      record.uusdPool = num(pairData.reserve1).multipliedBy(1000000).toFixed(0)
+      record.liquidity = num(pairData.reserve1)
+        .dividedBy(pairData.reserve0)
+        .multipliedBy(pairData.reserve0)
+        .plus(pairData.reserve1)
+        .multipliedBy(1000000)
+        .toFixed(0)
+
+      if (pairData.timestamp === timestamp) {
+        record.volume = num(pairData.hourlyVolumeToken1).multipliedBy(1000000).toFixed(0)
+        record.fee = num(record.volume).multipliedBy(0.003).toFixed(0)
+        record.transactions = pairData.hourlyTxns
+      }
 
       records.push(record)
     }

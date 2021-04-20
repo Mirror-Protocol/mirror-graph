@@ -43,7 +43,7 @@ typings/
 keystore.json
 keystore-local.json
 *.envrc
-*ormconfig.json
+*ormconfig*
 environment/*
 mirror-graph.json
 data/
