@@ -1,6 +1,6 @@
 import { Entity, PrimaryColumn, CreateDateColumn, Column, Index } from 'typeorm'
 import { ContractType } from 'types'
-import { HaveGovAndMaybeAsset } from '../Have'
+import { HaveGovAndMaybeAsset } from '../have/HaveGovAndMaybeAsset'
 
 @Entity('contract')
 @Index('idx_contract_address_type_gov', ['address', 'type', 'gov'], { unique: true })

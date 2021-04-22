@@ -1,7 +1,7 @@
 import {
   Column, Entity, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, Index
 } from 'typeorm'
-import { HaveGov } from '../Have'
+import { HaveGov } from '../have/HaveGov'
 
 @Entity('daily_statistic')
 export class DailyStatisticEntity extends HaveGov {

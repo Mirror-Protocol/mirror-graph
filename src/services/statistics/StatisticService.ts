@@ -1,5 +1,6 @@
 import * as bluebird from 'bluebird'
 import memoize from 'memoizee-decorator'
+import { uniq } from 'lodash'
 import { Repository, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
@@ -126,12 +127,13 @@ export class StatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
   async getGovAPY(): Promise<string> {
+    const period = 15 // days
     const to = Date.now()
-    const from = Date.now() - (60000 * 60 * 24 * 7) // 7days ago
+    const from = Date.now() - (60000 * 60 * 24 * period) // 15days ago
 
     // gov stake reward = ((7days reward amount) / 7 * 365) / (staked to gov MIR amount)
     const govEntity = this.govService.get()
-    const govReward7d = (
+    const reward = (
       await this.rewardRepo
         .createQueryBuilder()
         .select('sum(amount)', 'amount')
@@ -144,7 +146,7 @@ export class StatisticService {
         .getRawOne()
     )?.amount
     const govStakedMir = await getTokenBalance(govEntity.mirrorToken, govEntity.gov)
-    const govAPY = num(govReward7d).dividedBy(7).multipliedBy(365).dividedBy(govStakedMir)
+    const govAPY = num(reward).dividedBy(period).multipliedBy(365).dividedBy(govStakedMir)
 
     return !govAPY.isNaN() ? govAPY.toString() : '0'
   }
@@ -211,16 +213,17 @@ export class StatisticService {
     } else if (network === Network.BSC) {
       return this.bscStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC)
     } else if (network === Network.COMBINE) {
-      const terra = await this.terraStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC)
-      const eth = await this.ethStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC)
-      const bsc = await this.bscStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC)
+      const terra = (await this.terraStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
+        .sort((a, b) => b.timestamp - a.timestamp)
+      const eth = (await this.ethStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
+        .sort((a, b) => b.timestamp - a.timestamp)
+      const timestamps = uniq([...terra.map((data) => data.timestamp), ...eth.map((data) => data.timestamp)])
+        .sort((a, b) => a - b)
+      const findLatestValue = (array, timestamp) => array.find((data) => data.timestamp <= timestamp)?.value || 0
 
-      return terra.map((data) => ({
-        timestamp: data.timestamp,
-        value: num(data.value)
-          .plus(eth.find((ethData) => ethData.timestamp === data.timestamp)?.value || 0)
-          .plus(bsc.find((bscData) => bscData.timestamp === data.timestamp)?.value || 0)
-          .toString()
+      return timestamps.map((timestamp) => ({
+        timestamp,
+        value: num(findLatestValue(terra, timestamp)).plus(findLatestValue(eth, timestamp)).toFixed(0)
       }))
     }
   }

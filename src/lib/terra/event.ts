@@ -83,11 +83,17 @@ export function parseTransfer(events: Event[]): Transfer[] {
   for (let i = 0; i < attributes.length / 3; i += 1) {
     const to = attributes[i * 3].value
     const from = attributes[i * 3 + 1].value
-    const coins = Coins.fromString(attributes[i * 3 + 2].value)
+    const value = attributes[i * 3 + 2].value
+
+    if (!value || value.length < 1 || value === '0') {
+      continue
+    }
+
+    const coins = Coins.fromString(value)
     coins.map((coin) => {
       const { denom, amount } = coin.toData()
 
-      transfers.push({ from, to, denom, amount })
+      amount !== '0' && transfers.push({ from, to, denom, amount })
     })
   }
 

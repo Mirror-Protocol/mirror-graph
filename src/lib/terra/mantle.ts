@@ -2,7 +2,6 @@ import { TxInfo, Msg } from '@terra-money/terra.js'
 import { GraphQLClient, gql } from 'graphql-request'
 import { pick } from 'lodash'
 import { toSnakeCase, toCamelCase } from 'lib/caseStyles'
-import { errorHandler } from 'lib/error'
 
 export let mantle: GraphQLClient
 
@@ -58,6 +57,7 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
           GasWanted
           GasUsed
           Timestamp
+          TimestampUTC
 
           RawLog
           Logs {
@@ -114,8 +114,9 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
     Block.Txs?.filter(rawTx => rawTx.Success).map((rawTx) => {
       const infos = toSnakeCase(pick(
         rawTx,
-        ['Height', 'GasWanted', 'GasUsed', 'RawLog', 'Logs', 'Events', 'Timestamp']
+        ['Height', 'GasWanted', 'GasUsed', 'RawLog', 'Logs', 'Events']
       ))
+      infos.timestamp = new Date((+rawTx.TimestampUTC) * 1000).toUTCString()
 
       const txValue = toSnakeCase(pick(rawTx.Tx, ['Fee', 'Signatures', 'Memo']))
       const tx = {
@@ -123,13 +124,15 @@ export async function getTxs(start: number, end: number, limit = 100): Promise<T
         value: {
           ...txValue,
           msg: rawTx.Tx.Msg
+            .filter((msg) => [
+              'wasm/MsgExecuteContract',
+              'bank/MsgSend',
+              'bank/MsgMultiSend',
+              'market/MsgSwap',
+              'market/MsgSwapSend'
+            ].includes(msg.Type))
             .map((msg) => {
-              try {
-                return Msg.fromData({ type: msg.Type, value: JSON.parse(msg.Value) } as Msg.Data)?.toData() || {}
-              } catch(error) {
-                errorHandler(error)
-                return {}
-              }
+              return Msg.fromData({ type: msg.Type, value: JSON.parse(msg.Value) } as Msg.Data)?.toData()
             })
             .filter(Boolean)
         }

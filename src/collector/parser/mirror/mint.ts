@@ -152,7 +152,6 @@ export async function parse(
       .minus(returnCollateral.amount)
       .minus(protocolFee.amount)
       .toString()
-    address = cdp.address
 
     if (cdp.mintAmount === '0' || cdp.collateralAmount === '0') {
       // remove asset's mint position
@@ -178,6 +177,14 @@ export async function parse(
       token: liquidated.token,
       tags: [liquidated.token, returnCollateral.token],
     }
+
+    // save sender's tx
+    await txService().newTx({
+      ...tx, height, txHash, address, datetime, govId, contract, fee
+    }, manager)
+
+    // change address to cdp owner's address for tx
+    address = cdp.address
   } else {
     return
   }

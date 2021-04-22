@@ -1,7 +1,7 @@
 import {
   Entity, PrimaryGeneratedColumn, CreateDateColumn, Column, Index
 } from 'typeorm'
-import { HaveAsset } from '../Have'
+import { HaveAsset } from '../have/HaveAsset'
 
 @Entity('reward')
 export class RewardEntity extends HaveAsset {

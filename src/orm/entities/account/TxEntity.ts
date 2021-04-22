@@ -8,9 +8,9 @@ import {
   Entity
 } from 'typeorm'
 import { TxType, TxData } from 'types'
-import { ContractEntity } from 'orm'
-import { HaveGovAndMaybeAsset } from '../Have'
-
+import { ContractEntity } from '../gov/ContractEntity'
+import { HaveGovAndMaybeAsset } from '../have/HaveGovAndMaybeAsset'
+ 
 @Entity('tx')
 @Index('idx_tx_address_datetime_gov', ['address', 'datetime', 'gov'])
 export class TxEntity extends HaveGovAndMaybeAsset {
@@ -52,10 +52,10 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   @Column({ default: '0uusd' })
   fee: string
 
-  @Column({ nullable: true, default: null })
+  @Column({ nullable: true })
   memo?: string
 
-  @Column('text', { array: true, default: '{}' })
+  @Column('text', { default: '{}' })
   tags: string[]
 
   @Column()

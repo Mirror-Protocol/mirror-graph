@@ -153,6 +153,6 @@ export default class StatisticController extends KoaController {
   async getPools(ctx: Koa.Context): Promise<void> {
     const { format } = ctx.request.query
 
-    success(ctx, await getPools(format))
+    success(ctx, await getPools(format as string))
   }
 }

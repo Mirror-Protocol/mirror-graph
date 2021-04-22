@@ -7,7 +7,7 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm'
-import { AssetEntity } from 'orm'
+import { AssetEntity } from './AssetEntity'
 
 @Entity('asset_positions')
 export class AssetPositionsEntity {

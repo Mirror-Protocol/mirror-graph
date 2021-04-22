@@ -24,7 +24,7 @@ async function loop(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  logger.info(`initialize collector, start_block_height: ${config.START_BLOCK_HEIGHT}`)
+  logger.info(`Initialize collector, start_block_height: ${config.START_BLOCK_HEIGHT}`)
 
   initErrorHandler({ sentryDsn: process.env.SENTRY_COLLECTOR })
 
@@ -32,7 +32,7 @@ async function main(): Promise<void> {
 
   await initORM(Container)
 
-  logger.info('initialize mirror')
+  logger.info('Initialize mirror')
   await initMirror()
 
   logger.info('start collecting')
