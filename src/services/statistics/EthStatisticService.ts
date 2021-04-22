@@ -1,34 +1,52 @@
 import * as bluebird from 'bluebird'
+import { uniq } from 'lodash'
+import { convertToTimeZone } from 'date-fns-timezone'
 import memoize from 'memoizee-decorator'
+import { Repository, FindConditions, FindOneOptions, LessThanOrEqual } from 'typeorm'
 import { Container, Service, Inject } from 'typedi'
-import { find, sortedUniq } from 'lodash'
+import { InjectRepository } from 'typeorm-typedi-extensions'
+import { find } from 'lodash'
 import { num } from 'lib/num'
-import { getPairHourDatas, getPairDayDatas, getPairsDayDatas } from 'lib/meth'
-import { AssetService } from 'services'
+import { getPairHourDatas, getPairDayDatas } from 'lib/meth'
+import { AssetService, GovService } from 'services'
+import { AssetDailyEntity, AssetHourlyEntity } from 'orm'
 import { PeriodStatistic, ValueAt } from 'graphql/schema'
-import { AssetStatus } from 'types'
+import { AssetStatus, Network } from 'types'
 
 @Service()
 export class EthStatisticService {
   constructor(
     @Inject((type) => AssetService) private readonly assetService: AssetService,
+    @Inject((type) => GovService) private readonly govService: GovService,
+    @InjectRepository(AssetDailyEntity) private readonly dailyRepo: Repository<AssetDailyEntity>,
+    @InjectRepository(AssetHourlyEntity) private readonly hourlyRepo: Repository<AssetHourlyEntity>,
   ) {}
 
-  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
-  async today(): Promise<PeriodStatistic> {
-    // start of today (UTC)
-    const from = Date.now() - (Date.now() % 86400000)
+  async getDailyStatistic(
+    conditions: FindConditions<AssetDailyEntity>,
+    options?: FindOneOptions<AssetDailyEntity>,
+    repo = this.dailyRepo
+  ): Promise<AssetDailyEntity> {
+    return repo.findOne(conditions, options)
+  }
 
-    const assets = this.assetService.getEthAssets()
-    const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
-    const datas = await getPairsDayDatas(pairAddresses, from, from)
-    const transactions = datas.reduce((result, data) => result.plus(data.dailyTxns), num(0)).toString()
-    const volume = datas.reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0)).multipliedBy(1000000).toFixed(0)
+  async getHourlyStatistic(
+    conditions: FindConditions<AssetHourlyEntity>,
+    options?: FindOneOptions<AssetHourlyEntity>,
+    repo = this.hourlyRepo
+  ): Promise<AssetHourlyEntity> {
+    return repo.findOne(conditions, options)
+  }
+
+  @memoize({ promise: true, maxAge: 60000 }) // 1 minute
+  async today(): Promise<PeriodStatistic> {
+    const datetime = convertToTimeZone(Date.now() - (Date.now() % 86400000), { timeZone: 'UTC' })
+
+    const datas = await this.dailyRepo.find({ where: { datetime } })
+    const transactions = datas.reduce((result, data) => result.plus(data.transactions), num(0)).toString()
+    const volume = datas.reduce((result, data) => result.plus(data.volume), num(0)).toFixed(0)
     const feeVolume = num(volume).multipliedBy(0.003).toFixed(0)
-    const mirPair = find(assets, (asset) => asset.symbol === 'MIR')?.pair.toLowerCase()
-    const mirVolume = mirPair
-      ? num(find(datas, (data) => data.pairAddress === mirPair)?.dailyVolumeToken1 || '0').multipliedBy(1000000).toFixed(0)
-      : '0'
+    const mirVolume = num(find(datas, (data) => data.token === this.govService.get().mirrorToken)?.volume || '0').toFixed(0)
 
     return {
       transactions,
@@ -39,7 +57,7 @@ export class EthStatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 }) // 1 minute
   async latest24h(): Promise<PeriodStatistic> {
     const assets = this.assetService.getAll({ where: { status: AssetStatus.LISTED }})
 
@@ -67,124 +85,97 @@ export class EthStatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 60, preFetch: true }) // 60 minutes
+  @memoize({ promise: true, maxAge: 60000 }) // 1 minute
   async getLiquidityHistory(from: number, to: number): Promise<ValueAt[]> {
-    const assets = this.assetService.getEthAssets()
-    const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
-    const initialDatas = await bluebird.map(
-      pairAddresses,
-      async (pair) => {
-        const pairData = await getPairDayDatas(pair, 0, from, 1, 'desc')
-        if (pairData[0]) {
-          return Object.assign(pairData[0], { timestamp: from })
-        }
-      }
-    ).filter(Boolean)
-
-    let datas = initialDatas
-    const maxRange = 86400000 * 4
-    for (let queryFrom = from + 86400000; queryFrom <= to; queryFrom += maxRange) {
-      datas.push(...await getPairsDayDatas(
-        pairAddresses, queryFrom, Math.min(queryFrom + (maxRange - 86400000), to)
-      ))
-    }
-    datas = datas.sort((a, b) => b.timestamp - a.timestamp)
-
-    const history = []
-    for (let timestamp = from; timestamp <= to; timestamp += 86400000) {
-      history.push({
-        timestamp,
-        value: pairAddresses.reduce(
-          (result, pair) => {
-            const pairData = datas.find((data) => data.pairAddress === pair.toLowerCase() && data.timestamp <= timestamp)
-            const liquidity = pairData
-              ? num(pairData.reserve1).dividedBy(pairData.reserve0).multipliedBy(pairData.reserve0).plus(pairData.reserve1)
-              : num(0)
-
-            return result.plus(liquidity)
-          },
-          num(0)
-        ).multipliedBy(1000000).toFixed(0)
-      })
-    }
-    return history.filter((data) => data.value !== '0')
-  }
-
-  @memoize({ promise: true, maxAge: 60000 * 30, preFetch: true }) // 30 minutes
-  async getTradingVolumeHistory(from: number, to: number): Promise<ValueAt[]> {
-    const assets = this.assetService.getEthAssets()
-    const pairAddresses = Object.keys(assets).map((token) => assets[token].pair)
-
-    const history = []
-    const maxRange = 86400000 * 4
-    for (let queryFrom = from; queryFrom <= to; queryFrom += maxRange) {
-      const datas = await getPairsDayDatas(
-        pairAddresses, queryFrom, Math.min(queryFrom + (maxRange - 86400000), to)
+    const history = await this.dailyRepo
+      .createQueryBuilder()
+      .select('EXTRACT(epoch from datetime) * 1000', 'timestamp')
+      .addSelect('token')
+      .addSelect('liquidity')
+      .where(
+        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
       )
-      history.push(...sortedUniq(datas.map((data) => data.timestamp)).map((timestamp) => ({
-        timestamp,
-        value: datas
-          .filter((data) => data.timestamp === timestamp)
-          .reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0)).multipliedBy(1000000).toFixed(0)
-      })))
-    }
-    return history
+      .orderBy('datetime', 'DESC')
+      .getRawMany()
+
+    const timestamps = uniq(history.map((data) => data.timestamp)).sort((a, b) => a - b)
+
+    const ethAssets = this.assetService.getEthAssets()
+    const tokens = Object.keys(ethAssets).map((asset) => ethAssets[asset].terraToken)
+
+    const findLatestLiquidity = (array, token, timestamp) =>
+      array.find((data) => data.token === token && data.timestamp <= timestamp)?.liquidity || 0
+
+    return timestamps.map((timestamp) => ({
+      timestamp,
+      value: tokens
+        .reduce((result, data) => result.plus(findLatestLiquidity(history, data, timestamp)), num(0))
+        .toFixed(0)
+    }))
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 }) // 1 minute
+  async getTradingVolumeHistory(from: number, to: number): Promise<ValueAt[]> {
+    return this.dailyRepo
+      .createQueryBuilder()
+      .select('EXTRACT(epoch from datetime) * 1000', 'timestamp')
+      .addSelect('SUM(volume)', 'value')
+      .where(
+        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+      )
+      .groupBy('datetime')
+      .orderBy('datetime', 'ASC')
+      .getRawMany()
+  }
+
+  @memoize({ promise: true, maxAge: 60000 }) // 1 minute
   async getAssetDayVolume(token: string, timestamp: number): Promise<string> {
-    const ethAsset = await this.assetService.getEthAsset(token)
-    if (!ethAsset) {
-      return '0'
-    }
-    const datas = await getPairDayDatas(ethAsset.pair, timestamp, timestamp, 1, 'desc')
-    return datas
-      .reduce((result, data) => result.plus(data.dailyVolumeToken1), num(0))
-      .multipliedBy(1000000)
-      .toFixed(0)
+    const latest = await this.getDailyStatistic(
+      { token },
+      {
+        where: { datetime: LessThanOrEqual(timestamp) },
+        order: { id: 'DESC' }
+      },
+    )
+
+    return latest?.volume || '0'
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 }) // 1 minute
   async getAsset24h(token: string): Promise<{ volume: string; transactions: string }> {
-    const ethAsset = await this.assetService.getEthAsset(token)
-    if (!ethAsset) {
-      return {
-        volume: '0',
-        transactions: '0'
-      }
-    }
-
     const now = Date.now()
     const to = now - (now % 3600000)
     const from = to - 86400000
-    const datas = await getPairHourDatas(ethAsset.pair, from, to, 24, 'asc')
+
+    const datas = await this.hourlyRepo
+      .createQueryBuilder()
+      .select('EXTRACT(epoch from datetime) * 1000', 'timestamp')
+      .addSelect('volume')
+      .addSelect('transactions')
+      .where('token = :token', { token })
+      .andWhere(
+        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+      )
+      .getRawMany()
 
     return {
       volume: datas
-        .reduce((result, data) => result.plus(data.hourlyVolumeToken1), num(0))
-        .multipliedBy(1000000)
+        .reduce((result, data) => result.plus(data.volume), num(0))
         .toFixed(0),
       transactions: datas
-        .reduce((result, data) => result.plus(data.hourlyTxns), num(0))
-        .toString()
+        .reduce((result, data) => result.plus(data.transactions), num(0))
+        .toFixed(0)
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 60, preFetch: true }) // 60 minutes
+  @memoize({ promise: true, maxAge: 60000 }) // 1 minute
   async getAssetLiquidity(token: string): Promise<string> {
-    const ethAsset = await this.assetService.getEthAsset(token)
-    if (!ethAsset) {
-      return '0'
-    }
-    const datas = await getPairDayDatas(ethAsset.pair, 0, Date.now(), 1, 'desc')
-    if (!datas || datas.length < 1) {
-      return '0'
-    }
-    const pairData = datas[0]
-    return num(pairData.reserve1).dividedBy(pairData.reserve0).multipliedBy(pairData.reserve0)
-      .plus(pairData.reserve1)
-      .multipliedBy(1000000)
-      .toFixed(0)
+    const latest = await this.getDailyStatistic({ token }, { order: { id: 'DESC' }})
+
+    return latest?.liquidity || '0'
   }
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
@@ -193,6 +184,61 @@ export class EthStatisticService {
     const ethAssetInfos = await this.assetService.getEthAssetInfos()
 
     return ethAssetInfos[ethAsset?.token]?.apr || '0'
+  }
+
+  async collectStatistic(token: string, isDaily: boolean, from: number, to: number): Promise<void> {
+    const repo = isDaily ? this.dailyRepo : this.hourlyRepo
+    const unit = isDaily ? 86400000 : 3600000 // 1 day : 1 hour
+    const maxQueryRange = unit * 1000
+    const currentUTC = Date.now() - (Date.now() % unit)
+    const fromUTC = Math.min(from - (from % unit), currentUTC)
+    const toUTC = Math.min(to - (to % unit), currentUTC)
+    const network = Network.ETH
+
+    const ethAsset = await this.assetService.getEthAsset(token)
+    const pair = ethAsset?.pair
+    if (!pair) {
+      return
+    }
+
+    const records = []
+    const newEntity = (network, token, datetime) => isDaily
+      ? new AssetDailyEntity({ network, token, datetime })
+      : new AssetHourlyEntity({ network, token, datetime })
+
+    for (let queryFrom = fromUTC; queryFrom <= toUTC; queryFrom += maxQueryRange) {
+      const queryTo = Math.min(queryFrom + maxQueryRange, toUTC)
+
+      const pairDatas = isDaily
+        ? await getPairDayDatas(pair, queryFrom, queryTo, 1000, 'asc')
+        : await getPairHourDatas(pair, queryFrom, queryTo, 1000, 'asc')
+
+      await bluebird.mapSeries(pairDatas, async (pairData) => {
+        const {
+          timestamp, reserve0, reserve1, volumeToken1, transactions
+        } = pairData
+        const datetime = convertToTimeZone(timestamp, { timeZone: 'UTC' })
+        const record = (await repo.findOne({ network, token, datetime }))
+          || newEntity(network, token, datetime)
+
+        record.pool = num(reserve0).multipliedBy(1000000).toFixed(0)
+        record.uusdPool = num(reserve1).multipliedBy(1000000).toFixed(0)
+        record.liquidity = num(reserve1)
+          .dividedBy(reserve0)
+          .multipliedBy(reserve0)
+          .plus(reserve1)
+          .multipliedBy(1000000)
+          .toFixed(0)
+
+        record.volume = num(volumeToken1).multipliedBy(1000000).toFixed(0)
+        record.fee = num(record.volume).multipliedBy(0.003).toFixed(0)
+        record.transactions = transactions
+
+        records.push(record)
+      })
+    }
+
+    await repo.save(records)
   }
 }
 

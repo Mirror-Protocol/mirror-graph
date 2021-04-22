@@ -4,7 +4,7 @@ import { createObjectCsvWriter } from 'csv-writer'
 import { format } from 'date-fns'
 import { num } from 'lib/num'
 import * as logger from 'lib/logger'
-import { assetService, priceService, oracleService } from 'services'
+import { assetService, priceService, oracleService, ethStatisticService } from 'services'
 import { AssetStatus } from 'types'
 
 export function statisticCommands(): void {
@@ -56,6 +56,40 @@ export function statisticCommands(): void {
 
         await writer.writeRecords([record])
       }
+
+      logger.info('completed')
+    })
+
+  program
+    .command('collect-liquidity')
+    .action(async () => {
+      const assets = (await assetService().getAll({
+        where: { status: AssetStatus.LISTED },
+        order: { symbol: 'ASC' },
+      }))
+
+      await bluebird.mapSeries(assets, async (asset) => {
+        const { token, symbol } = asset
+
+        logger.info(`collect ${symbol} daily`)
+
+        const latestDaily = await ethStatisticService().getDailyStatistic(
+          { token }, { order: { id: 'DESC' }}
+        )
+        const fromDaily = latestDaily?.datetime.getTime() || 1606953600000
+        await ethStatisticService().collectStatistic(asset.token, true, fromDaily, Date.now())
+
+        logger.info(`collect ${symbol} hourly`)
+        await bluebird.delay(1000)
+
+        const latestHourly = await ethStatisticService().getHourlyStatistic(
+          { token }, { order: { id: 'DESC' }}
+        )
+        const fromHourly = latestHourly?.datetime.getTime() || 1606953600000
+        await ethStatisticService().collectStatistic(asset.token, false, fromHourly, Date.now())
+
+        await bluebird.delay(1000)
+      })
 
       logger.info('completed')
     })

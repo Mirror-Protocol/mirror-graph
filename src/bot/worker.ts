@@ -2,7 +2,9 @@ import * as bluebird from 'bluebird'
 import { TxWallet } from 'lib/terra'
 import { errorHandler as errorHandleWithSentry } from 'lib/error'
 import { sendSlack } from 'lib/slack'
-import { distributeRewards, updateCdps, updatePolls, updateNews, updateAirdrop } from './jobs'
+import {
+  distributeRewards, updateCdps, updatePolls, updateNews, updateAirdrop, updateStatistic
+} from './jobs'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function errorHandler(job: string, error?: Error & { [key: string]: any }): void {
@@ -25,11 +27,13 @@ function errorHandler(job: string, error?: Error & { [key: string]: any }): void
 async function tick(now: number, wallet: TxWallet): Promise<void> {
   await distributeRewards(wallet).catch((error) => errorHandler('distributeRewards', error))
 
-  await updateNews().catch((error) => errorHandler('updateNews', error))
-
   await updateCdps().catch((error) => errorHandler('updateCdps', error))
 
   await updatePolls(wallet).catch((error) => errorHandler('updatePolls', error))
+
+  await updateStatistic().catch((error) => errorHandler('updateStatistic', error))
+
+  await updateNews().catch((error) => errorHandler('updateNews', error))
 
   await updateAirdrop(wallet).catch((error) => errorHandler('updateAirdrop', error))
 }

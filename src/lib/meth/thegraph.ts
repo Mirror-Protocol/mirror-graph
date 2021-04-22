@@ -2,26 +2,15 @@ import { GraphQLClient, gql } from 'graphql-request'
 
 export let client: GraphQLClient
 
-interface PairDayData {
+interface PairStatisticData {
   id: string
   timestamp: number
   pairAddress: string
   reserve0: string
   reserve1: string
-  dailyVolumeToken0: string
-  dailyVolumeToken1: string
-  dailyTxns: string
-}
-
-interface PairHourData {
-  id: string
-  timestamp: number
-  pairAddress: string
-  reserve0: string
-  reserve1: string
-  hourlyVolumeToken0: string
-  hourlyVolumeToken1: string
-  hourlyTxns: string
+  volumeToken0: string
+  volumeToken1: string
+  transactions: string
 }
 
 export function getClient(): GraphQLClient {
@@ -37,7 +26,7 @@ export function getClient(): GraphQLClient {
 
 export async function getPairDayDatas(
   pair: string, from: number, to: number, limit: number, orderDirection: string
-): Promise<PairDayData[]> {
+): Promise<PairStatisticData[]> {
   const result = await getClient().request(
     gql`query($pair: String!, $from: Int!, $to: Int!, $orderDirection: String!, $limit: Int!) {
       pairDayDatas(
@@ -81,15 +70,15 @@ export async function getPairDayDatas(
     pairAddress: data.pairAddress,
     reserve0: data.token1.symbol === 'UST' ? data.reserve0 : data.reserve1,
     reserve1: data.token1.symbol === 'UST' ? data.reserve1 : data.reserve0,
-    dailyVolumeToken0: data.token1.symbol === 'UST' ? data.dailyVolumeToken0 : data.dailyVolumeToken1,
-    dailyVolumeToken1: data.token1.symbol === 'UST' ? data.dailyVolumeToken1 : data.dailyVolumeToken0,
-    dailyTxns: data.dailyTxns,
+    volumeToken0: data.token1.symbol === 'UST' ? data.dailyVolumeToken0 : data.dailyVolumeToken1,
+    volumeToken1: data.token1.symbol === 'UST' ? data.dailyVolumeToken1 : data.dailyVolumeToken0,
+    transactions: data.dailyTxns,
   }))
 }
 
 export async function getPairHourDatas(
   pair: string, from: number, to: number, limit: number, orderDirection: string
-): Promise<PairHourData[]> {
+): Promise<PairStatisticData[]> {
   const result = await getClient().request(
     gql`query($pair: String!, $from: Int!, $to: Int!, $orderDirection: String!, $limit: Int!) {
       pairHourDatas(
@@ -135,13 +124,13 @@ export async function getPairHourDatas(
     pairAddress: data.pair.id,
     reserve0: data.pair.token1.symbol === 'UST' ? data.reserve0 : data.reserve1,
     reserve1: data.pair.token1.symbol === 'UST' ? data.reserve1 : data.reserve0,
-    hourlyVolumeToken0: data.pair.token1.symbol === 'UST' ? data.hourlyVolumeToken0 : data.hourlyVolumeToken1,
-    hourlyVolumeToken1: data.pair.token1.symbol === 'UST' ? data.hourlyVolumeToken1 : data.hourlyVolumeToken0,
-    hourlyTxns: data.hourlyTxns,
+    volumeToken0: data.pair.token1.symbol === 'UST' ? data.hourlyVolumeToken0 : data.hourlyVolumeToken1,
+    volumeToken1: data.pair.token1.symbol === 'UST' ? data.hourlyVolumeToken1 : data.hourlyVolumeToken0,
+    transactions: data.hourlyTxns,
   }))
 }
 
-export async function getPairsDayDatas(pairs: string[], from: number, to: number): Promise<PairDayData[]> {
+export async function getPairsDayDatas(pairs: string[], from: number, to: number): Promise<PairStatisticData[]> {
   const result = await getClient().request(
     gql`query($pairs: [String!]!, $from: Int!, $to: Int!) {
       pairDayDatas(
@@ -182,8 +171,8 @@ export async function getPairsDayDatas(pairs: string[], from: number, to: number
     pairAddress: data.pairAddress,
     reserve0: data.token1.symbol === 'UST' ? data.reserve0 : data.reserve1,
     reserve1: data.token1.symbol === 'UST' ? data.reserve1 : data.reserve0,
-    dailyVolumeToken0: data.token1.symbol === 'UST' ? data.dailyVolumeToken0 : data.dailyVolumeToken1,
-    dailyVolumeToken1: data.token1.symbol === 'UST' ? data.dailyVolumeToken1 : data.dailyVolumeToken0,
-    dailyTxns: data.dailyTxns,
+    volumeToken0: data.token1.symbol === 'UST' ? data.dailyVolumeToken0 : data.dailyVolumeToken1,
+    volumeToken1: data.token1.symbol === 'UST' ? data.dailyVolumeToken1 : data.dailyVolumeToken0,
+    transactions: data.dailyTxns,
   }))
 }
