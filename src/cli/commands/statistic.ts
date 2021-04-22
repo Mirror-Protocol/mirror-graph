@@ -68,11 +68,25 @@ export function statisticCommands(): void {
         order: { symbol: 'ASC' },
       }))
 
-      const latest = await ethStatisticService().getDailyStatistic(undefined, { order: { id: 'DESC' }})
-      const from = latest?.datetime.getTime() || 1606953600000
-
       await bluebird.mapSeries(assets, async (asset) => {
-        await ethStatisticService().collectDailyStatistic(asset.token, from, Date.now())
+        const { token, symbol } = asset
+
+        logger.info(`collect ${symbol} daily`)
+
+        const latestDaily = await ethStatisticService().getDailyStatistic(
+          { token }, { order: { id: 'DESC' }}
+        )
+        const fromDaily = latestDaily?.datetime.getTime() || 1606953600000
+        await ethStatisticService().collectStatistic(asset.token, true, fromDaily, Date.now())
+
+        logger.info(`collect ${symbol} hourly`)
+        await bluebird.delay(1000)
+
+        const latestHourly = await ethStatisticService().getHourlyStatistic(
+          { token }, { order: { id: 'DESC' }}
+        )
+        const fromHourly = latestHourly?.datetime.getTime() || 1606953600000
+        await ethStatisticService().collectStatistic(asset.token, false, fromHourly, Date.now())
 
         await bluebird.delay(1000)
       })

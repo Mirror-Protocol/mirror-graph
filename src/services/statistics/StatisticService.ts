@@ -1,5 +1,6 @@
 import * as bluebird from 'bluebird'
 import memoize from 'memoizee-decorator'
+import { uniq } from 'lodash'
 import { Repository, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
@@ -239,14 +240,17 @@ export class StatisticService {
     } else if (network === Network.ETH) {
       return this.ethStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC)
     } else if (network === Network.COMBINE) {
-      const terra = await this.terraStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC)
-      const eth = await this.ethStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC)
+      const terra = (await this.terraStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
+        .sort((a, b) => b.timestamp - a.timestamp)
+      const eth = (await this.ethStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
+        .sort((a, b) => b.timestamp - a.timestamp)
+      const timestamps = uniq([...terra.map((data) => data.timestamp), ...eth.map((data) => data.timestamp)])
+        .sort((a, b) => a - b)
+      const findLatestValue = (array, timestamp) => array.find((data) => data.timestamp <= timestamp)?.value || 0
 
-      return terra.map((data) => ({
-        timestamp: data.timestamp,
-        value: num(data.value)
-          .plus(eth.find((ethData) => ethData.timestamp === data.timestamp)?.value || 0)
-          .toString()
+      return timestamps.map((timestamp) => ({
+        timestamp,
+        value: num(findLatestValue(terra, timestamp)).plus(findLatestValue(eth, timestamp)).toFixed(0)
       }))
     }
   }
