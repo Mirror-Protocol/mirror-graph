@@ -1,9 +1,8 @@
 import * as bluebird from 'bluebird'
 import { getRepository } from 'typeorm'
-import { getLatestBlockHeight, getContractStoreWithHeight } from 'lib/terra'
-import { sendSlack } from 'lib/slack'
+import { getContractStoreWithHeight } from 'lib/terra'
 import { PairPool } from 'lib/mirror'
-import { assetService } from 'services'
+import { assetService, govService } from 'services'
 import { AssetPositionsEntity } from 'orm'
 import { AssetStatus } from 'types'
 
@@ -31,34 +30,74 @@ export async function getPairPool(targetHeight: number, pair: string):
   }
 }
 
-export async function syncPairs(height: number): Promise<void> {
-  const latestHeight = await getLatestBlockHeight().catch(() => undefined)
-  if (height !== latestHeight) {
-    return
-  }
+export interface TokenInfo {
+  decimals: string
+  name: string
+  symbol: string
+  totalSupply: string
+}
 
+export async function getTokenInfo(targetHeight: number, token: string): Promise<TokenInfo> {
+  for (let i = 0; i < 5; i += 1) {
+    const queryResult = await getContractStoreWithHeight<TokenInfo>(token, { tokenInfo: {} })
+    const { result, height } = queryResult
+    if (height !== targetHeight) {
+      await bluebird.delay(200)
+      continue
+    }
+
+    return result
+  }
+}
+
+export async function getTokenBalance(targetHeight: number, token: string, address: string): Promise<{ balance: string }> {
+  for (let i = 0; i < 5; i += 1) {
+    const queryResult = await getContractStoreWithHeight<{ balance: string }>(token, { balance: { address } })
+    const { result, height } = queryResult
+    if (height !== targetHeight) {
+      await bluebird.delay(200)
+      continue
+    }
+
+    return result
+  }
+}
+
+export async function syncPairs(height: number): Promise<void> {
   const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED } })
+  const stakingContract = govService().get().staking
 
   await bluebird.map(assets, async (asset) => {
-    const { symbol } = asset
+    const { lpToken } = asset
+    let changed = false
+
     const pairPool = await getPairPool(height, asset.pair).catch(() => undefined)
-    if (!pairPool) {
-      return
+    if (pairPool) {
+      const { assetAmount, collateralAmount } = pairPool
+      const { pool, uusdPool } = asset.positions
+
+      if (assetAmount !== pool || collateralAmount !== uusdPool) {
+        asset.positions.pool = assetAmount
+        asset.positions.uusdPool = collateralAmount
+
+        changed = true
+      }
     }
 
-    const { assetAmount, collateralAmount } = pairPool
-    const { pool, uusdPool } = asset.positions
+    const tokenInfo = await getTokenInfo(height, lpToken).catch(() => undefined)
+    if (tokenInfo && asset.positions.lpShares !== tokenInfo.totalSupply) {
+      asset.positions.lpShares = tokenInfo.totalSupply
 
-    if (assetAmount !== pool || collateralAmount !== uusdPool) {
-      await sendSlack(
-        'mirror-collector',
-        `sync failed: height: ${height}, ${symbol}, chain: ${assetAmount}-${collateralAmount}, db: ${pool}-${uusdPool}`
-      )
-
-      asset.positions.pool = assetAmount
-      asset.positions.uusdPool = collateralAmount
+      changed = true
     }
 
-    await getRepository(AssetPositionsEntity).save(asset.positions)
+    const tokenBalance = await getTokenBalance(height, lpToken, stakingContract).catch(() => undefined)
+    if (tokenBalance && asset.positions.lpStaked !== tokenBalance.balance) {
+      asset.positions.lpStaked = tokenBalance.balance
+
+      changed = true
+    }
+
+    changed && await getRepository(AssetPositionsEntity).save(asset.positions)
   })
 }
