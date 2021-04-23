@@ -6,7 +6,8 @@ export function getClient(): GraphQLClient {
   if (!client) {
     client = new GraphQLClient(
       // 'https://api.bscgraph.org/subgraphs/id/QmUDNRjYZ7XbgTvfVnXHj6LcTNacDD9GPXHWLjdTKi6om6',
-      'https://api.bscgraph.org/subgraphs/name/cakeswap',
+      // 'https://api.bscgraph.org/subgraphs/name/cakeswap',
+      'https://api.thegraph.com/subgraphs/name/pancakeswap/exchange',
       { timeout: 60000, keepalive: true }
     )
   }
