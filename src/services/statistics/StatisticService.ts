@@ -9,8 +9,6 @@ import { getTokenBalance } from 'lib/mirror'
 import {
   GovService,
   AssetService,
-  EthService,
-  BscService,
   TerraStatisticService,
   EthStatisticService,
   BscStatisticService,
@@ -24,8 +22,6 @@ export class StatisticService {
   constructor(
     @Inject((type) => GovService) private readonly govService: GovService,
     @Inject((type) => AssetService) private readonly assetService: AssetService,
-    @Inject((type) => EthService) private readonly ethService: EthService,
-    @Inject((type) => BscService) private readonly bscService: BscService,
     @Inject((type) => TerraStatisticService) private readonly terraStatisticService: TerraStatisticService,
     @Inject((type) => EthStatisticService) private readonly ethStatisticService: EthStatisticService,
     @Inject((type) => BscStatisticService) private readonly bscStatisticService: BscStatisticService,
@@ -325,20 +321,14 @@ export class StatisticService {
     if (network === Network.TERRA) {
       return this.terraStatisticService.getAssetLiquidity(token)
     } else if (network === Network.ETH) {
-      const asset = await this.ethService.getAsset(token)
-
-      return this.ethStatisticService.getAssetLiquidity(asset?.pair)
+      return this.ethStatisticService.getAssetLiquidity(token)
     } else if (network === Network.BSC) {
-      const asset = await this.bscService.getAsset(token)
-
-      return this.bscStatisticService.getAssetLiquidity(asset?.pair)
+      return this.bscStatisticService.getAssetLiquidity(token)
     } else if (network === Network.COMBINE) {
-      const ethAsset = await this.ethService.getAsset(token)
-      const bscAsset = await this.bscService.getAsset(token)
       const statistics = [
         await this.terraStatisticService.getAssetLiquidity(token),
-        await this.ethStatisticService.getAssetLiquidity(ethAsset?.pair),
-        await this.bscStatisticService.getAssetLiquidity(bscAsset?.pair),
+        await this.ethStatisticService.getAssetLiquidity(token),
+        await this.bscStatisticService.getAssetLiquidity(token),
       ]
 
       return statistics.reduce((result, stat) => result.plus(stat), num(0)).toString()

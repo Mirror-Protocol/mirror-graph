@@ -95,7 +95,11 @@ export class TerraStatisticService {
       collateralValue = collateralValue.plus(collateral)
     })
 
-    return collateralValue.dividedBy(await this.assetMarketCap()).toFixed(4)
+    const assetMarketCap = num(await this.assetMarketCap())
+      .plus(await ethStatisticService().assetMarketCap())
+      .plus(await bscStatisticService().assetMarketCap())
+
+    return collateralValue.dividedBy(assetMarketCap).toFixed(4)
   }
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes

@@ -19,9 +19,7 @@ export class EthService {
 
   @memoize({})
   async getAsset(token: string): Promise<EthAsset> {
-    const asset = await this.assetService.get({ token })
-
-    return find(this.getAssets(), (ethAsset) => ethAsset.symbol === asset.symbol)
+    return find(this.getAssets(), (ethAsset) => ethAsset.terraToken === token)
   }
 
   @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes

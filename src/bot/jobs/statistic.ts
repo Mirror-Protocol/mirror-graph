@@ -1,30 +1,28 @@
 import * as bluebird from 'bluebird'
 import * as logger from 'lib/logger'
-import { assetService, ethStatisticService } from 'services'
-import { AssetStatus } from 'types'
+import { assetService, ethStatisticService, bscStatisticService } from 'services'
+import { AssetStatus, Network } from 'types'
 import { Updater } from 'lib/Updater'
 
 const updater = new Updater(60000 * 5) // 5min
 const genesisTimestamp = 1606953600000
 
 async function updateDaily(token: string): Promise<void> {
-  const latest = await ethStatisticService().getDailyStatistic(
-    { token }, { order: { id: 'DESC' } }
-  )
-  const from = latest?.datetime.getTime() || genesisTimestamp
   const now = Date.now()
+  const ethLatest = await ethStatisticService().getDailyStatistic({ token, network: Network.ETH }, { order: { id: 'DESC' } })
+  const bscLatest = await bscStatisticService().getDailyStatistic({ token, network: Network.BSC }, { order: { id: 'DESC' } })
 
-  return ethStatisticService().collectStatistic(token, true, from, now)
+  await ethStatisticService().collectStatistic(token, true, ethLatest?.datetime.getTime() || genesisTimestamp, now)
+  await bscStatisticService().collectStatistic(token, true, bscLatest?.datetime.getTime() || genesisTimestamp, now)
 }
 
 async function updateHourly(token: string): Promise<void> {
-  const latest = await ethStatisticService().getHourlyStatistic(
-    { token }, { order: { id: 'DESC' } }
-  )
-  const from = latest?.datetime.getTime() || genesisTimestamp
   const now = Date.now()
+  const ethLatest = await ethStatisticService().getHourlyStatistic({ token, network: Network.ETH }, { order: { id: 'DESC' } })
+  const bscLatest = await bscStatisticService().getHourlyStatistic({ token, network: Network.BSC }, { order: { id: 'DESC' } })
 
-  return ethStatisticService().collectStatistic(token, false, from, now)
+  await ethStatisticService().collectStatistic(token, false, ethLatest?.datetime.getTime() || genesisTimestamp, now)
+  await bscStatisticService().collectStatistic(token, false, bscLatest?.datetime.getTime() || genesisTimestamp, now)
 }
 
 export async function updateStatistic(): Promise<void> {

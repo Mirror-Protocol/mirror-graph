@@ -2,7 +2,7 @@ import { GraphQLClient, gql } from 'graphql-request'
 
 export let client: GraphQLClient
 
-interface PairStatisticData {
+export interface EthPairStatisticData {
   id: string
   timestamp: number
   pairAddress: string
@@ -26,7 +26,7 @@ export function getClient(): GraphQLClient {
 
 export async function getPairDayDatas(
   pair: string, from: number, to: number, limit: number, orderDirection: string
-): Promise<PairStatisticData[]> {
+): Promise<EthPairStatisticData[]> {
   const result = await getClient().request(
     gql`query($pair: String!, $from: Int!, $to: Int!, $orderDirection: String!, $limit: Int!) {
       pairDayDatas(
@@ -78,7 +78,7 @@ export async function getPairDayDatas(
 
 export async function getPairHourDatas(
   pair: string, from: number, to: number, limit: number, orderDirection: string
-): Promise<PairStatisticData[]> {
+): Promise<EthPairStatisticData[]> {
   const result = await getClient().request(
     gql`query($pair: String!, $from: Int!, $to: Int!, $orderDirection: String!, $limit: Int!) {
       pairHourDatas(
@@ -130,7 +130,7 @@ export async function getPairHourDatas(
   }))
 }
 
-export async function getPairsDayDatas(pairs: string[], from: number, to: number): Promise<PairStatisticData[]> {
+export async function getPairsDayDatas(pairs: string[], from: number, to: number): Promise<EthPairStatisticData[]> {
   const result = await getClient().request(
     gql`query($pairs: [String!]!, $from: Int!, $to: Int!) {
       pairDayDatas(

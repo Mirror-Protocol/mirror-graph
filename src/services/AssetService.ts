@@ -1,4 +1,3 @@
-import memoize from 'memoizee-decorator'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import {
   Repository,
@@ -9,12 +8,8 @@ import {
 } from 'typeorm'
 import { Container, Service } from 'typedi'
 import { addMonths } from 'date-fns'
-import { find } from 'lodash'
-import { loadEthAssets } from 'lib/data'
 import { num, BigNumber } from 'lib/num'
-import { queryAssetInfos } from 'lib/eth'
 import { AssetEntity, AssetPositionsEntity, AssetNewsEntity, PriceEntity } from 'orm'
-import { EthAsset, EthAssetInfos, EthAssets } from 'types'
 
 @Service()
 export class AssetService {
@@ -52,21 +47,6 @@ export class AssetService {
       order: { datetime: 'DESC' },
       take: 5,
     })
-  }
-
-  @memoize({})
-  getEthAssets(): EthAssets {
-    return loadEthAssets()
-  }
-
-  @memoize({})
-  async getEthAsset(token: string): Promise<EthAsset> {
-    return find(this.getEthAssets(), (ethAsset) => ethAsset.terraToken === token)
-  }
-
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
-  async getEthAssetInfos(): Promise<EthAssetInfos> {
-    return queryAssetInfos()
   }
 
   async addMintPosition(
