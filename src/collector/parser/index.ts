@@ -34,7 +34,7 @@ async function txTick(manager: EntityManager, timestamp: number): Promise<void> 
     // calculate today's liquidity volume
     await statisticService().calculateDailyCumulativeLiquidity(timestamp, dailyStatRepo)
 
-    if (!isSameDay(lastTick, timestamp)) {
+    if (lastTick > 0 && !isSameDay(lastTick, timestamp)) {
       // calculate yesterday's liquidity volume finally
       await statisticService().calculateDailyCumulativeLiquidity(lastTick, dailyStatRepo)
     }

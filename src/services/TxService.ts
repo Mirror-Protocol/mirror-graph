@@ -58,7 +58,10 @@ export class TxService {
       .createQueryBuilder()
       .select(`sum(coalesce((data->>'offerAmount')::numeric, 0))`, 'volume')
       .where(`address = :address AND type='BUY'`, { address: account })
-      .andWhere('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .andWhere(
+        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+      )
       .getRawOne()
     const sellVolume = await this.repo
       .createQueryBuilder()
@@ -67,7 +70,10 @@ export class TxService {
         'volume'
       )
       .where(`address = :address AND type='SELL'`, { address: account })
-      .andWhere('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+      .andWhere(
+        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+      )
       .getRawOne()
 
     return num(buyVolume?.volume ?? '0')

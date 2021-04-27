@@ -1,5 +1,4 @@
 import * as bluebird from 'bluebird'
-import { convertToTimeZone } from 'date-fns-timezone'
 import memoize from 'memoizee-decorator'
 import { Repository, FindConditions, FindOneOptions, getRepository } from 'typeorm'
 import { find, uniq } from 'lodash'
@@ -99,7 +98,7 @@ export class EthBaseStatistic {
 
   @memoize({ promise: true, maxAge: 60000 }) // 1 minute
   async today(): Promise<PeriodStatistic> {
-    const datetime = convertToTimeZone(Date.now() - (Date.now() % 86400000), { timeZone: 'UTC' })
+    const datetime = new Date(Date.now() - (Date.now() % 86400000))
 
     const datas = await this.dailyRepo.find({ where: { datetime, network: this.network } })
     const transactions = datas.reduce((result, data) => result.plus(data.transactions), num(0)).toString()
@@ -194,7 +193,7 @@ export class EthBaseStatistic {
 
   @memoize({ promise: true, maxAge: 60000 }) // 1 minute
   async getAssetDayVolume(token: string, timestamp: number): Promise<string> {
-    const datetime = convertToTimeZone(timestamp - (timestamp % 86400000), { timeZone: 'UTC' })
+    const datetime = new Date(timestamp - (timestamp % 86400000))
     const latest = await this.getDailyStatistic(
       { token },
       {
@@ -297,7 +296,7 @@ export class EthBaseStatistic {
         const {
           timestamp, reserve0, reserve1, volumeToken1, transactions
         } = pairData
-        const datetime = convertToTimeZone(timestamp, { timeZone: 'UTC' })
+        const datetime = new Date(timestamp)
         const record = (await repo.findOne({ network, token, datetime }))
           || newEntity(network, token, datetime)
 
