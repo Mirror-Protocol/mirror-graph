@@ -1,6 +1,5 @@
 import * as bluebird from 'bluebird'
 import { uniq } from 'lodash'
-import { convertToTimeZone } from 'date-fns-timezone'
 import memoize from 'memoizee-decorator'
 import { Repository, FindConditions, FindOneOptions, LessThanOrEqual } from 'typeorm'
 import { Container, Service, Inject } from 'typedi'
@@ -40,7 +39,7 @@ export class EthStatisticService {
 
   @memoize({ promise: true, maxAge: 60000 }) // 1 minute
   async today(): Promise<PeriodStatistic> {
-    const datetime = convertToTimeZone(Date.now() - (Date.now() % 86400000), { timeZone: 'UTC' })
+    const datetime = new Date(Date.now() - (Date.now() % 86400000))
 
     const datas = await this.dailyRepo.find({ where: { datetime } })
     const transactions = datas.reduce((result, data) => result.plus(data.transactions), num(0)).toString()
@@ -217,7 +216,7 @@ export class EthStatisticService {
         const {
           timestamp, reserve0, reserve1, volumeToken1, transactions
         } = pairData
-        const datetime = convertToTimeZone(timestamp, { timeZone: 'UTC' })
+        const datetime = new Date(timestamp)
         const record = (await repo.findOne({ network, token, datetime }))
           || newEntity(network, token, datetime)
 
