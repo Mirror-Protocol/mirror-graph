@@ -14,7 +14,10 @@ export async function getOHLC<T>(
     .addSelect('MIN(low)', 'low')
     .addSelect('(array_agg(close ORDER BY datetime DESC))[1]', 'close')
     .where('token = :token', { token })
-    .andWhere('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+    .andWhere(
+      'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+      { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+    )
     .getRawOne()
 
   return new AssetOHLC({ ...ohlc, from, to })
@@ -33,7 +36,10 @@ export async function getHistory<T>(
     .addSelect('datetime', 'timestamp')
     .addSelect('close', 'price')
     .where(Array.isArray(token) ? 'token = ANY(:token)' : 'token = :token', { token })
-    .andWhere('datetime BETWEEN :from AND :to', { from: new Date(from), to: new Date(to) })
+    .andWhere(
+      'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
+      { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
+    )
     .andWhere("int4(date_part('minute', datetime)) % :interval = 0", { interval })
     .orderBy('datetime', 'ASC')
     .getRawMany()
