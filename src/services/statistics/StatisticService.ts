@@ -242,12 +242,12 @@ export class StatisticService {
       return this.ethStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC)
     } else if (network === Network.COMBINE) {
       const terra = (await this.terraStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
-        .sort((a, b) => b.timestamp - a.timestamp)
+        .sort((a, b) => +b.timestamp - +a.timestamp)
       const eth = (await this.ethStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
-        .sort((a, b) => b.timestamp - a.timestamp)
-      const timestamps = uniq([...terra.map((data) => +data.timestamp), ...eth.map((data) => data.timestamp)])
+        .sort((a, b) => +b.timestamp - +a.timestamp)
+      const timestamps = uniq([...terra.map((data) => +data.timestamp), ...eth.map((data) => +data.timestamp)])
         .sort((a, b) => a - b)
-      const findLatestValue = (array, timestamp) => array.find((data) => data.timestamp <= timestamp)?.value || 0
+      const findLatestValue = (array, timestamp) => array.find((data) => +data.timestamp <= +timestamp)?.value || 0
 
       return bluebird.mapSeries(timestamps, (timestamp) => ({
         timestamp: +timestamp,
@@ -268,7 +268,7 @@ export class StatisticService {
       const terra = await this.terraStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
       const eth = await this.ethStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
 
-      return terra.map((data) => ({
+      return bluebird.mapSeries(terra, (data) => ({
         timestamp: data.timestamp,
         value: num(data.value)
           .plus(eth.find((ethData) => ethData.timestamp === data.timestamp)?.value || 0)
@@ -290,7 +290,7 @@ export class StatisticService {
       const terra = await this.terraStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
       const eth = await this.ethStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
 
-      values = terra.map((data) => ({
+      values = await bluebird.mapSeries(terra, (data) => ({
         timestamp: data.timestamp,
         value: num(data.value)
           .plus(eth.find((ethData) => ethData.timestamp === data.timestamp)?.value || 0)
@@ -298,7 +298,7 @@ export class StatisticService {
       }))
     }
 
-    return values.map((data) => ({
+    return bluebird.mapSeries(values, (data) => ({
       timestamp: data.timestamp,
       value: num(data.value).multipliedBy(0.003).toFixed(0)
     }))

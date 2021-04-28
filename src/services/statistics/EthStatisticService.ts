@@ -104,7 +104,7 @@ export class EthStatisticService {
     const tokens = Object.keys(ethAssets).map((asset) => ethAssets[asset].terraToken)
 
     const findLatestLiquidity = (array, token, timestamp) =>
-      array.find((data) => data.token === token && data.timestamp <= timestamp)?.liquidity || 0
+      array.find((data) => data.token === token && +data.timestamp <= +timestamp)?.liquidity || 0
 
     return bluebird.mapSeries(timestamps, (timestamp) => ({
       timestamp: +timestamp,
