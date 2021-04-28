@@ -19,7 +19,7 @@ export class TerraStatisticService {
     @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>
   ) {}
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute
   async today(): Promise<PeriodStatistic> {
     const from = Date.now() - (Date.now() % 86400000)
     const to = from + 86400000
@@ -55,7 +55,7 @@ export class TerraStatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute
   async latest24h(): Promise<PeriodStatistic> {
     const to = Date.now()
     const from = to - 86400000
@@ -91,7 +91,7 @@ export class TerraStatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute
   async getLiquidityHistory(from: number, to: number): Promise<ValueAt[]> {
     return this.dailyRepo
       .createQueryBuilder()
@@ -105,7 +105,7 @@ export class TerraStatisticService {
       .getRawMany()
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute
   async getTradingVolumeHistory(from: number, to: number): Promise<ValueAt[]> {
     return this.dailyRepo
       .createQueryBuilder()
@@ -119,7 +119,7 @@ export class TerraStatisticService {
       .getRawMany()
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute
   async getAssetDayVolume(token: string, timestamp: number): Promise<string> {
     const from = timestamp
     const to = from + 86400000
@@ -136,7 +136,7 @@ export class TerraStatisticService {
     return txs?.volume || '0'
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute
   async getAsset24h(token: string): Promise<{ volume: string; transactions: string }> {
     const from = Date.now() - (60000 * 60 * 24)
     const to = Date.now()
@@ -157,7 +157,7 @@ export class TerraStatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute
   async getAssetLiquidity(token: string): Promise<string> {
     const asset = await this.assetService.get({ token })
     const price = await this.priceService.getPrice(token)
@@ -169,7 +169,7 @@ export class TerraStatisticService {
       .toFixed(0)
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute
   async getAssetAPR(token: string): Promise<string> {
     const asset = await this.assetService.get({ token })
     const { mirrorToken } = this.govService.get()

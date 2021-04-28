@@ -38,7 +38,7 @@ export class StatisticService {
     @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>
   ) {}
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute
   async statistic(network: Network): Promise<Partial<Statistic>> {
     const assets = await this.assetService.getAll()
     const gov = this.govService.get()
@@ -87,7 +87,7 @@ export class StatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute
   async mirSupply(): Promise<Partial<Statistic>> {
     const gov = this.govService.get()
     const mirrorToken = gov.mirrorToken
@@ -155,7 +155,7 @@ export class StatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute
   async getGovAPY(): Promise<string> {
     const period = 15 // days
     const to = Date.now()
@@ -364,7 +364,7 @@ export class StatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async richlist(token: string, offset: number, limit: number): Promise<AccountBalance[]> {
     // SELECT * FROM (
     //   SELECT DISTINCT ON (address) address,token,balance
