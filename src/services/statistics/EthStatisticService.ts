@@ -98,7 +98,7 @@ export class EthStatisticService {
       .orderBy('datetime', 'DESC')
       .getRawMany()
 
-    const timestamps = uniq(history.map((data) => data.timestamp)).sort((a, b) => a - b)
+    const timestamps = uniq(history.map((data) => +data.timestamp)).sort((a, b) => a - b)
 
     const ethAssets = this.assetService.getEthAssets()
     const tokens = Object.keys(ethAssets).map((asset) => ethAssets[asset].terraToken)
@@ -106,8 +106,8 @@ export class EthStatisticService {
     const findLatestLiquidity = (array, token, timestamp) =>
       array.find((data) => data.token === token && data.timestamp <= timestamp)?.liquidity || 0
 
-    return timestamps.map((timestamp) => ({
-      timestamp,
+    return bluebird.mapSeries(timestamps, (timestamp) => ({
+      timestamp: +timestamp,
       value: tokens
         .reduce((result, data) => result.plus(findLatestLiquidity(history, data, timestamp)), num(0))
         .toFixed(0)

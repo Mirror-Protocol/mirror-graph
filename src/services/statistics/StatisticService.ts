@@ -245,12 +245,12 @@ export class StatisticService {
         .sort((a, b) => b.timestamp - a.timestamp)
       const eth = (await this.ethStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
         .sort((a, b) => b.timestamp - a.timestamp)
-      const timestamps = uniq([...terra.map((data) => data.timestamp), ...eth.map((data) => data.timestamp)])
+      const timestamps = uniq([...terra.map((data) => +data.timestamp), ...eth.map((data) => data.timestamp)])
         .sort((a, b) => a - b)
       const findLatestValue = (array, timestamp) => array.find((data) => data.timestamp <= timestamp)?.value || 0
 
-      return timestamps.map((timestamp) => ({
-        timestamp,
+      return bluebird.mapSeries(timestamps, (timestamp) => ({
+        timestamp: +timestamp,
         value: num(findLatestValue(terra, timestamp)).plus(findLatestValue(eth, timestamp)).toFixed(0)
       }))
     }
