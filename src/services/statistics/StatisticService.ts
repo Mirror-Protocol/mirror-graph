@@ -30,7 +30,7 @@ export class StatisticService {
     @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>
   ) {}
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
   async statistic(network: Network): Promise<Partial<Statistic>> {
     const stat = {
       network,
@@ -121,7 +121,7 @@ export class StatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
   async getGovAPY(): Promise<string> {
     const period = 15 // days
     const to = Date.now()
@@ -198,6 +198,7 @@ export class StatisticService {
     return repo.save(daily)
   }
 
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
   async getLiquidityHistory(network: Network, from: number, to: number): Promise<ValueAt[]> {
     const fromDayUTC = Math.max(from - (from % 86400000), 1606953600000)
     const toDayUTC = to - (to % 86400000)
@@ -210,20 +211,26 @@ export class StatisticService {
       return this.bscStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC)
     } else if (network === Network.COMBINE) {
       const terra = (await this.terraStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
-        .sort((a, b) => b.timestamp - a.timestamp)
+        .sort((a, b) => +b.timestamp - +a.timestamp)
       const eth = (await this.ethStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
-        .sort((a, b) => b.timestamp - a.timestamp)
-      const timestamps = uniq([...terra.map((data) => data.timestamp), ...eth.map((data) => data.timestamp)])
-        .sort((a, b) => a - b)
-      const findLatestValue = (array, timestamp) => array.find((data) => data.timestamp <= timestamp)?.value || 0
+        .sort((a, b) => +b.timestamp - +a.timestamp)
+      const bsc = (await this.bscStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
+        .sort((a, b) => +b.timestamp - +a.timestamp)
+      const timestamps = uniq([
+        ...terra.map((data) => +data.timestamp),
+        ...eth.map((data) => +data.timestamp),
+        ...bsc.map((data) => +data.timestamp)
+      ]).sort((a, b) => a - b)
+      const findLatestValue = (array, timestamp) => array.find((data) => +data.timestamp <= +timestamp)?.value || 0
 
-      return timestamps.map((timestamp) => ({
-        timestamp,
+      return bluebird.mapSeries(timestamps, (timestamp) => ({
+        timestamp: +timestamp,
         value: num(findLatestValue(terra, timestamp)).plus(findLatestValue(eth, timestamp)).toFixed(0)
       }))
     }
   }
 
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
   async getTradingVolumeHistory(network: Network, from: number, to: number): Promise<ValueAt[]> {
     const fromDayUTC = Math.max(from - (from % 86400000), 1606953600000)
     const toDayUTC = to - (to % 86400000)
@@ -239,16 +246,17 @@ export class StatisticService {
       const eth = await this.ethStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
       const bsc = await this.bscStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
 
-      return terra.map((data) => ({
-        timestamp: data.timestamp,
+      return bluebird.mapSeries(terra, (data) => ({
+        timestamp: +data.timestamp,
         value: num(data.value)
-          .plus(eth.find((ethData) => ethData.timestamp === data.timestamp)?.value || 0)
-          .plus(bsc.find((bscData) => bscData.timestamp === data.timestamp)?.value || 0)
+          .plus(eth.find((ethData) => +ethData.timestamp === +data.timestamp)?.value || 0)
+          .plus(bsc.find((bscData) => +bscData.timestamp === +data.timestamp)?.value || 0)
           .toString()
       }))
     }
   }
 
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
   async getFeeHistory(network: Network, from: number, to: number): Promise<ValueAt[]> {
     const fromDayUTC = Math.max(from - (from % 86400000), 1606953600000)
     const toDayUTC = to - (to % 86400000)
@@ -261,17 +269,19 @@ export class StatisticService {
     } else if (network === Network.COMBINE) {
       const terra = await this.terraStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
       const eth = await this.ethStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
+      const bsc = await this.bscStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
 
-      values = terra.map((data) => ({
-        timestamp: data.timestamp,
+      values = await bluebird.mapSeries(terra, (data) => ({
+        timestamp: +data.timestamp,
         value: num(data.value)
-          .plus(eth.find((ethData) => ethData.timestamp === data.timestamp)?.value || 0)
+          .plus(eth.find((ethData) => +ethData.timestamp === +data.timestamp)?.value || 0)
+          .plus(bsc.find((bscData) => +bscData.timestamp === +data.timestamp)?.value || 0)
           .toString()
       }))
     }
 
-    return values.map((data) => ({
-      timestamp: data.timestamp,
+    return bluebird.mapSeries(values, (data) => ({
+      timestamp: +data.timestamp,
       value: num(data.value).multipliedBy(0.003).toFixed(0)
     }))
   }
@@ -351,7 +361,7 @@ export class StatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async richlist(token: string, offset: number, limit: number): Promise<AccountBalance[]> {
     // SELECT * FROM (
     //   SELECT DISTINCT ON (address) address,token,balance
