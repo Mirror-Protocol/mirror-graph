@@ -44,7 +44,9 @@ export async function parse(args: ParseArgs): Promise<void> {
       token: mirrorToken,
     }
   } else if (msg['execute_poll']) {
-    const { from_contract: { action } } = log.eventsByType
+    const {
+      from_contract: { action },
+    } = log.eventsByType
 
     if (action.includes('whitelist')) {
       return parseExecutePoll(args)
@@ -68,6 +70,14 @@ export async function parse(args: ParseArgs): Promise<void> {
       data: { amount },
       token: mirrorToken,
     }
+  } else if (msg['withdraw_voting_rewards']) {
+    const amount = findAttribute(attributes, 'amount')
+
+    parsed = {
+      type: TxType.GOV_WITHDRAW_VOTING_REWARDS,
+      data: { amount },
+      token: mirrorToken,
+    }
   } else if (msg['cast_vote']) {
     const pollId = findAttribute(attributes, 'poll_id')
     const amount = findAttribute(attributes, 'amount')
@@ -82,7 +92,18 @@ export async function parse(args: ParseArgs): Promise<void> {
     return
   }
 
-  await txService().newTx({
-    ...parsed, height, txHash, address: sender, datetime, govId, contract, fee, tags: [mirrorToken],
-  }, manager)
+  await txService().newTx(
+    {
+      ...parsed,
+      height,
+      txHash,
+      address: sender,
+      datetime,
+      govId,
+      contract,
+      fee,
+      tags: [mirrorToken],
+    },
+    manager
+  )
 }
