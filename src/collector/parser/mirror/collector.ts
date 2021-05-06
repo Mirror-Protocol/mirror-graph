@@ -28,7 +28,7 @@ export async function parse(args: ParseArgs): Promise<void> {
       ...args,
       sender: contract.address,
       msg: { 'swap': {} },
-      contract: await contractService().get({ address: pairContract })
+      contract: await contractService().get({ address: pairContract }),
     })
   }
 }

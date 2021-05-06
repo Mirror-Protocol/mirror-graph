@@ -1,4 +1,3 @@
-import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { assetService, statisticService, txService } from 'services'
@@ -7,25 +6,23 @@ import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, msg, log, contract, fee }: ParseArgs
+  { manager, height, txHash, timestamp, sender, contract, contractEvent, fee }: ParseArgs
 ): Promise<void> {
   const { token, govId } = contract
   const datetime = new Date(timestamp)
   const positionsRepo = manager.getRepository(AssetPositionsEntity)
   let parsed = {}
 
-  if (msg['swap']) {
-    const attributes = findAttributes(log.events, 'from_contract', { key: 'action', value: 'swap' })
-    const offerAsset = findAttribute(attributes, 'offer_asset')
-    const askAsset = findAttribute(attributes, 'ask_asset')
-    const offerAmount = findAttribute(attributes, 'offer_amount')
-    const returnAmount = findAttribute(attributes, 'return_amount')
-    const taxAmount = findAttribute(attributes, 'tax_amount')
-    const spreadAmount = findAttribute(attributes, 'spread_amount')
-    const commissionAmount = findAttribute(attributes, 'commission_amount')
+  const actionType = contractEvent.action?.actionType
+  if (!actionType) {
+    return
+  }
 
+  if (actionType === 'swap') {
+    const {
+      offerAsset, askAsset, offerAmount, returnAmount, taxAmount, spreadAmount, commissionAmount
+    } = contractEvent.action
     const type = offerAsset === 'uusd' ? TxType.BUY : TxType.SELL
-
     const volume = type === TxType.BUY
       ? offerAmount
       : num(returnAmount).plus(spreadAmount).plus(commissionAmount).toString()
@@ -68,11 +65,8 @@ export async function parse(
     // add daily trading volume
     const dailyStatRepo = manager.getRepository(DailyStatisticEntity)
     await statisticService().addDailyTradingVolume(datetime.getTime(), volume, dailyStatRepo)
-
-  } else if (msg['provide_liquidity']) {
-    const attributes = findAttributes(log.events, 'from_contract', { key: 'action', value: 'provide_liquidity' })
-    const assets = findAttribute(attributes, 'assets')
-    const share = findAttribute(attributes, 'share')
+  } else if (actionType === 'provide_liquidity') {
+    const { assets, share } = contractEvent.action
     const liquidities = assets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
     const assetToken = liquidities.find((liquidity) => liquidity.token !== 'uusd')
     const uusdToken = liquidities.find((liquidity) => liquidity.token === 'uusd')
@@ -87,10 +81,8 @@ export async function parse(
       data: { assets, share },
       tags: [assetToken.token, uusdToken.token],
     }
-  } else if (msg['withdraw_liquidity']) {
-    const attributes = findAttributes(log.events, 'from_contract', { key: 'action', value: 'withdraw_liquidity' })
-    const refundAssets = findAttribute(attributes, 'refund_assets')
-    const withdrawnShare = findAttribute(attributes, 'withdrawn_share')
+  } else if (actionType === 'withdraw_liquidity') {
+    const { refundAssets, withdrawnShare } = contractEvent.action
     const liquidities = refundAssets.split(', ').map((assetAmount) => splitTokenAmount(assetAmount))
     const assetToken = liquidities.find((liquidity) => liquidity.token !== 'uusd')
     const uusdToken = liquidities.find((liquidity) => liquidity.token === 'uusd')

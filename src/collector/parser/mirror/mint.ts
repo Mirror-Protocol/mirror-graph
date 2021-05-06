@@ -1,4 +1,3 @@
-import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { assetService, accountService, cdpService, oracleService, txService } from 'services'
@@ -7,7 +6,7 @@ import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, msg, log, contract, fee }: ParseArgs
+  { manager, height, txHash, timestamp, sender, contract, contractEvent, fee }: ParseArgs
 ): Promise<void> {
   const cdpRepo = manager.getRepository(CdpEntity)
   const positionsRepo = manager.getRepository(AssetPositionsEntity)
@@ -21,12 +20,13 @@ export async function parse(
   let tx = {}
   let address = sender
 
-  const attributes = findAttributes(log.events, 'from_contract')
-  const positionIdx = findAttribute(attributes, 'position_idx')
+  const actionType = contractEvent.action?.actionType
+  if (!actionType) {
+    return
+  }
 
-  if (msg['open_position']) {
-    const mintAmount = findAttribute(attributes, 'mint_amount')
-    const collateralAmount = findAttribute(attributes, 'collateral_amount')
+  if (actionType === 'open_position') {
+    const { positionIdx, mintAmount, collateralAmount } = contractEvent.action
 
     const mint = splitTokenAmount(mintAmount)
     const collateral = splitTokenAmount(collateralAmount)
@@ -55,8 +55,8 @@ export async function parse(
       token: mint.token,
       tags: [mint.token, collateral.token],
     }
-  } else if (msg['deposit']) {
-    const depositAmount = findAttribute(attributes, 'deposit_amount')
+  } else if (actionType === 'deposit') {
+    const { positionIdx, depositAmount } = contractEvent.action
     const deposit = splitTokenAmount(depositAmount)
 
     // add cdp collateral
@@ -72,9 +72,8 @@ export async function parse(
       token: deposit.token,
       tags: [deposit.token],
     }
-  } else if (msg['withdraw']) {
-    const withdrawAmount = findAttribute(attributes, 'withdraw_amount')
-    const protocolFeeAmount = findAttribute(attributes, 'protocol_fee')
+  } else if (actionType === 'withdraw') {
+    const { positionIdx, withdrawAmount, protocolFee: protocolFeeAmount, taxAmount } = contractEvent.action
     const withdraw = splitTokenAmount(withdrawAmount)
     const protocolFee = splitTokenAmount(protocolFeeAmount)
 
@@ -92,14 +91,14 @@ export async function parse(
       data: {
         positionIdx,
         withdrawAmount,
-        taxAmount: findAttribute(attributes, 'tax_amount'),
+        taxAmount,
         protocolFeeAmount
       },
       token: withdraw.token,
       tags: [withdraw.token],
     }
-  } else if (msg['mint']) {
-    const mintAmount = findAttribute(attributes, 'mint_amount')
+  } else if (actionType === 'mint') {
+    const { positionIdx, mintAmount } = contractEvent.action
     const mint = splitTokenAmount(mintAmount)
 
     // add cdp mint
@@ -119,8 +118,8 @@ export async function parse(
       token: mint.token,
       tags: [mint.token],
     }
-  } else if (msg['burn']) {
-    const burnAmount = findAttribute(attributes, 'burn_amount')
+  } else if (actionType === 'burn') {
+    const { positionIdx, burnAmount } = contractEvent.action
     const burn = splitTokenAmount(burnAmount)
 
     // remove cdp mint
@@ -136,11 +135,8 @@ export async function parse(
       token: burn.token,
       tags: [burn.token],
     }
-  } else if (msg['auction']) {
-    const liquidatedAmount = findAttribute(attributes, 'liquidated_amount')
-    const returnCollateralAmount = findAttribute(attributes, 'return_collateral_amount')
-    const protocolFeeAmount = findAttribute(attributes, 'protocol_fee')
-    const taxAmount = findAttribute(attributes, 'tax_amount')
+  } else if (actionType === 'auction') {
+    const { positionIdx, liquidatedAmount, returnCollateralAmount, protocolFee: protocolFeeAmount, taxAmount } = contractEvent.action
 
     const liquidated = splitTokenAmount(liquidatedAmount)
     const returnCollateral = splitTokenAmount(returnCollateralAmount)

@@ -11,7 +11,7 @@ import { Container, Service } from 'typedi'
 import { addMonths } from 'date-fns'
 import { find } from 'lodash'
 import { loadEthAssets } from 'lib/data'
-import { num, BigNumber } from 'lib/num'
+import { num } from 'lib/num'
 import { queryAssetInfos } from 'lib/meth'
 import { AssetEntity, AssetPositionsEntity, AssetNewsEntity, PriceEntity } from 'orm'
 import { EthAsset, EthAssetInfos, EthAssets } from 'types'
@@ -90,7 +90,7 @@ export class AssetService {
       repo
     )
 
-    positions.lpShares = BigNumber.max(num(positions.lpShares).plus(lpShares), 0).toString()
+    positions.lpShares = num(positions.lpShares).plus(lpShares).toString()
 
     return repo.save(positions)
   }
@@ -106,7 +106,7 @@ export class AssetService {
       repo
     )
 
-    positions.asCollateral = BigNumber.max(num(positions.asCollateral).plus(amount), 0).toString()
+    positions.asCollateral = num(positions.asCollateral).plus(amount).toString()
 
     return repo.save(positions)
   }
@@ -118,7 +118,7 @@ export class AssetService {
   ): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions({ token }, { select: ['token', 'lpStaked'] }, repo)
 
-    positions.lpStaked = BigNumber.max(num(positions.lpStaked).plus(stakeAmount), 0).toString()
+    positions.lpStaked = num(positions.lpStaked).plus(stakeAmount).toString()
 
     return repo.save(positions)
   }

@@ -102,7 +102,7 @@ export class StatisticService {
     const airdropBalance = await getTokenBalance(mirrorToken, airdropContract)
     const factoryBalance = await getTokenBalance(mirrorToken, factoryContract)
     const communityBalance = await getTokenBalance(mirrorToken, communityContract)
-    const methBalance = await getMethMirTokenBalance()
+    const methBalance = await getMethMirTokenBalance().catch((error) => '0')
 
     const { totalSupply } = await getContractStore(mirrorToken, { tokenInfo: {} })
     const mirCirculatingSupply = num(totalSupply)

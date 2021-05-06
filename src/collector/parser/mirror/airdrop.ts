@@ -1,21 +1,22 @@
-import { findAttributes, findAttribute } from 'lib/terra'
 import { airdropService, govService, txService } from 'services'
 import { AirdropEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, msg, log, contract, fee }: ParseArgs
+  { manager, height, txHash, timestamp, sender, contract, contractEvent, fee }: ParseArgs
 ): Promise<void> {
-  const attributes = findAttributes(log.events, 'from_contract')
   const { govId } = contract
   const datetime = new Date(timestamp)
   let parsed = {}
 
-  if (msg['claim']) {
-    const address = findAttribute(attributes, 'address')
-    const amount = findAttribute(attributes, 'amount')
-    const stage = findAttribute(attributes, 'stage')
+  const actionType = contractEvent.action?.actionType
+  if (!actionType) {
+    return
+  }
+
+  if (actionType === 'claim') {
+    const { address, amount, stage } = contractEvent.action
 
     const airdropEntity = await airdropService().get(
       { address, stage: +stage, amount }, undefined, manager.getRepository(AirdropEntity)

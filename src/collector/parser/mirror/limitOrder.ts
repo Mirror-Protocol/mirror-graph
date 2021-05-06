@@ -1,4 +1,3 @@
-import { findAttributes, findAttribute } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { limitOrderService, statisticService, txService } from 'services'
@@ -8,19 +7,20 @@ import { ParseArgs } from './parseArgs'
 import { errorHandler } from 'lib/error'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, msg, log, contract, fee }: ParseArgs
+  { manager, height, txHash, timestamp, sender, contract, contractEvent, fee }: ParseArgs
 ): Promise<void> {
   const limitOrderRepo = manager.getRepository(LimitOrderEntity)
   const { govId } = contract
   const datetime = new Date(timestamp)
   let parsed = {}
 
-  if (msg['submit_order']) {
-    const attributes = findAttributes(log.events, 'from_contract', { key: 'action', value: 'submit_order' })
-    const orderId = findAttribute(attributes, 'order_id')
-    const bidderAddr = findAttribute(attributes, 'bidder_addr')
-    const offerAsset = findAttribute(attributes, 'offer_asset')
-    const askAsset = findAttribute(attributes, 'ask_asset')
+  const actionType = contractEvent.action?.actionType
+  if (!actionType) {
+    return
+  }
+
+  if (actionType === 'submit_order') {
+    const { orderId, bidderAddr, offerAsset, askAsset } = contractEvent.action
 
     const offer = splitTokenAmount(offerAsset)
     const ask = splitTokenAmount(askAsset)
@@ -64,9 +64,8 @@ export async function parse(
       },
       tags: [offer.token, ask.token]
     }
-  } else if (msg['cancel_order']) {
-    const attributes = findAttributes(log.events, 'from_contract', { key: 'action', value: 'cancel_order' })
-    const orderId = findAttribute(attributes, 'order_id')
+  } else if (actionType === 'cancel_order') {
+    const { orderId } = contractEvent.action
 
     const limitOrder = await limitOrderService().get({ id: orderId }, undefined, limitOrderRepo)
     if (!limitOrder) {
@@ -91,11 +90,8 @@ export async function parse(
       },
       tags: [token, 'uusd']
     }
-  } else if (msg['execute_order']) {
-    const attributes = findAttributes(log.events, 'from_contract', { key: 'action', value: 'execute_order' })
-    const orderId = findAttribute(attributes, 'order_id')
-    const executorReceive = findAttribute(attributes, 'executor_receive')
-    const bidderReceive = findAttribute(attributes, 'bidder_receive')
+  } else if (actionType === 'execute_order') {
+    const { orderId, executorReceive, bidderReceive } = contractEvent.action
 
     const limitOrder = await limitOrderService().get({ id: orderId }, undefined, limitOrderRepo)
     if (!limitOrder) {
