@@ -32,12 +32,13 @@ export async function parse(
       data: { address, amount, stage },
       token: govService().get().mirrorToken,
       tags: [govService().get().mirrorToken],
+      address,
     }
   } else {
     return
   }
 
   await txService().newTx({
-    ...parsed, height, txHash, address: sender, datetime, govId, contract, fee
+    ...parsed, height, txHash, datetime, govId, contract, fee
   }, manager)
 }

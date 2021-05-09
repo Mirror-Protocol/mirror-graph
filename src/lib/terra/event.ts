@@ -1,4 +1,5 @@
 import { Event, EventKV, Coins } from '@terra-money/terra.js'
+import { isMatch } from 'lodash'
 import { toCamelCase } from 'lib/caseStyles'
 
 export interface ContractActions {
@@ -182,4 +183,12 @@ export function parseContractEvents(events: Event[]): ContractEvent[] {
   }
 
   return contractEvents
+}
+
+export function findContractAction(
+  contractEvents: ContractEvent[], address:string, action: unknown
+): ContractEvent {
+  return contractEvents.find(
+    (event) => (event.address === address && event.action && isMatch(event.action, action))
+  )
 }

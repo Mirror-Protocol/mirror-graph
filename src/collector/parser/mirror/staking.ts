@@ -1,15 +1,18 @@
+import { findContractAction } from 'lib/terra'
 import { assetService, govService, txService } from 'services'
 import { num } from 'lib/num'
-import { AssetPositionsEntity, RewardEntity } from 'orm'
+import { AssetEntity, AssetPositionsEntity, RewardEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, contract, contractEvent, fee }: ParseArgs
+  { manager, height, txHash, timestamp, sender, contract, contractEvent, contractEvents, fee }: ParseArgs
 ): Promise<void> {
   const { govId } = contract
   const datetime = new Date(timestamp)
+  const assetRepo = manager.getRepository(AssetEntity)
   let parsed = {}
+  let address = sender
 
   const actionType = contractEvent.action?.actionType
   if (!actionType) {
@@ -21,6 +24,14 @@ export async function parse(
     const { amount, assetToken } = contractEvent.action
     const positionsRepo = manager.getRepository(AssetPositionsEntity)
 
+    if (actionType === 'bond') {
+      // find send event for find transaction owner.
+      const asset = await assetService().get({ token: assetToken }, undefined, assetRepo)
+      address = findContractAction(contractEvents, asset.lpToken, {
+        actionType: 'send', to: contract.address, amount
+      }).action.from
+    }
+
     await assetService().addStakePosition(
       assetToken, type === TxType.STAKE ? amount : `-${amount}`, positionsRepo
     )
@@ -31,7 +42,7 @@ export async function parse(
       token: assetToken,
       tags: [assetToken],
     }
-  } else if (actionType === 'withdraw') {
+  } else if (actionType === 'withdraw') { // todo
     const { amount } = contractEvent.action
 
     if (amount === '0') {
@@ -60,6 +71,6 @@ export async function parse(
   }
 
   await txService().newTx({
-    ...parsed, height, txHash, address: sender, datetime, govId, contract, fee
+    ...parsed, height, txHash, address, datetime, govId, contract, fee
   }, manager)
 }

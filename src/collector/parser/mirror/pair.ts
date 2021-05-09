@@ -1,17 +1,20 @@
+import { findContractAction } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { assetService, statisticService, txService } from 'services'
-import { AssetPositionsEntity, DailyStatisticEntity } from 'orm'
+import { AssetEntity, AssetPositionsEntity, DailyStatisticEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, contract, contractEvent, fee }: ParseArgs
+  { manager, height, txHash, timestamp, sender, contract, contractEvent, contractEvents, fee }: ParseArgs
 ): Promise<void> {
   const { token, govId } = contract
   const datetime = new Date(timestamp)
   const positionsRepo = manager.getRepository(AssetPositionsEntity)
+  const assetRepo = manager.getRepository(AssetEntity)
   let parsed = {}
+  let address = sender
 
   const actionType = contractEvent.action?.actionType
   if (!actionType) {
@@ -29,6 +32,12 @@ export async function parse(
 
     if (offerAmount === '0' || returnAmount === '0') {
       return
+    }
+
+    if (type === TxType.SELL) {
+      address = findContractAction(contractEvents, token, {
+        actionType: 'send', to: contract.address, amount: offerAmount
+      }).action.from
     }
 
     // buy price: offer / return
@@ -71,6 +80,10 @@ export async function parse(
     const assetToken = liquidities.find((liquidity) => liquidity.token !== 'uusd')
     const uusdToken = liquidities.find((liquidity) => liquidity.token === 'uusd')
 
+    address = findContractAction(contractEvents, token, {
+      actionType: 'transfer_from', to: contract.address, amount: assetToken.amount
+    }).action.from
+
     // add asset's liquidity position
     await assetService().addLiquidityPosition(
       assetToken.token, share, positionsRepo
@@ -87,6 +100,12 @@ export async function parse(
     const assetToken = liquidities.find((liquidity) => liquidity.token !== 'uusd')
     const uusdToken = liquidities.find((liquidity) => liquidity.token === 'uusd')
 
+    const asset = await assetService().get({ token }, undefined, assetRepo)
+
+    address = findContractAction(contractEvents, asset.lpToken, {
+      actionType: 'send', to: contract.address, amount: withdrawnShare
+    }).action.from
+
     // remove asset's liquidity position
     await assetService().addLiquidityPosition(
       assetToken.token, `-${withdrawnShare}`, positionsRepo
@@ -102,6 +121,6 @@ export async function parse(
   }
 
   await txService().newTx({
-    ...parsed, height, txHash, address: sender, datetime, govId, token, contract, fee
+    ...parsed, height, txHash, address, datetime, govId, token, contract, fee
   }, manager)
 }

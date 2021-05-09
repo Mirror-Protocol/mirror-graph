@@ -1,3 +1,4 @@
+import { findContractAction } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { assetService, accountService, cdpService, oracleService, txService } from 'services'
@@ -6,7 +7,7 @@ import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, contract, contractEvent, fee }: ParseArgs
+  { manager, height, txHash, timestamp, sender, contract, contractEvent, contractEvents, fee }: ParseArgs
 ): Promise<void> {
   const cdpRepo = manager.getRepository(CdpEntity)
   const positionsRepo = manager.getRepository(AssetPositionsEntity)
@@ -30,6 +31,12 @@ export async function parse(
 
     const mint = splitTokenAmount(mintAmount)
     const collateral = splitTokenAmount(collateralAmount)
+
+    if (collateral.token !== 'uusd') {
+      address = findContractAction(contractEvents, collateral.token, {
+        actionType: 'send', to: contract.address, amount: collateral.amount
+      }).action.from
+    }
 
     // create cdp
     cdp = new CdpEntity({
@@ -58,6 +65,12 @@ export async function parse(
   } else if (actionType === 'deposit') {
     const { positionIdx, depositAmount } = contractEvent.action
     const deposit = splitTokenAmount(depositAmount)
+
+    if (deposit.token !== 'uusd') {
+      address = findContractAction(contractEvents, deposit.token, {
+        actionType: 'send', to: contract.address, amount: deposit.amount
+      }).action.from
+    }
 
     // add cdp collateral
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
@@ -122,6 +135,10 @@ export async function parse(
     const { positionIdx, burnAmount } = contractEvent.action
     const burn = splitTokenAmount(burnAmount)
 
+    address = findContractAction(contractEvents, burn.token, {
+      actionType: 'send', to: contract.address, amount: burn.amount
+    }).action.from
+
     // remove cdp mint
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).minus(burn.amount).toString()
@@ -135,12 +152,16 @@ export async function parse(
       token: burn.token,
       tags: [burn.token],
     }
-  } else if (actionType === 'auction') {
+  } else if (actionType === 'auction') { // todo
     const { positionIdx, liquidatedAmount, returnCollateralAmount, protocolFee: protocolFeeAmount, taxAmount } = contractEvent.action
 
     const liquidated = splitTokenAmount(liquidatedAmount)
     const returnCollateral = splitTokenAmount(returnCollateralAmount)
     const protocolFee = splitTokenAmount(protocolFeeAmount)
+
+    address = findContractAction(contractEvents, liquidated.token, {
+      actionType: 'send', to: contract.address, amount: liquidated.amount
+    }).action.from
 
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).minus(liquidated.amount).toString()

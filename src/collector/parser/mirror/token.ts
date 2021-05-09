@@ -1,4 +1,5 @@
 import { EntityManager } from 'typeorm'
+import { findContractAction } from 'lib/terra'
 import { num } from 'lib/num'
 import { contractService, accountService, assetService, priceService, txService, govService } from 'services'
 import { BalanceEntity, AssetEntity, PriceEntity, ContractEntity, AssetPositionsEntity } from 'orm'
@@ -11,14 +12,9 @@ async function getReceivePrice(
   const { manager, contractEvents, timestamp } = args
   const contractRepo = manager.getRepository(ContractEntity)
 
-  const event = contractEvents.find((event) => (
-    event.action &&
-    event.address === from &&
-    event.action.actionType === 'swap' &&
-    event.action.offerAsset === 'uusd' &&
-    event.action.askAsset === token &&
-    event.action.returnAmount === amount
-  ))
+  const event = findContractAction(contractEvents, from, {
+    actionType: 'swap', offerAsset: 'uusd', askAsset: token, returnAmount: amount
+  })
 
   if (event && (await contractService().get({ address: from }, undefined, contractRepo))?.type === ContractType.PAIR) {
     const { offerAmount, returnAmount } = event.action

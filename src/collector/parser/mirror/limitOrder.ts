@@ -1,3 +1,4 @@
+import { findContractAction } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { limitOrderService, statisticService, txService } from 'services'
@@ -7,12 +8,13 @@ import { ParseArgs } from './parseArgs'
 import { errorHandler } from 'lib/error'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, contract, contractEvent, fee }: ParseArgs
+  { manager, height, txHash, timestamp, sender, contract, contractEvent, contractEvents, fee }: ParseArgs
 ): Promise<void> {
   const limitOrderRepo = manager.getRepository(LimitOrderEntity)
   const { govId } = contract
   const datetime = new Date(timestamp)
   let parsed = {}
+  let address = sender
 
   const actionType = contractEvent.action?.actionType
   if (!actionType) {
@@ -43,6 +45,10 @@ export async function parse(
       amount = offer.amount
       uusdAmount = ask.amount
       price = num(ask.amount).dividedBy(offer.amount).toString()
+
+      address = findContractAction(contractEvents, token, {
+        actionType: 'send', to: contract.address, amount
+      }).action.from
     }
 
     // save limit order entity
@@ -145,6 +151,6 @@ export async function parse(
   }
 
   await txService().newTx({
-    ...parsed, height, txHash, address: sender, datetime, govId, contract, fee
+    ...parsed, height, txHash, address, datetime, govId, contract, fee
   }, manager)
 }
