@@ -5,7 +5,7 @@ import { isSameDay } from 'date-fns'
 import * as bluebird from 'bluebird'
 import { EntityManager } from 'typeorm'
 import { statisticService } from 'services'
-import { DailyStatisticEntity, TxHashEntity } from 'orm'
+import { DailyStatisticEntity/*, TxHashEntity*/ } from 'orm'
 import { parseTerraMsg } from './terra'
 import { parseMirrorMsg } from './mirror'
 
@@ -57,9 +57,9 @@ export async function parseTxs(manager: EntityManager, txs: TxInfo[]): Promise<v
     })
 
     // save parsed tx hash
-    await manager.getRepository(TxHashEntity).save(new TxHashEntity({
-      height: txInfo.height, txHash: txInfo.txhash, datetime: new Date(txInfo.timestamp)
-    }))
+    // await manager.getRepository(TxHashEntity).save(new TxHashEntity({
+    //   height: txInfo.height, txHash: txInfo.txhash, datetime: new Date(txInfo.timestamp)
+    // }))
 
     await txTick(manager, new Date(txInfo.timestamp).getTime())
   })
