@@ -42,7 +42,7 @@ export async function parse(
       token: assetToken,
       tags: [assetToken],
     }
-  } else if (actionType === 'withdraw') { // todo
+  } else if (actionType === 'withdraw') {
     const { amount } = contractEvent.action
 
     if (amount === '0') {

@@ -152,7 +152,7 @@ export async function parse(
       token: burn.token,
       tags: [burn.token],
     }
-  } else if (actionType === 'auction') { // todo
+  } else if (actionType === 'auction') {
     const { positionIdx, liquidatedAmount, returnCollateralAmount, protocolFee: protocolFeeAmount, taxAmount } = contractEvent.action
 
     const liquidated = splitTokenAmount(liquidatedAmount)

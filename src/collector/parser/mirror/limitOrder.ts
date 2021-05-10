@@ -105,7 +105,7 @@ export async function parse(
       return
     }
 
-    const { token, type, address } = limitOrder
+    const { token, type, address: orderOwnerAddress } = limitOrder
     const filled = splitTokenAmount(type === LimitOrderType.ASK ? executorReceive : bidderReceive)
     const filledUusd = splitTokenAmount(type === LimitOrderType.ASK ? bidderReceive : executorReceive)
 
@@ -144,8 +144,14 @@ export async function parse(
 
     // save order owner's tx
     await txService().newTx({
-      ...parsed, height, txHash, address, datetime, govId, contract, fee
+      ...parsed, height, txHash, address: orderOwnerAddress, datetime, govId, contract, fee
     }, manager)
+
+    if (LimitOrderType.BID) {
+      address = findContractAction(contractEvents, token, {
+        actionType: 'send', to: contract.address, amount: filled.amount
+      }).action.from
+    }
   } else {
     return
   }
