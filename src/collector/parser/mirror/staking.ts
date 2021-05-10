@@ -1,22 +1,36 @@
-import { findAttributes, findAttribute } from 'lib/terra'
+import { findContractAction } from 'lib/terra'
 import { assetService, govService, txService } from 'services'
-import { AssetPositionsEntity } from 'orm'
+import { num } from 'lib/num'
+import { AssetEntity, AssetPositionsEntity, RewardEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, msg, log, contract, fee }: ParseArgs
+  { manager, height, txHash, timestamp, sender, contract, contractEvent, contractEvents, fee }: ParseArgs
 ): Promise<void> {
-  const attributes = findAttributes(log.events, 'from_contract')
   const { govId } = contract
   const datetime = new Date(timestamp)
+  const assetRepo = manager.getRepository(AssetEntity)
   let parsed = {}
+  let address = sender
 
-  if (msg['bond'] || msg['unbond']) {
-    const type = msg['bond'] ? TxType.STAKE : TxType.UNSTAKE
-    const amount = findAttribute(attributes, 'amount')
-    const assetToken = findAttribute(attributes, 'asset_token')
+  const actionType = contractEvent.action?.actionType
+  if (!actionType) {
+    return
+  }
+
+  if (actionType === 'bond' || actionType === 'unbond') {
+    const type = actionType === 'bond' ? TxType.STAKE : TxType.UNSTAKE
+    const { amount, assetToken } = contractEvent.action
     const positionsRepo = manager.getRepository(AssetPositionsEntity)
+
+    if (actionType === 'bond') {
+      // find send event for find transaction owner.
+      const asset = await assetService().get({ token: assetToken }, undefined, assetRepo)
+      address = findContractAction(contractEvents, asset.lpToken, {
+        actionType: 'send', to: contract.address, amount
+      }).action.from
+    }
 
     await assetService().addStakePosition(
       assetToken, type === TxType.STAKE ? amount : `-${amount}`, positionsRepo
@@ -28,8 +42,8 @@ export async function parse(
       token: assetToken,
       tags: [assetToken],
     }
-  } else if (msg['withdraw']) {
-    const amount = findAttribute(attributes, 'amount')
+  } else if (actionType === 'withdraw') {
+    const { amount } = contractEvent.action
 
     if (amount === '0') {
       return
@@ -41,11 +55,22 @@ export async function parse(
       token: govService().get().mirrorToken,
       tags: [govService().get().mirrorToken],
     }
+  } else if (actionType === 'deposit_reward') {
+    const datetime = new Date(timestamp)
+
+    const { assetToken: token, amount } = contractEvent.action
+
+    if (token && amount && num(amount).isGreaterThan(0)) {
+      const entity = new RewardEntity({ height, txHash, datetime, token, amount })
+      await manager.save(entity)
+    }
+
+    return
   } else {
     return
   }
 
   await txService().newTx({
-    ...parsed, height, txHash, address: sender, datetime, govId, contract, fee
+    ...parsed, height, txHash, address, datetime, govId, contract, fee
   }, manager)
 }

@@ -2,7 +2,7 @@ import * as bluebird from 'bluebird'
 import { TxInfo, TxLog } from '@terra-money/terra.js'
 import { EntityManager, Not, IsNull } from 'typeorm'
 import { parseTransfer } from 'lib/terra'
-import { num, BigNumber } from 'lib/num'
+import { num } from 'lib/num'
 import { accountService, contractService, assetService, priceService } from 'services'
 import {
   BalanceEntity, ContractEntity, AssetPositionsEntity, PriceEntity
@@ -21,7 +21,7 @@ async function contractTransfer(
     return
 
   // pair contract uusd balance changed
-  positions.uusdPool = BigNumber.max(num(positions.uusdPool).plus(value), 0).toString()
+  positions.uusdPool = num(positions.uusdPool).plus(value).toString()
 
   // set pool price ohlc
   const priceRepo = manager.getRepository(PriceEntity)

@@ -1,6 +1,7 @@
 import { Coins, TxLog } from '@terra-money/terra.js'
 import { EntityManager } from 'typeorm'
 import { ContractEntity } from 'orm'
+import { ContractEvent } from 'lib/terra'
 
 export interface ParseArgs {
   manager: EntityManager
@@ -13,4 +14,6 @@ export interface ParseArgs {
   msg: unknown
   log: TxLog
   contract: ContractEntity
+  contractEvent: ContractEvent
+  contractEvents: ContractEvent[]
 }
