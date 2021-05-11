@@ -1,11 +1,19 @@
 import { getContractStore } from 'lib/terra'
 import { num } from 'lib/num'
 import {
-  PairPool, OraclePrice, GovConfig, GovPoll, MintAssetConfig, StakingPool, DistributionInfo
+  PairPool,
+  OraclePrice,
+  GovConfig,
+  GovPoll,
+  MintAssetConfig,
+  StakingConfig,
+  StakingPool,
+  DistributionInfo,
 } from './types'
 
-export async function getPairPool(pair: string):
-  Promise<{assetAmount: string; collateralAmount: string; totalShare: string}> {
+export async function getPairPool(
+  pair: string
+): Promise<{ assetAmount: string; collateralAmount: string; totalShare: string }> {
   const pool = await getContractStore<PairPool>(pair, { pool: {} })
   const token = pool.assets.find((asset) => asset.info['token'])
   const nativeToken = pool.assets.find((asset) => asset.info['nativeToken'])
@@ -13,7 +21,7 @@ export async function getPairPool(pair: string):
   return {
     assetAmount: token?.amount || '0',
     collateralAmount: nativeToken?.amount || '0',
-    totalShare: pool.totalShare || '0'
+    totalShare: pool.totalShare || '0',
   }
 }
 
@@ -25,12 +33,11 @@ export async function getPairPrice(pair: string): Promise<string> {
 }
 
 export async function getOraclePrice(oracle: string, token: string): Promise<string> {
-  const oraclePrice = await getContractStore<OraclePrice>(
-    oracle, { price: { baseAsset: token, quoteAsset: 'uusd' } }
-  )
+  const oraclePrice = await getContractStore<OraclePrice>(oracle, {
+    price: { baseAsset: token, quoteAsset: 'uusd' },
+  })
 
-  if (!oraclePrice)
-    return undefined
+  if (!oraclePrice) return undefined
 
   return num(oraclePrice.rate).toString()
 }
@@ -39,6 +46,10 @@ export async function getTokenBalance(token: string, address: string): Promise<s
   const { balance } = await getContractStore(token, { balance: { address } })
 
   return balance
+}
+
+export async function getStakingConfig(staking: string): Promise<StakingConfig> {
+  return getContractStore(staking, { config: {} })
 }
 
 export async function getStakingPool(staking: string, token: string): Promise<StakingPool> {

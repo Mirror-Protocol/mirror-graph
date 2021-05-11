@@ -6,6 +6,7 @@ export interface GovConfig {
   owner: string
   proposalDeposit: string
   quorum: string
+  snapshotPeriod: number
   threshold: string
 }
 
@@ -15,6 +16,7 @@ export interface GovPoll {
   description: string
   endHeight: number
   executeData: unknown[]
+  stakedAmount: string
   id: number
   link?: string
   noVotes: string

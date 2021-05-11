@@ -12,4 +12,6 @@ export enum ContractType {
   PAIR = 'pair',
   COMMUNITY = 'community',
   AIRDROP = 'airdrop',
+  COLLATERAL_ORACLE = 'collateralOracle',
+  LOCK = 'lock',
 }
