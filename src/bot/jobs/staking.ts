@@ -28,9 +28,6 @@ export async function adjustPremium(wallet: TxWallet): Promise<void> {
       .map((listed) => listed.token)
       .filter(async (token) => {
         const pool = await getStakingPool(staking, token)
-        logger.info(`ready to adjust premium asset(${token}) latestHeight: ${latestHeight}, 
-          premiumUpdatedTime: ${pool.premiumUpdatedTime}, premiumMinUpdateInterval: ${premiumMinUpdateInterval}, latestHeight: ${latestHeight} `)
-
         return (
           !pool.premiumUpdatedTime ||
           pool.premiumUpdatedTime == 0 ||
