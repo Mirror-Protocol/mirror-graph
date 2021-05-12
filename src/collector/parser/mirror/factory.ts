@@ -22,7 +22,7 @@ export async function parse({ manager, log, contract, contractEvent }: ParseArgs
     const entities = await govService().whitelisting(govId, symbol, name, token, pair, lpToken)
 
     await manager.save(entities)
-  } else if (actionType === 'migrate_asset') {
+  } else if (actionType === 'migration') {
     const attributes = findAttributes(log.events, 'from_contract')
     const fromToken = findAttribute(attributes, 'asset_token')
     const token = findAttribute(attributes, 'asset_token_addr')
@@ -35,10 +35,11 @@ export async function parse({ manager, log, contract, contractEvent }: ParseArgs
     )
 
     asset.status = AssetStatus.DELISTED
+    await manager.save(asset)
 
     // whitelisting new asset
     const entities = await govService().whitelisting(govId, asset.symbol, asset.name, token, pair, lpToken)
 
-    await manager.save([asset, ...entities])
+    await manager.save(entities)
   }
 }
