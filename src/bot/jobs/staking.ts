@@ -3,7 +3,6 @@ import { Coins, StdFee } from '@terra-money/terra.js'
 import { TxWallet, getLatestBlockHeight } from 'lib/terra'
 import { getStakingConfig, getStakingPool } from 'lib/mirror'
 import * as logger from 'lib/logger'
-import { toSnakeCase } from 'lib/caseStyles'
 import { Updater } from 'lib/Updater'
 import { govService, assetService } from 'services'
 import { AssetStatus } from 'types'
@@ -25,30 +24,28 @@ export async function adjustPremium(wallet: TxWallet): Promise<void> {
   logger.info(`listed assets count: ${listeds.length}`)
   if (listeds && listeds.length > 0) {
     const assetTokens = await bluebird
-      .map(listeds, (listed) => listed.token)
+      .filter(listeds, (listed) => listed.symbol !== 'MIR' && listed.symbol !== 'uusd')
+      .map((listed) => listed.token)
       .filter(async (token) => {
         const pool = await getStakingPool(staking, token)
         logger.info(`ready to adjust premium asset(${token}) latestHeight: ${latestHeight}, 
-          premiumUpdatedTime: ${pool.premiumUpdatedTime}, premiumMinUpdateInterval: ${premiumMinUpdateInterval} `)
+          premiumUpdatedTime: ${pool.premiumUpdatedTime}, premiumMinUpdateInterval: ${premiumMinUpdateInterval}, latestHeight: ${latestHeight} `)
 
         return (
           !pool.premiumUpdatedTime ||
           pool.premiumUpdatedTime == 0 ||
-          latestHeight <= pool.premiumUpdatedTime + premiumMinUpdateInterval
+          latestHeight >= pool.premiumUpdatedTime + premiumMinUpdateInterval
         )
       })
 
     if (assetTokens && assetTokens.length > 0) {
-      logger.info(
-        `assetTokens: ${JSON.stringify(
-          toSnakeCase({ adjustPremium: { assetTokens: assetTokens } })
-        )}`
-      )
+      const gas = 300_000 + 20_000 * (assetTokens.length - 1)
       await wallet.execute(
         staking,
         { adjustPremium: { assetTokens: assetTokens } },
         new Coins([]),
-        new StdFee(30000000 - 1, { uusd: 30000000 - 1 })
+        new StdFee(3_500_000, { uusd: gas })
+        //new StdFee(3500000, { uusd: 550000 })
       )
 
       logger.info(
