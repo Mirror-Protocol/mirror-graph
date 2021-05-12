@@ -21,7 +21,6 @@ export async function adjustPremium(wallet: TxWallet): Promise<void> {
   const { premiumMinUpdateInterval } = await getStakingConfig(staking)
 
   const listeds = await assetService().getAll({ where: { status: AssetStatus.LISTED } })
-  logger.info(`listed assets count: ${listeds.length}`)
   if (listeds && listeds.length > 0) {
     const assetTokens = await bluebird
       .filter(listeds, (listed) => listed.symbol !== 'MIR' && listed.symbol !== 'uusd')
