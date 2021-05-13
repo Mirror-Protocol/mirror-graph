@@ -42,9 +42,9 @@ export class GovEntity {
   @Column()
   collector: string
 
-  @Column()
+  @Column({ default: '' })
   collateralOracle: string
 
-  @Column()
+  @Column({ default: '' })
   lock: string
 }
