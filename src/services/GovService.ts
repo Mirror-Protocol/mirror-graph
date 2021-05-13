@@ -47,6 +47,8 @@ export class GovService {
         staking,
         tokenFactory,
         collector,
+        collateralOracle,
+        lock,
       } = contracts
 
       const entities = []
@@ -62,6 +64,8 @@ export class GovService {
         staking,
         tokenFactory,
         collector,
+        collateralOracle,
+        lock,
       })
       entities.push(govEntity)
 

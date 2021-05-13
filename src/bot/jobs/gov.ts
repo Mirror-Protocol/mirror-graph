@@ -13,36 +13,45 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
   }
 
   const latestHeight = await getLatestBlockHeight()
-  if (!latestHeight)
-    return
+  if (!latestHeight) return
 
   const { gov } = govService().get()
-  const { effectiveDelay/*, expirationPeriod*/ } = await getGovConfig(gov)
+  const { effectiveDelay, snapshotPeriod, votingPeriod } = await getGovConfig(gov)
 
-  // collect ended poll
   let polls = await getGovPolls(gov, 'in_progress', 100)
+  logger.info(`polls in progress count: ${polls.length}`)
   await bluebird.mapSeries(polls, async (poll) => {
+    logger.info(`ready to end or snapshot poll(${poll.id}) stakedAmount: ${poll.stakedAmount} endHeight: ${poll.endHeight}, 
+      votingPeriod:${votingPeriod}, latestHeight: ${latestHeight}, snapshotPeriod: ${snapshotPeriod}`)
+    //-- end poll
     if (latestHeight > poll.endHeight) {
       await wallet.execute(gov, { endPoll: { pollId: poll.id } })
 
-      logger.info(`end poll id: ${poll.id}`)
+      logger.info(`> end poll(${poll.id})`)
+    }
+    //-- snapshot poll
+    else if (!poll.stakedAmount && snapshotPeriod) {
+      const snapHeight = poll.endHeight - snapshotPeriod
+      if (latestHeight > snapHeight) {
+        await wallet.execute(gov, { snapshotPoll: { pollId: poll.id } })
+
+        logger.info(`> snapshot poll(${poll.id})`)
+      }
     }
   })
 
-  // collect execute needed
-  polls = (await getGovPolls(gov, 'passed', 100))
-    .filter((poll) => poll.executeData)
-
+  polls = (await getGovPolls(gov, 'passed', 100)).filter((poll) => poll.executeData)
   await bluebird.mapSeries(polls, async (poll) => {
+    //-- execute poll
     const executeHeight = poll.endHeight + effectiveDelay
     // try execute only 1 hour(600 blocks)
-    if (latestHeight > executeHeight && latestHeight - executeHeight < 10 * 60 ) {
+    if (latestHeight > executeHeight && latestHeight - executeHeight < 10 * 60) {
       await wallet.execute(gov, { executePoll: { pollId: poll.id } })
 
-      logger.info(`execute poll id: ${poll.id}`)
+      logger.info(`> execute poll(${poll.id})`)
     }
 
-    // over expiration period, expire
+    //-- expire poll
     // const expireHeight = poll.endHeight + expirationPeriod
     // if (latestHeight > expireHeight) {
     //   await wallet.execute(gov, { expirePoll: { pollId: poll.id } })
