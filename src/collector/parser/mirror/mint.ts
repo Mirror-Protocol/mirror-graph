@@ -54,7 +54,7 @@ export async function parse(
 
     // add account balance
     const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
-    await accountService().addBalance(sender, mint.token, price, mint.amount, datetime, balanceRepo)
+    await accountService().addBalance(address, mint.token, price, mint.amount, datetime, balanceRepo)
 
     tx = {
       type: TxType.OPEN_POSITION,
@@ -123,7 +123,7 @@ export async function parse(
 
     // add account balance
     const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
-    await accountService().addBalance(sender, mint.token, price, mint.amount, datetime, balanceRepo)
+    await accountService().addBalance(address, mint.token, price, mint.amount, datetime, balanceRepo)
 
     tx = {
       type: TxType.MINT,
@@ -190,7 +190,7 @@ export async function parse(
 
     tx = {
       type: TxType.AUCTION,
-      data: { positionIdx, liquidatedAmount, returnCollateralAmount, taxAmount, protocolFeeAmount, liquidator: sender },
+      data: { positionIdx, liquidatedAmount, returnCollateralAmount, taxAmount, protocolFeeAmount, liquidator: address },
       token: liquidated.token,
       tags: [liquidated.token, returnCollateral.token],
     }
