@@ -1,7 +1,7 @@
 import { findContractAction } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
-import { assetService, statisticService, txService } from 'services'
+import { assetService, govService, statisticService, txService } from 'services'
 import { AssetEntity, AssetPositionsEntity, DailyStatisticEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
@@ -38,6 +38,15 @@ export async function parse(
       address = findContractAction(contractEvents, token, {
         actionType: 'send', to: contract.address, amount: offerAmount
       }).action.from
+
+      // if transaction from mint contract = opened short position
+      // so, transaction owner is short token staker
+      const gov = govService().get()
+      if (address === gov.mint) {
+        address = findContractAction(contractEvents, gov.staking, {
+          actionType: 'increase_short_token', amount: offerAmount
+        }).action.stakerAddr
+      }
     }
 
     // buy price: offer / return

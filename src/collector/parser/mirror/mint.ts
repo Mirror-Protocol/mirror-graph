@@ -7,7 +7,7 @@ import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, contract, contractEvent, contractEvents, fee }: ParseArgs
+  { manager, height, txHash, timestamp, sender, contract, contractEvent, contractEvents, fee, log }: ParseArgs
 ): Promise<void> {
   const cdpRepo = manager.getRepository(CdpEntity)
   const positionsRepo = manager.getRepository(AssetPositionsEntity)
@@ -28,6 +28,7 @@ export async function parse(
 
   if (actionType === 'open_position') {
     const { positionIdx, mintAmount, collateralAmount } = contractEvent.action
+    const isShort = contractEvent.action?.isShort === 'true'
 
     const mint = splitTokenAmount(mintAmount)
     const collateral = splitTokenAmount(collateralAmount)
@@ -46,19 +47,22 @@ export async function parse(
       mintAmount: mint.amount,
       collateralToken: collateral.token,
       collateralAmount: collateral.amount,
+      isShort
     })
 
     // add mint/asCollateral position
     await assetService().addMintPosition(mint.token, mint.amount, positionsRepo)
     await assetService().addAsCollateralPosition(collateral.token, collateral.amount, positionsRepo)
 
-    // add account balance
-    const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
-    await accountService().addBalance(sender, mint.token, price, mint.amount, datetime, balanceRepo)
+    if (!isShort) {
+      // add minted amount to account balance
+      const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
+      await accountService().addBalance(address, mint.token, price, mint.amount, datetime, balanceRepo)
+    }
 
     tx = {
       type: TxType.OPEN_POSITION,
-      data: { positionIdx, mintAmount, collateralAmount },
+      data: { positionIdx, mintAmount, collateralAmount, isShort },
       token: mint.token,
       tags: [mint.token, collateral.token],
     }
@@ -123,7 +127,7 @@ export async function parse(
 
     // add account balance
     const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
-    await accountService().addBalance(sender, mint.token, price, mint.amount, datetime, balanceRepo)
+    await accountService().addBalance(address, mint.token, price, mint.amount, datetime, balanceRepo)
 
     tx = {
       type: TxType.MINT,
@@ -190,7 +194,7 @@ export async function parse(
 
     tx = {
       type: TxType.AUCTION,
-      data: { positionIdx, liquidatedAmount, returnCollateralAmount, taxAmount, protocolFeeAmount, liquidator: sender },
+      data: { positionIdx, liquidatedAmount, returnCollateralAmount, taxAmount, protocolFeeAmount, liquidator: address },
       token: liquidated.token,
       tags: [liquidated.token, returnCollateral.token],
     }
