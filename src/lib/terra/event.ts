@@ -1,5 +1,5 @@
 import { Event, EventKV, Coins } from '@terra-money/terra.js'
-import { isMatch } from 'lodash'
+import { isMatch, camelCase } from 'lodash'
 import { toCamelCase } from 'lib/caseStyles'
 
 export interface ContractActions {
@@ -159,6 +159,8 @@ export function parseContractEvents(events: Event[]): ContractEvent[] {
         sender: executeContracts[contractEvents.length].sender,
         action: undefined,
       }
+
+      contractEvents.push(event)
       continue
     }
 
@@ -173,13 +175,11 @@ export function parseContractEvents(events: Event[]): ContractEvent[] {
           break
         }
 
-        event.action[attr.key] = attr.value
+        event.action[camelCase(attr.key)] = attr.value
       }
     } else {
-      event[attr.key] = attr.value
+      event[camelCase(attr.key)] = attr.value
     }
-
-    contractEvents.push(toCamelCase(event))
   }
 
   return contractEvents

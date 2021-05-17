@@ -161,7 +161,7 @@ export class TerraStatisticService {
   async getAssetLiquidity(token: string): Promise<string> {
     const asset = await this.assetService.get({ token })
     const price = await this.priceService.getPrice(token)
-    if (!asset || !price) {
+    if (!asset || !price || asset.positions.uusdPool === '0' || asset.positions.pool === '0') {
       return '0'
     }
     return num(asset.positions.uusdPool).dividedBy(asset.positions.pool).multipliedBy(asset.positions.pool)

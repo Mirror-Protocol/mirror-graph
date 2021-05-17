@@ -164,7 +164,7 @@ export async function parse(
     const protocolFee = splitTokenAmount(protocolFeeAmount)
 
     address = findContractAction(contractEvents, liquidated.token, {
-      actionType: 'send', to: contract.address, amount: liquidated.amount
+      actionType: 'send', to: contract.address
     }).action.from
 
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)

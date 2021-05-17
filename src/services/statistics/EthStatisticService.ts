@@ -222,12 +222,14 @@ export class EthStatisticService {
 
         record.pool = num(reserve0).multipliedBy(1000000).toFixed(0)
         record.uusdPool = num(reserve1).multipliedBy(1000000).toFixed(0)
-        record.liquidity = num(reserve1)
-          .dividedBy(reserve0)
-          .multipliedBy(reserve0)
-          .plus(reserve1)
-          .multipliedBy(1000000)
-          .toFixed(0)
+        record.liquidity = (record.pool === '0' || record.uusdPool === '0')
+          ? '0'
+          : num(reserve1)
+            .dividedBy(reserve0)
+            .multipliedBy(reserve0)
+            .plus(reserve1)
+            .multipliedBy(1000000)
+            .toFixed(0)
 
         record.volume = num(volumeToken1).multipliedBy(1000000).toFixed(0)
         record.fee = num(record.volume).multipliedBy(0.003).toFixed(0)
