@@ -147,7 +147,7 @@ export async function parse(
       ...parsed, height, txHash, address: orderOwnerAddress, datetime, govId, contract, fee
     }, manager)
 
-    if (LimitOrderType.BID) {
+    if (type === LimitOrderType.BID) {
       address = findContractAction(contractEvents, token, {
         actionType: 'send', to: contract.address, amount: filled.amount
       }).action.from
