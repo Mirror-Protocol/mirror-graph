@@ -75,7 +75,6 @@ export async function parse(
 
     const limitOrder = await limitOrderService().get({ id: orderId }, undefined, limitOrderRepo)
     if (!limitOrder) {
-      errorHandler(new Error(`invalid limit order id [${orderId}] from cancel_order`))
       return
     }
     const { token, type, amount, uusdAmount, filledAmount, filledUusdAmount } = limitOrder
