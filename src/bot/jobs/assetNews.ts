@@ -18,7 +18,7 @@ export async function updateNews(): Promise<void> {
 
   await bluebird.mapSeries(assets, async (asset) => {
     const { symbol, token } = asset
-    if (symbol === 'MIR')
+    if (symbol === 'MIR' || symbol === 'mGLXY')
       return
 
     const latestNews = await getRepository(AssetNewsEntity).findOne(
