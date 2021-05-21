@@ -1,4 +1,5 @@
 import * as bluebird from 'bluebird'
+import { EntityManager } from 'typeorm'
 import { uniq } from 'lodash'
 import memoize from 'memoizee-decorator'
 import { Repository, FindConditions, FindOneOptions, LessThanOrEqual } from 'typeorm'
@@ -185,8 +186,10 @@ export class EthStatisticService {
     return ethAssetInfos[ethAsset?.token]?.apr || '0'
   }
 
-  async collectStatistic(token: string, isDaily: boolean, from: number, to: number): Promise<void> {
-    const repo = isDaily ? this.dailyRepo : this.hourlyRepo
+  async collectStatistic(manager: EntityManager, token: string, isDaily: boolean, from: number, to: number): Promise<void> {
+    const repo = isDaily
+      ? manager.getRepository(AssetDailyEntity)
+      : manager.getRepository(AssetHourlyEntity)
     const unit = isDaily ? 86400000 : 3600000 // 1 day : 1 hour
     const maxQueryRange = unit * 1000
     const currentUTC = Date.now() - (Date.now() % unit)
@@ -200,7 +203,6 @@ export class EthStatisticService {
       return
     }
 
-    const records = []
     const newEntity = (network, token, datetime) => isDaily
       ? new AssetDailyEntity({ network, token, datetime })
       : new AssetHourlyEntity({ network, token, datetime })
@@ -235,11 +237,9 @@ export class EthStatisticService {
         record.fee = num(record.volume).multipliedBy(0.003).toFixed(0)
         record.transactions = transactions
 
-        records.push(record)
+        await manager.save(record)
       })
     }
-
-    await repo.save(records)
   }
 }
 
