@@ -75,7 +75,6 @@ export async function parse(
 
     const limitOrder = await limitOrderService().get({ id: orderId }, undefined, limitOrderRepo)
     if (!limitOrder) {
-      errorHandler(new Error(`invalid limit order id [${orderId}] from cancel_order`))
       return
     }
     const { token, type, amount, uusdAmount, filledAmount, filledUusdAmount } = limitOrder
@@ -147,7 +146,7 @@ export async function parse(
       ...parsed, height, txHash, address: orderOwnerAddress, datetime, govId, contract, fee
     }, manager)
 
-    if (LimitOrderType.BID) {
+    if (type === LimitOrderType.BID) {
       address = findContractAction(contractEvents, token, {
         actionType: 'send', to: contract.address, amount: filled.amount
       }).action.from
