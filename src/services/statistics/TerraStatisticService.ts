@@ -2,10 +2,11 @@ import memoize from 'memoizee-decorator'
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
+import { getDistributionInfo, getStakingPool } from 'lib/mirror'
 import { num } from 'lib/num'
 import { GovService, AssetService, PriceService } from 'services'
 import { DailyStatisticEntity, TxEntity, RewardEntity } from 'orm'
-import { PeriodStatistic, ValueAt } from 'graphql/schema'
+import { PeriodStatistic, ValueAt, APR } from 'graphql/schema'
 
 @Service()
 export class TerraStatisticService {
@@ -169,10 +170,44 @@ export class TerraStatisticService {
       .toFixed(0)
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute
-  async getAssetAPR(token: string): Promise<string> {
+  // @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  async getAnnualRewardTable(): Promise<{ [token: string]: string }> {
+    // genesis(2020.12.04 04:00 KST) + 6hours
+    const DISTRIBUTE_START = 1607022000000 + (60000 * 60 * 6)
+    const ONE_YEAR = 60000 * 60 * 24 * 365
+
+    const distributionSchedule = [
+      [               DISTRIBUTE_START, ONE_YEAR * 1 + DISTRIBUTE_START, '54900000000000'],
+      [ONE_YEAR * 1 + DISTRIBUTE_START, ONE_YEAR * 2 + DISTRIBUTE_START, '27450000000000'],
+      [ONE_YEAR * 2 + DISTRIBUTE_START, ONE_YEAR * 3 + DISTRIBUTE_START, '13725000000000'],
+      [ONE_YEAR * 3 + DISTRIBUTE_START, ONE_YEAR * 4 + DISTRIBUTE_START,  '6862500000000'],
+    ]
+
+    const now = Date.now()
+    const schedule = distributionSchedule.find((schedule) => now >= schedule[0] && now <= schedule[1])
+    const reward = Array.isArray(schedule) ? schedule[2] : '0'
+
+    const { weights } = await getDistributionInfo(this.govService.get().factory)
+    if (reward === '0' || !weights) {
+      return {}
+    }
+    const totalWeight = weights.reduce((result, data) => result.plus(data[1]), num(0))
+    const getTokenReward = (weight) => num(reward).multipliedBy(num(weight).dividedBy(totalWeight))
+
+    return weights
+      .filter((data) => num(data[1]).isGreaterThan(0))
+      .reduce(
+        (result, data) => Object.assign(result, {
+          [data[0]]: getTokenReward(data[1]).toFixed(0)
+        }),
+        {}
+      )
+  }
+
+  @memoize({ promise: true, maxAge: 60000, preFetch: true }) // 1 minute
+  async getAssetAPR(token: string): Promise<APR> {
     const asset = await this.assetService.get({ token })
-    const { mirrorToken } = this.govService.get()
+    const { mirrorToken, staking } = this.govService.get()
 
     const mirPrice = await this.priceService.getPrice(mirrorToken)
     const positions = asset.positions
@@ -180,31 +215,26 @@ export class TerraStatisticService {
       .dividedBy(positions.pool)
       .multipliedBy(positions.pool)
       .plus(asset.positions.uusdPool)
-
-    const from = Date.now() - (60000 * 60 * 24) // 24h ago
-    const to = Date.now()
-    const reward24h = (
-      await this.rewardRepo
-        .createQueryBuilder()
-        .select('sum(amount)', 'amount')
-        .where(
-          'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
-          { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
-        )
-        .andWhere('token = :token', { token })
-        .andWhere('is_gov_reward = false')
-        .getRawOne()
-    )?.amount || '0'
-    const mirValue = num(reward24h).multipliedBy(mirPrice).multipliedBy(365)
-
     const poolValue = liquidityValue.multipliedBy(
       num(asset.positions.lpStaked).dividedBy(asset.positions.lpShares)
     )
+ 
+    const annualReward = (await this.getAnnualRewardTable())[token]
+    if (
+      !annualReward || annualReward === '0' || !mirPrice || mirPrice === '0' || poolValue.isNaN() || liquidityValue.isNaN()
+    ) {
+      return { long: '0', short: '0' }
+    }
 
-    // (24h MIR reward * MIR price * 365) / (liquidity value * (staked lp share/total lp share))
-    const apr = mirValue.dividedBy(poolValue)
+    const { shortRewardWeight } = await getStakingPool(staking, token)
+    const longReward = num(annualReward).multipliedBy(num(1).minus(shortRewardWeight || 0))
+    const shortReward = num(annualReward).multipliedBy(shortRewardWeight)
 
-    return apr.isNaN() ? '0' : apr.toString()
+    // (Annual MIR reward * MIR price) / (liquidity value * (staked lp share/total lp share))
+    return {
+      long: longReward.multipliedBy(mirPrice).dividedBy(poolValue).toFixed(3),
+      short: shortReward.multipliedBy(mirPrice).dividedBy(poolValue).toFixed(3),
+    }
   }
 }
 

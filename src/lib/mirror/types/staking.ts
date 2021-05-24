@@ -13,9 +13,10 @@ export interface StakingPool {
   totalBondAmount: string
   totalShortAmount: string
   rewardIndex: string
-  shortRewardIndex: string
   pendingReward: string
   shortPendingReward: string
+  shortRewardIndex: string
+  shortRewardWeight: string
   premiumRate: string
   premiumUpdatedTime: number
 }

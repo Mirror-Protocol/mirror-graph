@@ -22,7 +22,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
 
   // MIR inflation distribute every 1hour
   const distributionInfo = await getDistributionInfo(factory)
-  if (Date.now() - (+distributionInfo.lastDistributed*1000) >= 60000 * 60) {
+  if (Date.now() - (+distributionInfo.lastDistributed * 1000) >= 60000 * 60) {
     await wallet.execute(
       factory,
       { distribute: {} },

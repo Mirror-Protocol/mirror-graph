@@ -1,8 +1,9 @@
 import { Resolver, FieldResolver, Root, Arg } from 'type-graphql'
 import { AssetEntity } from 'orm'
-import { AssetStatistic } from 'graphql/schema'
+import { AssetStatistic, APR } from 'graphql/schema'
 import { StatisticService } from 'services'
 import { Network } from 'types'
+
 @Resolver((of) => AssetStatistic)
 export class AssetStatisticResolver {
   constructor(
@@ -29,15 +30,7 @@ export class AssetStatisticResolver {
   async apr(
     @Root() asset: AssetEntity,
     @Arg('network', (type) => Network, { defaultValue: Network.TERRA }) network: Network
-  ): Promise<string> {
+  ): Promise<APR> {
     return this.statisticService.getAssetAPR(network, asset.token)
-  }
-
-  @FieldResolver()
-  async apy(
-    @Root() asset: AssetEntity,
-    @Arg('network', (type) => Network, { defaultValue: Network.TERRA }) network: Network
-  ): Promise<string> {
-    return this.statisticService.getAssetAPY(network, asset.token)
   }
 }

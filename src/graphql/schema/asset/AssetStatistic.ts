@@ -1,4 +1,5 @@
 import { ObjectType, Field } from 'type-graphql'
+import { APR } from 'graphql/schema'
 
 @ObjectType({ simpleResolvers: true })
 export class AssetStatistic {
@@ -8,9 +9,6 @@ export class AssetStatistic {
   @Field({ nullable: true, description: 'trading volume of latest 24h' })
   volume?: string
 
-  @Field({ nullable: true, description: 'lp token APR' })
-  apr?: string
-
-  @Field({ nullable: true, description: 'lp token APY' })
-  apy?: string
+  @Field((type) => APR, { nullable: true, description: 'asset long/short apr' })
+  apr?: APR
 }

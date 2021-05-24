@@ -68,5 +68,5 @@ export async function getMintAssetConfig(mint: string, token: string): Promise<M
 }
 
 export async function getDistributionInfo(factory: string): Promise<DistributionInfo> {
-  return getContractStore(factory, { distributionInfo: {} })
+  return getContractStore<DistributionInfo>(factory, { distributionInfo: {} })
 }
