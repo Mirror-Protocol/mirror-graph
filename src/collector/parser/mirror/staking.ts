@@ -25,11 +25,15 @@ export async function parse(
     const positionsRepo = manager.getRepository(AssetPositionsEntity)
 
     if (actionType === 'bond') {
-      // find send event for find transaction owner.
-      const asset = await assetService().get({ token: assetToken }, undefined, assetRepo)
-      address = findContractAction(contractEvents, asset.lpToken, {
-        actionType: 'send', to: contract.address, amount
-      }).action.from
+      address = contractEvent.action.stakerAddr
+
+      if (!address) {
+        // find send event for find transaction owner.
+        const asset = await assetService().get({ token: assetToken }, undefined, assetRepo)
+        address = findContractAction(contractEvents, asset.lpToken, {
+          actionType: 'send', to: contract.address, amount
+        }).action.from
+      }
     }
 
     await assetService().addStakePosition(
