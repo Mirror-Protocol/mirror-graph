@@ -5,7 +5,7 @@ import { KoaController, Controller, Validator, Validate, Get } from 'koa-joi-con
 import { success } from 'lib/response'
 import { num, aprToApy } from 'lib/num'
 import { assetService, statisticService, priceService } from 'services'
-import { AssetStatus, Network } from 'types'
+import { Network } from 'types'
 
 const Joi = Validator.Joi
 
@@ -28,7 +28,7 @@ async function getStatistic(): Promise<{
 
 async function getPools(format: string): Promise<unknown> {
   if (format === 'cmc-dex') {
-    const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
+    const assets = await assetService().getListedAssets()
     const pools = {}
     await bluebird.map(assets, async (asset) => {
       const price = await priceService().getPrice(asset.token)
@@ -74,7 +74,7 @@ async function getPools(format: string): Promise<unknown> {
 
     return pools
   } else if (format === 'cmc-yield-farming') {
-    const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
+    const assets = await assetService().getListedAssets()
 
     const pools = [
       ...await bluebird.map(assets, async (asset) => ({
@@ -114,7 +114,7 @@ async function getPools(format: string): Promise<unknown> {
       pools,
     }
   } else if (format === 'coingecko') {
-    const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
+    const assets = await assetService().getListedAssets()
     const pools = {}
     await bluebird.map(assets, async (asset) => {
       pools[`Terra ${asset.symbol}-UST`] = {

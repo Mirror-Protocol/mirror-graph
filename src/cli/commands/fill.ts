@@ -1,6 +1,6 @@
 import { program } from 'commander'
 import { ethers } from 'ethers'
-import { getRepository } from 'typeorm'
+import { getRepository, Not } from 'typeorm'
 import { addMinutes, addDays, startOfDay } from 'date-fns'
 import * as bluebird from 'bluebird'
 import * as fs from 'fs'
@@ -52,14 +52,9 @@ async function fillPriceHistory(asset: AssetEntity): Promise<void> {
 }
 
 async function fillPriceHistoryAll(): Promise<void> {
-  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
+  const assets = await assetService().getListedAssets({ symbol: Not('MIR')})
 
-  await bluebird.mapSeries(assets, async (asset) => {
-    if (asset.symbol === 'MIR')
-      return
-
-    await fillPriceHistory(asset)
-  })
+  await bluebird.mapSeries(assets, async (asset) => fillPriceHistory(asset))
 }
 
 export function fillCommands(): void {

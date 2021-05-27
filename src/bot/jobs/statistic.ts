@@ -2,7 +2,6 @@ import * as bluebird from 'bluebird'
 import { getManager, EntityManager } from 'typeorm'
 import * as logger from 'lib/logger'
 import { assetService, ethStatisticService } from 'services'
-import { AssetStatus } from 'types'
 import { Updater } from 'lib/Updater'
 
 const updater = new Updater(60000 * 5) // 5min
@@ -33,7 +32,7 @@ export async function updateStatistic(): Promise<void> {
     return
   }
 
-  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED } })
+  const assets = await assetService().getListedAssets()
 
   await getManager().transaction(async (manager: EntityManager) => {
     await bluebird.mapSeries(assets, async (asset) => {

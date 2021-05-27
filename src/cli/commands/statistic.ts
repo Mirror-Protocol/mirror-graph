@@ -6,15 +6,16 @@ import { num } from 'lib/num'
 import * as logger from 'lib/logger'
 import { assetService, priceService, oracleService, ethStatisticService } from 'services'
 import { AssetStatus } from 'types'
+import { Not } from 'typeorm'
 
 export function statisticCommands(): void {
   program
     .command('assets-premium')
     .action(async () => {
       const assetList = (await assetService().getAll({
-        where: { status: AssetStatus.LISTED },
+        where: { status: AssetStatus.LISTED, symbol: Not('MIR') },
         order: { symbol: 'ASC' },
-      })).filter((asset) => asset.symbol !== 'MIR')
+      }))
 
       const header = [{ id: 'time', title: 'time' }]
       assetList.map((asset) => {

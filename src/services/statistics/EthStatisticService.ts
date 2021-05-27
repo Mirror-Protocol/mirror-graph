@@ -11,7 +11,7 @@ import { getPairHourDatas, getPairDayDatas } from 'lib/meth'
 import { AssetService, GovService } from 'services'
 import { AssetDailyEntity, AssetHourlyEntity } from 'orm'
 import { PeriodStatistic, ValueAt } from 'graphql/schema'
-import { AssetStatus, Network } from 'types'
+import { Network } from 'types'
 
 @Service()
 export class EthStatisticService {
@@ -59,7 +59,7 @@ export class EthStatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute
   async latest24h(): Promise<PeriodStatistic> {
-    const assets = this.assetService.getAll({ where: { status: AssetStatus.LISTED }})
+    const assets = this.assetService.getListedAssets()
 
     let volume = num(0)
     let transactions = num(0)

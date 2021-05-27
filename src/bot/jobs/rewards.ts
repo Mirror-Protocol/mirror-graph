@@ -5,7 +5,6 @@ import { toSnakeCase } from 'lib/caseStyles'
 import * as logger from 'lib/logger'
 import { getTokenBalance, getDistributionInfo } from 'lib/mirror'
 import { govService, assetService, accountService } from 'services'
-import { AssetStatus } from 'types'
 import { num } from 'lib/num'
 import { Updater } from 'lib/Updater'
 
@@ -17,7 +16,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
   }
 
   const { factory, collector, mirrorToken } = govService().get()
-  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
+  const assets = await assetService().getListedAssets()
   const sender = wallet.key.accAddress
 
   // MIR inflation distribute every 1hour

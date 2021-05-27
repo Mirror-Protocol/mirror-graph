@@ -14,7 +14,7 @@ import { loadEthAssets } from 'lib/data'
 import { num } from 'lib/num'
 import { queryAssetInfos } from 'lib/meth'
 import { AssetEntity, AssetPositionsEntity, AssetNewsEntity, PriceEntity } from 'orm'
-import { EthAsset, EthAssetInfos, EthAssets } from 'types'
+import { EthAsset, EthAssetInfos, EthAssets, AssetStatus } from 'types'
 
 @Service()
 export class AssetService {
@@ -36,6 +36,10 @@ export class AssetService {
 
   async getAll(options?: FindManyOptions<AssetEntity>, repo = this.repo): Promise<AssetEntity[]> {
     return repo.find(options)
+  }
+
+  async getListedAssets(where?: FindConditions<AssetEntity>): Promise<AssetEntity[]> {
+    return this.getAll({ where: { status: AssetStatus.LISTED, ...where }})
   }
 
   async getPositions(
