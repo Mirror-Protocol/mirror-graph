@@ -1,4 +1,4 @@
-import { findContractAction } from 'lib/terra'
+import { findContractAction, isNativeToken } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { assetService, accountService, cdpService, oracleService, txService } from 'services'
@@ -33,7 +33,7 @@ export async function parse(
     const mint = splitTokenAmount(mintAmount)
     const collateral = splitTokenAmount(collateralAmount)
 
-    if (collateral.token !== 'uusd') {
+    if (!isNativeToken(collateral.token)) {
       address = findContractAction(contractEvents, collateral.token, {
         actionType: 'send', to: contract.address, amount: collateral.amount
       }).action.from
@@ -50,9 +50,8 @@ export async function parse(
       isShort
     })
 
-    // add mint/asCollateral position
+    // add mint position
     await assetService().addMintPosition(mint.token, mint.amount, positionsRepo)
-    await assetService().addAsCollateralPosition(collateral.token, collateral.amount, positionsRepo)
 
     if (!isShort) {
       // add minted amount to account balance
@@ -70,7 +69,7 @@ export async function parse(
     const { positionIdx, depositAmount } = contractEvent.action
     const deposit = splitTokenAmount(depositAmount)
 
-    if (deposit.token !== 'uusd') {
+    if (!isNativeToken(deposit.token)) {
       address = findContractAction(contractEvents, deposit.token, {
         actionType: 'send', to: contract.address, amount: deposit.amount
       }).action.from
@@ -79,9 +78,6 @@ export async function parse(
     // add cdp collateral
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).plus(deposit.amount).toString()
-
-    // add asset's asCollateral position
-    await assetService().addAsCollateralPosition(deposit.token, deposit.amount, positionsRepo)
 
     tx = {
       type: TxType.DEPOSIT_COLLATERAL,
@@ -99,9 +95,6 @@ export async function parse(
     // remove cdp collateral
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).minus(totalWithdraw).toString()
-
-    // remove asset's asCollateral position
-    await assetService().addAsCollateralPosition(withdraw.token, `-${totalWithdraw}`, positionsRepo)
 
     tx = {
       type: TxType.WITHDRAW_COLLATERAL,
@@ -178,18 +171,12 @@ export async function parse(
       // remove asset's mint position
       await assetService().addMintPosition(liquidated.token, `-${cdp.mintAmount}`, positionsRepo)
 
-      // remove asset's asCollateral position
-      await assetService().addAsCollateralPosition(returnCollateral.token, `-${cdp.collateralAmount}`, positionsRepo)
-
       cdp.mintAmount = '0'
       cdp.collateralAmount = '0'
       cdp.collateralRatio = '0'
     } else {
       // remove asset's mint position
       await assetService().addMintPosition(liquidated.token, `-${liquidated.amount}`, positionsRepo)
-
-      // remove asset's asCollateral position
-      await assetService().addAsCollateralPosition(returnCollateral.token, `-${returnCollateral.amount}`, positionsRepo)
     }
 
     tx = {

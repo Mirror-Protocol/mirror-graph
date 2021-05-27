@@ -48,6 +48,7 @@ export class StatisticService {
     let collateralValue = num(0)
 
     await bluebird.map(assets, async (asset) => {
+      // todo: uusd in assets will be removed.
       if (asset.token === 'uusd') {
         const { balance } = await this.accountService.getBalance(mintContract.address, 'uusd')
         totalValueLocked = totalValueLocked.plus(balance)

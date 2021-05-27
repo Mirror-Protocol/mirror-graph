@@ -95,22 +95,6 @@ export class AssetService {
     return repo.save(positions)
   }
 
-  async addAsCollateralPosition(
-    token: string,
-    amount: string,
-    repo = this.positionsRepo
-  ): Promise<AssetPositionsEntity> {
-    const positions = await this.getPositions(
-      { token },
-      { select: ['token', 'asCollateral'] },
-      repo
-    )
-
-    positions.asCollateral = num(positions.asCollateral).plus(amount).toString()
-
-    return repo.save(positions)
-  }
-
   async addStakePosition(
     token: string,
     stakeAmount: string,

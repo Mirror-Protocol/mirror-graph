@@ -12,9 +12,6 @@ export class AssetPositions {
   uusdPool: string
 
   @Field()
-  asCollateral: string
-
-  @Field()
   lpShares: string
 
   @Field()
