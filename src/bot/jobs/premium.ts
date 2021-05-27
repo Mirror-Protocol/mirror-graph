@@ -10,7 +10,8 @@ import { govService, assetService } from 'services'
 const updater = new Updater(60000) // 1min
 
 export async function adjustPremium(wallet: TxWallet): Promise<void> {
-  if (!updater.needUpdate(Date.now())) {
+  const now = Date.now()
+  if (!updater.needUpdate(now)) {
     return
   }
 
@@ -29,7 +30,7 @@ export async function adjustPremium(wallet: TxWallet): Promise<void> {
       return (
         !pool.premiumUpdatedTime ||
         pool.premiumUpdatedTime == 0 ||
-        latestHeight >= pool.premiumUpdatedTime + premiumMinUpdateInterval
+        now >= +(pool.premiumUpdatedTime + premiumMinUpdateInterval) * 1000
       )
     })
 
