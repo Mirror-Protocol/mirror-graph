@@ -31,6 +31,10 @@ async function collectPrice(
 async function fillPriceHistory(asset: AssetEntity): Promise<void> {
   const symbol = asset.symbol.substring(1)
   const price = await priceService().get({ token: asset.token }, { order: { id: 'ASC' }})
+  if (!price) {
+    logger.info(`There is no price for ${symbol}`)
+    return
+  }
 
   const minFrom = startOfDay(addDays(price.datetime, -1)).getTime()
   const minTo = addMinutes(price.datetime, -1).getTime()
@@ -65,7 +69,7 @@ export function fillCommands(): void {
       if (symbol === 'all') {
         await fillPriceHistoryAll()
       } else {
-        const asset = await assetService().get({ symbol })
+        const asset = await assetService().get({ symbol, status: AssetStatus.LISTED })
         await fillPriceHistory(asset)
       }
 

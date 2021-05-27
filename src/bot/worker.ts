@@ -3,13 +3,7 @@ import { TxWallet } from 'lib/terra'
 import { errorHandler as errorHandleWithSentry } from 'lib/error'
 import { sendSlack } from 'lib/slack'
 import {
-  adjustPremium,
-  distributeRewards,
-  updateCdps,
-  updatePolls,
-  updateNews,
-  updateAirdrop,
-  updateStatistic,
+  distributeRewards, updateCdps, updatePolls, updateNews, /*updateAirdrop,*/ updateStatistic
 } from './jobs'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,8 +25,6 @@ function errorHandler(job: string, error?: Error & { [key: string]: any }): void
 }
 
 async function tick(now: number, wallet: TxWallet): Promise<void> {
-  await adjustPremium(wallet).catch((error) => errorHandler('adjustPremium', error))
-
   await distributeRewards(wallet).catch((error) => errorHandler('distributeRewards', error))
 
   await updateCdps().catch((error) => errorHandler('updateCdps', error))
@@ -43,7 +35,7 @@ async function tick(now: number, wallet: TxWallet): Promise<void> {
 
   await updateNews().catch((error) => errorHandler('updateNews', error))
 
-  await updateAirdrop(wallet).catch((error) => errorHandler('updateAirdrop', error))
+  // await updateAirdrop(wallet).catch((error) => errorHandler('updateAirdrop', error))
 }
 
 export async function loop(wallet: TxWallet): Promise<void> {

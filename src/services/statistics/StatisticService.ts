@@ -208,7 +208,7 @@ export class StatisticService {
     repo = this.dailyRepo
   ): Promise<DailyStatisticEntity> {
     const datetime = new Date(timestamp - (timestamp % 86400000))
-    const assets = await this.assetService.getAll({ where: { status: AssetStatus.LISTED }})
+    const assets = await this.assetService.getAll({ where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }]})
     let liquidityValue = num(0)
 
     await bluebird.map(
