@@ -170,7 +170,7 @@ export class TerraStatisticService {
       .toFixed(0)
   }
 
-  // @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
   async getAnnualRewardTable(): Promise<{ [token: string]: string }> {
     // genesis(2020.12.04 04:00 KST) + 6hours
     const DISTRIBUTE_START = 1607022000000 + (60000 * 60 * 6)
@@ -208,16 +208,15 @@ export class TerraStatisticService {
   async getAssetAPR(token: string): Promise<APR> {
     const asset = await this.assetService.get({ token })
     const { mirrorToken, staking } = this.govService.get()
+    const { positions } = asset
 
     const mirPrice = await this.priceService.getPrice(mirrorToken)
-    const positions = asset.positions
     const liquidityValue = num(positions.uusdPool)
       .dividedBy(positions.pool)
       .multipliedBy(positions.pool)
-      .plus(asset.positions.uusdPool)
-    const poolValue = liquidityValue.multipliedBy(
-      num(asset.positions.lpStaked).dividedBy(asset.positions.lpShares)
-    )
+      .plus(positions.uusdPool)
+    const poolValue = liquidityValue
+      .multipliedBy(num(positions.lpStaked).dividedBy(positions.lpShares))
  
     const annualReward = (await this.getAnnualRewardTable())[token]
     if (
