@@ -1,6 +1,7 @@
-import { LCDClient, TxInfo, Wallet, Msg } from '@terra-money/terra.js'
+import { LCDClient, TxInfo, Wallet, Msg, Coins, Coin } from '@terra-money/terra.js'
 import { delay } from 'bluebird'
 import { toSnakeCase, toCamelCase } from 'lib/caseStyles'
+import { num } from 'lib/num'
 
 export let lcd: LCDClient = undefined
 
@@ -57,4 +58,12 @@ export async function contractQuery<T>(
     throw new Error('wrong address')
   }
   return toCamelCase(await lcd.wasm.contractQuery<T>(address, toSnakeCase(query))) as T
+}
+
+export function getGasPrice(denom: string): string {
+  return lcd.config.gasPrices[denom]
+}
+
+export function getGasAmount(gas: number, denom: string): Coins.Input {
+  return [new Coin(denom, num(gas).multipliedBy(getGasPrice(denom)).toFixed(0))]
 }
