@@ -5,7 +5,7 @@ import { Container, Service, Inject } from 'typedi'
 import { getDistributionInfo, getStakingPool } from 'lib/mirror'
 import { num } from 'lib/num'
 import { GovService, AssetService, PriceService } from 'services'
-import { DailyStatisticEntity, TxEntity, RewardEntity } from 'orm'
+import { DailyStatisticEntity, TxEntity } from 'orm'
 import { PeriodStatistic, ValueAt, APR } from 'graphql/schema'
 
 @Service()
@@ -17,7 +17,6 @@ export class TerraStatisticService {
     @InjectRepository(DailyStatisticEntity)
     private readonly dailyRepo: Repository<DailyStatisticEntity>,
     @InjectRepository(TxEntity) private readonly txRepo: Repository<TxEntity>,
-    @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>
   ) {}
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minute

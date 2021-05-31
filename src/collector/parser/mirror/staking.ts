@@ -1,7 +1,6 @@
 import { findContractAction } from 'lib/terra'
 import { assetService, govService, txService } from 'services'
-import { num } from 'lib/num'
-import { AssetEntity, AssetPositionsEntity, RewardEntity } from 'orm'
+import { AssetEntity, AssetPositionsEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
@@ -59,17 +58,6 @@ export async function parse(
       token: govService().get().mirrorToken,
       tags: [govService().get().mirrorToken],
     }
-  } else if (actionType === 'deposit_reward') {
-    const datetime = new Date(timestamp)
-
-    const { assetToken: token, amount } = contractEvent.action
-
-    if (token && amount && num(amount).isGreaterThan(0)) {
-      const entity = new RewardEntity({ height, txHash, datetime, token, amount })
-      await manager.save(entity)
-    }
-
-    return
   } else {
     return
   }
