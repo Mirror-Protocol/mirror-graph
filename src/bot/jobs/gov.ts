@@ -19,7 +19,6 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
   const { effectiveDelay, snapshotPeriod } = await getGovConfig(gov)
 
   let polls = await getGovPolls(gov, 'in_progress', 100)
-  logger.info(`${polls.length} polls in progress`)
   await bluebird.mapSeries(polls, async (poll) => {
     // end poll
     if (latestHeight > poll.endHeight) {
@@ -28,7 +27,7 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
       logger.info(`end poll(${poll.id})`)
     }
     // snapshot poll
-    else if (!poll.stakedAmount && snapshotPeriod) {
+    else if (poll.stakedAmount == null && snapshotPeriod) {
       const snapHeight = poll.endHeight - snapshotPeriod
       if (latestHeight > snapHeight) {
         await wallet.execute(gov, { snapshotPoll: { pollId: poll.id } })
