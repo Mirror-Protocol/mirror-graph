@@ -4,8 +4,6 @@ export class CalculateCdpRatio1622434470526 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query('DROP FUNCTION IF EXISTS public.calculateCdpRatio;')
     await queryRunner.query(`
-DROP FUNCTION public.calculateCdpRatio;
-
 CREATE OR REPLACE FUNCTION public.calculateCdpRatio()
   RETURNS void
   LANGUAGE 'plpgsql'

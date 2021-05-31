@@ -10,6 +10,7 @@ import {
   updateNews,
   // updateAirdrop,
   updateStatistic,
+  updateCollateralPrice,
 } from './jobs'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,6 +35,8 @@ async function tick(now: number, wallet: TxWallet): Promise<void> {
   await adjustPremium(wallet).catch((error) => errorHandler('adjustPremium', error))
 
   await distributeRewards(wallet).catch((error) => errorHandler('distributeRewards', error))
+
+  await updateCollateralPrice().catch((error) => errorHandler('updateCollateralPrice', error))
 
   await updateCdps().catch((error) => errorHandler('updateCdps', error))
 

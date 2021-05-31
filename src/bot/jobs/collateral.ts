@@ -12,11 +12,11 @@ const updater = new Updater(200)
 const blockUpdater = new BlockUpdater()
 
 async function getPrice(asset: AssetEntity): Promise<string> {
-  const { token, symbol } = asset
+  const { symbol } = asset
 
   switch (symbol) {
     case 'LUNA':
-      return getOraclePrice(token)
+      return getOraclePrice('uusd')
 
     case 'aUST':
       return getaUSTPrice()
@@ -26,7 +26,7 @@ async function getPrice(asset: AssetEntity): Promise<string> {
 
     case 'bLUNA':
       return num(await getPairPrice(asset.pair))
-        .multipliedBy(await getOraclePrice('uluna'))
+        .multipliedBy(await getOraclePrice('uusd'))
         .toString()
   }
 }
