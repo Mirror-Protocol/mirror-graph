@@ -36,7 +36,4 @@ export class OraclePriceEntity extends HaveAsset {
 
   @Column('decimal', { precision: 40, scale: 6 })
   close: string
-
-  @Column('decimal', { precision: 40, scale: 6, default: '1' })
-  priceMultiplier: string
 }

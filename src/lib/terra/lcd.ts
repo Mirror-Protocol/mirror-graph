@@ -67,3 +67,9 @@ export function getGasPrice(denom: string): string {
 export function getGasAmount(gas: number, denom: string): Coins.Input {
   return [new Coin(denom, num(gas).multipliedBy(getGasPrice(denom)).toFixed(0))]
 }
+
+export async function getOraclePrice(denom: string): Promise<string> {
+  const coin = await lcd.oracle.exchangeRate(denom)
+
+  return coin.toData().amount
+}

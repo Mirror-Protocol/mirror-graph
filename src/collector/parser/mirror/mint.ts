@@ -1,7 +1,7 @@
 import { findContractAction, isNativeToken } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
-import { assetService, accountService, cdpService, oracleService, txService } from 'services'
+import { assetService, accountService, cdpService, oracleService, txService, collateralService } from 'services'
 import { CdpEntity, AssetPositionsEntity, BalanceEntity, OraclePriceEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
@@ -82,7 +82,7 @@ export async function parse(
     tx = {
       type: TxType.DEPOSIT_COLLATERAL,
       data: { positionIdx, depositAmount },
-      token: deposit.token,
+      token: cdp.token,
       tags: [deposit.token],
     }
   } else if (actionType === 'withdraw') {
@@ -104,7 +104,7 @@ export async function parse(
         taxAmount,
         protocolFeeAmount
       },
-      token: withdraw.token,
+      token: cdp.token,
       tags: [withdraw.token],
     }
   } else if (actionType === 'mint') {
@@ -200,9 +200,7 @@ export async function parse(
   // calculate collateral ratio
   const { token, collateralToken } = cdp
   const tokenPrice = await oracleService().getPrice(token, datetime.getTime(), oracleRepo)
-  const collateralPrice = collateralToken !== 'uusd'
-    ? await oracleService().getPrice(collateralToken, datetime.getTime(), oracleRepo)
-    : '1'
+  const collateralPrice = await collateralService().getPrice(collateralToken)
 
   if (tokenPrice && collateralPrice) {
     const { mintAmount, collateralAmount } = cdp

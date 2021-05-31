@@ -42,6 +42,10 @@ export class AssetService {
     return this.getAll({ where: { status: AssetStatus.LISTED, ...where }})
   }
 
+  async getCollateralAssets(where?: FindConditions<AssetEntity>): Promise<AssetEntity[]> {
+    return this.getAll({ where: { status: AssetStatus.COLLATERAL, ...where }})
+  }
+
   async getPositions(
     conditions: FindConditions<AssetPositionsEntity>,
     options?: FindOneOptions<AssetPositionsEntity>,

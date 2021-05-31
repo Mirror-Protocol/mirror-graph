@@ -43,12 +43,12 @@ export class StatisticService {
     const assets = await this.assetService.getAll()
     const gov = this.govService.get()
     const mintContract = await this.contractService.get({ type: ContractType.MINT, gov })
+    const mirPrice = await this.priceService.getPrice(gov.mirrorToken)
     let assetMarketCap = num(0)
     let totalValueLocked = num(0)
     let collateralValue = num(0)
 
     await bluebird.map(assets, async (asset) => {
-      // todo: uusd in assets will be removed.
       if (asset.token === 'uusd') {
         const { balance } = await this.accountService.getBalance(mintContract.address, 'uusd')
         totalValueLocked = totalValueLocked.plus(balance)
@@ -57,14 +57,20 @@ export class StatisticService {
       }
 
       // add liquidity value to tvl
-      const liquidity = await this.getAssetLiquidity(Network.COMBINE, asset.token)
-      totalValueLocked = totalValueLocked.plus(liquidity)
+      if (asset.status !== AssetStatus.COLLATERAL) {
+        const liquidity = await this.getAssetLiquidity(Network.COMBINE, asset.token)
+        totalValueLocked = totalValueLocked.plus(liquidity)
+      }
 
-      const price = await this.oracleService.getPrice(asset.token)
+      const price = asset.symbol !== 'MIR'
+        ? await this.oracleService.getPrice(asset.token)
+        : mirPrice
       if (!price) return
 
-      // add asset market cap
-      assetMarketCap = assetMarketCap.plus(num(asset.positions.mint).multipliedBy(price))
+      // add asset market cap(except MIR, collateral asset)
+      if (asset.symbol !== 'MIR' && asset.status !== AssetStatus.COLLATERAL) {
+        assetMarketCap = assetMarketCap.plus(num(asset.positions.mint).multipliedBy(price))
+      }
 
       // add collateral value to tvl
       const balance = await getTokenBalance(asset.token, mintContract.address)
@@ -74,7 +80,6 @@ export class StatisticService {
     })
     // add MIR gov staked value to tvl
     const mirBalance = await getTokenBalance(gov.mirrorToken, gov.gov)
-    const mirPrice = await this.priceService.getPrice(gov.mirrorToken)
     if (mirPrice && mirBalance) {
       totalValueLocked = totalValueLocked.plus(num(mirBalance).multipliedBy(mirPrice))
     }

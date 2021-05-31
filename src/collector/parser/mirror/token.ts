@@ -1,9 +1,9 @@
-import { EntityManager } from 'typeorm'
+import { EntityManager, Not } from 'typeorm'
 import { findContractAction } from 'lib/terra'
 import { num } from 'lib/num'
 import { contractService, accountService, assetService, priceService, txService, govService } from 'services'
 import { BalanceEntity, AssetEntity, PriceEntity, ContractEntity, AssetPositionsEntity } from 'orm'
-import { ContractType, TxType } from 'types'
+import { ContractType, TxType, AssetStatus } from 'types'
 import { ParseArgs } from './parseArgs'
 
 async function getReceivePrice(
@@ -73,7 +73,7 @@ export async function parse(args: ParseArgs): Promise<void> {
     if (!amount || amount === '' || amount === '0' || !from || !to)
       return
 
-    const asset = await assetService().get({ token }, undefined, assetRepo)
+    const asset = await assetService().get({ token, status: Not(AssetStatus.COLLATERAL) }, undefined, assetRepo)
     if (!asset)
       return
 
