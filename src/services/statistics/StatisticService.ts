@@ -32,9 +32,12 @@ export class StatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
   async statistic(network: Network): Promise<Partial<Statistic>> {
+    const collateralRatio = num(await this.terraStatisticService.collateralValue())
+      .dividedBy(await this.terraStatisticService.assetMarketCap())
+      .toFixed(4)
     const stat = {
       network,
-      collateralRatio: await this.terraStatisticService.collateralRatio(),
+      collateralRatio,
       ...await this.terraStatisticService.mirSupply(),
     }
 
