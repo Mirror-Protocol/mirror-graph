@@ -4,7 +4,7 @@ import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { getTokenBalance, getTokenInfo, getDistributionInfo, getStakingPool } from 'lib/mirror'
-import { getContractStore } from 'lib/terra'
+import { getContractStore, isNativeToken } from 'lib/terra'
 import { getMethMirTokenBalance } from 'lib/eth'
 import { num } from 'lib/num'
 import {
@@ -18,7 +18,7 @@ import {
   bscStatisticService,
 } from 'services'
 import { DailyStatisticEntity, TxEntity } from 'orm'
-import { ContractType } from 'types'
+import { ContractType, AssetStatus } from 'types'
 import { PeriodStatistic, ValueAt, Statistic, APR } from 'graphql/schema'
 
 @Service()
@@ -37,33 +37,22 @@ export class TerraStatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
   async totalValueLocked(): Promise<string> {
-    const assets = await this.assetService.getAll()
-    const gov = this.govService.get()
-    const mintContract = await this.contractService.get({ type: ContractType.MINT, gov })
-    let totalValueLocked = num(0)
+    const { mirrorToken, gov } = this.govService.get()
+    const assets = await this.assetService.getAll({
+      where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }]
+    })
 
+    let totalValueLocked = num(await this.collateralValue())
+
+    // add liquidity value to tvl
     await bluebird.map(assets, async (asset) => {
-      if (asset.token === 'uusd') {
-        const { balance } = await this.accountService.getBalance(mintContract.address, 'uusd')
-        totalValueLocked = totalValueLocked.plus(balance)
-        return
-      }
-
-      // add liquidity value to tvl
       const liquidity = await this.getAssetLiquidity(asset.token)
       totalValueLocked = totalValueLocked.plus(liquidity)
-
-      const price = await this.oracleService.getPrice(asset.token)
-      if (!price) return
-
-      // add collateral value to tvl
-      const balance = await getTokenBalance(asset.token, mintContract.address)
-      const collateral = num(balance).multipliedBy(price)
-      totalValueLocked = totalValueLocked.plus(collateral)
     })
+
     // add MIR gov staked value to tvl
-    const mirBalance = await getTokenBalance(gov.mirrorToken, gov.gov)
-    const mirPrice = await this.priceService.getPrice(gov.mirrorToken)
+    const mirBalance = await getTokenBalance(mirrorToken, gov)
+    const mirPrice = await this.priceService.getPrice(mirrorToken)
     if (mirPrice && mirBalance) {
       totalValueLocked = totalValueLocked.plus(num(mirBalance).multipliedBy(mirPrice))
     }
@@ -72,41 +61,41 @@ export class TerraStatisticService {
   }
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
-  async collateralRatio(): Promise<string> {
+  async collateralValue(): Promise<string> {
+    const { mint, mirrorToken } = this.govService.get()
+    const mirPrice = await this.priceService.getPrice(mirrorToken)
     const assets = await this.assetService.getAll()
-    const gov = this.govService.get()
-    const mintContract = await this.contractService.get({ type: ContractType.MINT, gov })
     let collateralValue = num(0)
 
     await bluebird.map(assets, async (asset) => {
-      if (asset.token === 'uusd') {
-        const { balance } = await this.accountService.getBalance(mintContract.address, 'uusd')
+      const { token, symbol } = asset
+      if (token === 'uusd') {
+        const { balance } = await this.accountService.getBalance(mint, 'uusd')
         collateralValue = collateralValue.plus(balance)
         return
       }
 
-      const price = await this.oracleService.getPrice(asset.token)
+      const price = symbol !== 'MIR' ? await this.oracleService.getPrice(token) : mirPrice
       if (!price) return
 
-      // add collateral value to tvl
-      const balance = await getTokenBalance(asset.token, mintContract.address)
+      const balance = isNativeToken(token)
+        ? (await this.accountService.getBalance(mint, token))?.balance || '0'
+        : await getTokenBalance(token, mint)
       const collateral = num(balance).multipliedBy(price)
       collateralValue = collateralValue.plus(collateral)
     })
 
-    const assetMarketCap = num(await this.assetMarketCap())
-      .plus(await ethStatisticService().assetMarketCap())
-      .plus(await bscStatisticService().assetMarketCap())
-
-    return collateralValue.dividedBy(assetMarketCap).toFixed(4)
+    return collateralValue.toFixed(0)
   }
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
   async assetMarketCap(): Promise<string> {
-    const assets = await this.assetService.getAll()
+    const assets = (await this.assetService.getAll({
+      where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }]
+    })).filter((asset) => asset.symbol !== 'MIR')
     let assetMarketCap = num(0)
 
-    await bluebird.map(assets.filter((asset) => asset.symbol !== 'MIR'), async (asset) => {
+    await bluebird.map(assets, async (asset) => {
       const price = await this.priceService.getPrice(asset.token)
       if (!price) return
 
