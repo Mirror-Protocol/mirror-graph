@@ -33,9 +33,6 @@ export class AssetPositionsEntity {
   @Column('numeric', { precision: 40, default: 0, comment: 'current liquidity uusd pool amount' })
   uusdPool: string
 
-  @Column('numeric', { precision: 40, default: 0, comment: 'total used as collateral amount' })
-  asCollateral: string
-
   @Column('numeric', { precision: 40, default: 0, comment: 'total lp token supply' })
   lpShares: string
 

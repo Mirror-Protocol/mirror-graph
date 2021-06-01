@@ -1,4 +1,4 @@
-import { findAttributes, findAttribute } from 'lib/terra'
+import { findContractAction } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { limitOrderService, statisticService, txService } from 'services'
@@ -8,19 +8,21 @@ import { ParseArgs } from './parseArgs'
 import { errorHandler } from 'lib/error'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, msg, log, contract, fee }: ParseArgs
+  { manager, height, txHash, timestamp, sender, contract, contractEvent, contractEvents, fee }: ParseArgs
 ): Promise<void> {
   const limitOrderRepo = manager.getRepository(LimitOrderEntity)
   const { govId } = contract
   const datetime = new Date(timestamp)
   let parsed = {}
+  let address = sender
 
-  if (msg['submit_order']) {
-    const attributes = findAttributes(log.events, 'from_contract', { key: 'action', value: 'submit_order' })
-    const orderId = findAttribute(attributes, 'order_id')
-    const bidderAddr = findAttribute(attributes, 'bidder_addr')
-    const offerAsset = findAttribute(attributes, 'offer_asset')
-    const askAsset = findAttribute(attributes, 'ask_asset')
+  const actionType = contractEvent.action?.actionType
+  if (!actionType) {
+    return
+  }
+
+  if (actionType === 'submit_order') {
+    const { orderId, bidderAddr, offerAsset, askAsset } = contractEvent.action
 
     const offer = splitTokenAmount(offerAsset)
     const ask = splitTokenAmount(askAsset)
@@ -43,6 +45,10 @@ export async function parse(
       amount = offer.amount
       uusdAmount = ask.amount
       price = num(ask.amount).dividedBy(offer.amount).toString()
+
+      address = findContractAction(contractEvents, token, {
+        actionType: 'send', to: contract.address, amount
+      }).action.from
     }
 
     // save limit order entity
@@ -64,13 +70,11 @@ export async function parse(
       },
       tags: [offer.token, ask.token]
     }
-  } else if (msg['cancel_order']) {
-    const attributes = findAttributes(log.events, 'from_contract', { key: 'action', value: 'cancel_order' })
-    const orderId = findAttribute(attributes, 'order_id')
+  } else if (actionType === 'cancel_order') {
+    const { orderId } = contractEvent.action
 
     const limitOrder = await limitOrderService().get({ id: orderId }, undefined, limitOrderRepo)
     if (!limitOrder) {
-      errorHandler(new Error(`invalid limit order id [${orderId}] from cancel_order`))
       return
     }
     const { token, type, amount, uusdAmount, filledAmount, filledUusdAmount } = limitOrder
@@ -91,11 +95,8 @@ export async function parse(
       },
       tags: [token, 'uusd']
     }
-  } else if (msg['execute_order']) {
-    const attributes = findAttributes(log.events, 'from_contract', { key: 'action', value: 'execute_order' })
-    const orderId = findAttribute(attributes, 'order_id')
-    const executorReceive = findAttribute(attributes, 'executor_receive')
-    const bidderReceive = findAttribute(attributes, 'bidder_receive')
+  } else if (actionType === 'execute_order') {
+    const { orderId, executorReceive, bidderReceive } = contractEvent.action
 
     const limitOrder = await limitOrderService().get({ id: orderId }, undefined, limitOrderRepo)
     if (!limitOrder) {
@@ -103,7 +104,7 @@ export async function parse(
       return
     }
 
-    const { token, type, address } = limitOrder
+    const { token, type, address: orderOwnerAddress } = limitOrder
     const filled = splitTokenAmount(type === LimitOrderType.ASK ? executorReceive : bidderReceive)
     const filledUusd = splitTokenAmount(type === LimitOrderType.ASK ? bidderReceive : executorReceive)
 
@@ -142,13 +143,19 @@ export async function parse(
 
     // save order owner's tx
     await txService().newTx({
-      ...parsed, height, txHash, address, datetime, govId, contract, fee
+      ...parsed, height, txHash, address: orderOwnerAddress, datetime, govId, contract, fee
     }, manager)
+
+    if (type === LimitOrderType.BID) {
+      address = findContractAction(contractEvents, token, {
+        actionType: 'send', to: contract.address, amount: filled.amount
+      }).action.from
+    }
   } else {
     return
   }
 
   await txService().newTx({
-    ...parsed, height, txHash, address: sender, datetime, govId, contract, fee
+    ...parsed, height, txHash, address, datetime, govId, contract, fee
   }, manager)
 }

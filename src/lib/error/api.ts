@@ -64,7 +64,7 @@ export function apiErrorHandler(
         sentry.withScope((scope) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           scope.addEventProcessor((event) =>
-            sentry.Handlers.parseRequest(event, ctx.request as any)
+            sentry.Handlers.parseRequest(event, ctx.request as unknown)
           )
           sentry.captureException(error)
         })

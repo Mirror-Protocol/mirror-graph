@@ -4,6 +4,7 @@ export enum AssetStatus {
   NONE = 'NONE',
   LISTED = 'LISTED',
   DELISTED = 'DELISTED',
+  COLLATERAL = 'COLLATERAL',
 }
 
 registerEnumType(AssetStatus, { name: 'AssetStatus' })

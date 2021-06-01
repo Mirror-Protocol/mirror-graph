@@ -4,7 +4,7 @@ import { uniq } from 'lodash'
 import { Repository, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
-import { num, aprToApy } from 'lib/num'
+import { num } from 'lib/num'
 import { getTokenBalance } from 'lib/mirror'
 import {
   GovService,
@@ -14,7 +14,7 @@ import {
   BscStatisticService,
 } from 'services'
 import { DailyStatisticEntity, RewardEntity } from 'orm'
-import { Statistic, PeriodStatistic, ValueAt, AccountBalance } from 'graphql/schema'
+import { Statistic, PeriodStatistic, ValueAt, AccountBalance, APR } from 'graphql/schema'
 import { Network, AssetStatus } from 'types'
 
 @Service()
@@ -173,7 +173,7 @@ export class StatisticService {
     repo = this.dailyRepo
   ): Promise<DailyStatisticEntity> {
     const datetime = new Date(timestamp - (timestamp % 86400000))
-    const assets = await this.assetService.getAll({ where: { status: AssetStatus.LISTED }})
+    const assets = await this.assetService.getAll({ where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }]})
     let liquidityValue = num(0)
 
     await bluebird.map(
@@ -345,19 +345,14 @@ export class StatisticService {
     }
   }
 
-  async getAssetAPR(network: Network, token: string): Promise<string> {
+  async getAssetAPR(network: Network, token: string): Promise<APR> {
     if (network === Network.TERRA) {
       return this.terraStatisticService.getAssetAPR(token)
     } else if (network === Network.ETH) {
-      return this.ethStatisticService.getAssetAPR(token)
-    }
-  }
-
-  async getAssetAPY(network: Network, token: string): Promise<string> {
-    if (network === Network.TERRA) {
-      return aprToApy(await this.terraStatisticService.getAssetAPR(token))
-    } else if (network === Network.ETH) {
-      return aprToApy(await this.ethStatisticService.getAssetAPR(token))
+      return {
+        long: await this.ethStatisticService.getAssetAPR(token),
+        short: '0'
+      }
     }
   }
 

@@ -1,3 +1,4 @@
+import { isNativeToken } from 'lib/terra'
 export function splitTokenAmount(tokenAmount: string): { token: string; amount: string } {
   const m = tokenAmount.match(/^([0-9]+(\.[0-9]+)?)([a-zA-Z0-9]+)$/)
   if (m === null) {
@@ -9,7 +10,7 @@ export function splitTokenAmount(tokenAmount: string): { token: string; amount: 
 
 export function toAssetAmount(token: string, amount: string): unknown {
   const info =
-    token === 'uusd' ? { nativeToken: { denom: token } } : { token: { contractAddr: token } }
+    isNativeToken(token) ? { nativeToken: { denom: token } } : { token: { contractAddr: token } }
 
   return { info, amount }
 }

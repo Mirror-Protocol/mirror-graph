@@ -4,7 +4,6 @@ import { getContractStoreWithHeight } from 'lib/terra'
 import { PairPool } from 'lib/mirror'
 import { assetService, govService } from 'services'
 import { AssetPositionsEntity } from 'orm'
-import { AssetStatus } from 'types'
 
 export async function getPairPool(targetHeight: number, pair: string):
   Promise<{ assetAmount: string; collateralAmount: string; totalShare: string }> {
@@ -64,7 +63,7 @@ export async function getTokenBalance(targetHeight: number, token: string, addre
 }
 
 export async function syncPairs(height: number): Promise<void> {
-  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED } })
+  const assets = await assetService().getListedAssets()
   const stakingContract = govService().get().staking
 
   await bluebird.map(assets, async (asset) => {

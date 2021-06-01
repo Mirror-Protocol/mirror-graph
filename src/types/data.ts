@@ -20,6 +20,8 @@ export interface Contracts {
   tokenFactory: string
   collector: string
   community: string
+  collateralOracle: string
+  lock: string
 }
 
 export interface Asset {

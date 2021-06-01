@@ -1,15 +1,16 @@
-import * as bluebird from 'bluebird'
-import { findAttributes, findAttribute, parseContractActions } from 'lib/terra'
-import { num } from 'lib/num'
+import { findAttributes, findAttribute } from 'lib/terra'
 import { ParseArgs } from './parseArgs'
 import { govService, assetService } from 'services'
-import { RewardEntity, AssetEntity } from 'orm'
+import { AssetEntity } from 'orm'
 import { AssetStatus } from 'types'
 
-export async function parse(
-  { manager, height, txHash, timestamp, msg, log, contract }: ParseArgs
-): Promise<void> {
-  if (msg['whitelist']) {
+export async function parse({ manager, log, contract, contractEvent }: ParseArgs): Promise<void> {
+  const actionType = contractEvent.action?.actionType
+  if (!actionType) {
+    return
+  }
+
+  if (actionType === 'whitelist') {
     const attributes = findAttributes(log.events, 'from_contract')
     const symbol = findAttribute(attributes, 'symbol') || ''
     const name = findAttribute(attributes, 'name') || ''
@@ -21,22 +22,7 @@ export async function parse(
     const entities = await govService().whitelisting(govId, symbol, name, token, pair, lpToken)
 
     await manager.save(entities)
-  } else if (msg['distribute']) {
-    const datetime = new Date(timestamp)
-
-    const contractActions = parseContractActions(log.events)
-    if (!Array.isArray(contractActions.depositReward))
-      return
-
-    await bluebird.mapSeries(contractActions.depositReward, async (action) => {
-      const { assetToken: token, amount } = action
-
-      if (token && amount && num(amount).isGreaterThan(0)) {
-        const entity = new RewardEntity({ height, txHash, datetime, token, amount })
-        await manager.save(entity)
-      }
-    })
-  } else if (msg['migrate_asset']) {
+  } else if (actionType === 'migration') {
     const attributes = findAttributes(log.events, 'from_contract')
     const fromToken = findAttribute(attributes, 'asset_token')
     const token = findAttribute(attributes, 'asset_token_addr')
@@ -49,12 +35,11 @@ export async function parse(
     )
 
     asset.status = AssetStatus.DELISTED
+    await manager.save(asset)
 
     // whitelisting new asset
-    const entities = await govService().whitelisting(
-      govId, asset.symbol, asset.name, token, pair, lpToken
-    )
+    const entities = await govService().whitelisting(govId, asset.symbol, asset.name, token, pair, lpToken)
 
-    await manager.save([asset, ...entities])
+    await manager.save(entities)
   }
 }

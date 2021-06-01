@@ -7,7 +7,7 @@ import { errorHandler } from 'lib/error'
 import { BlockEntity } from 'orm'
 import { parseTxs } from './parser'
 import { getCollectedBlock, updateBlock } from './block'
-import { syncPairs } from './sync'
+// import { syncPairs } from './sync'
 import config from 'config'
 
 export async function collect(now: number): Promise<void> {
@@ -35,7 +35,7 @@ export async function collect(now: number): Promise<void> {
     await updateBlock(collectedBlock, lastTx.height, manager.getRepository(BlockEntity))
   })
 
-  await syncPairs(lastTx.height).catch(errorHandler)
+  // await syncPairs(lastTx.height).catch(errorHandler)
 
   const txDate = formatToTimeZone(
     new Date(lastTx.timestamp), 'YYYY-MM-DD HH:mm:ss', { timeZone: 'Asia/Seoul' }

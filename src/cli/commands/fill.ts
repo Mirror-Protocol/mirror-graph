@@ -1,6 +1,6 @@
 import { program } from 'commander'
 import { ethers } from 'ethers'
-import { getRepository } from 'typeorm'
+import { getRepository, Not } from 'typeorm'
 import { addMinutes, addDays, startOfDay } from 'date-fns'
 import * as bluebird from 'bluebird'
 import * as fs from 'fs'
@@ -31,6 +31,10 @@ async function collectPrice(
 async function fillPriceHistory(asset: AssetEntity): Promise<void> {
   const symbol = asset.symbol.substring(1)
   const price = await priceService().get({ token: asset.token }, { order: { id: 'ASC' }})
+  if (!price) {
+    logger.info(`There is no price for ${symbol}`)
+    return
+  }
 
   const minFrom = startOfDay(addDays(price.datetime, -1)).getTime()
   const minTo = addMinutes(price.datetime, -1).getTime()
@@ -48,14 +52,9 @@ async function fillPriceHistory(asset: AssetEntity): Promise<void> {
 }
 
 async function fillPriceHistoryAll(): Promise<void> {
-  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
+  const assets = await assetService().getListedAssets({ symbol: Not('MIR')})
 
-  await bluebird.mapSeries(assets, async (asset) => {
-    if (asset.symbol === 'MIR')
-      return
-
-    await fillPriceHistory(asset)
-  })
+  await bluebird.mapSeries(assets, async (asset) => fillPriceHistory(asset))
 }
 
 export function fillCommands(): void {
@@ -65,7 +64,7 @@ export function fillCommands(): void {
       if (symbol === 'all') {
         await fillPriceHistoryAll()
       } else {
-        const asset = await assetService().get({ symbol })
+        const asset = await assetService().get({ symbol, status: AssetStatus.LISTED })
         await fillPriceHistory(asset)
       }
 

@@ -1,4 +1,5 @@
 import { program } from 'commander'
+import { getManager, EntityManager } from 'typeorm'
 import * as bluebird from 'bluebird'
 import { createObjectCsvWriter } from 'csv-writer'
 import { format } from 'date-fns'
@@ -6,15 +7,16 @@ import { num } from 'lib/num'
 import * as logger from 'lib/logger'
 import { assetService, priceService, oracleService, ethStatisticService } from 'services'
 import { AssetStatus } from 'types'
+import { Not } from 'typeorm'
 
 export function statisticCommands(): void {
   program
     .command('assets-premium')
     .action(async () => {
       const assetList = (await assetService().getAll({
-        where: { status: AssetStatus.LISTED },
+        where: { status: AssetStatus.LISTED, symbol: Not('MIR') },
         order: { symbol: 'ASC' },
-      })).filter((asset) => asset.symbol !== 'MIR')
+      }))
 
       const header = [{ id: 'time', title: 'time' }]
       assetList.map((asset) => {
@@ -68,27 +70,29 @@ export function statisticCommands(): void {
         order: { symbol: 'ASC' },
       }))
 
-      await bluebird.mapSeries(assets, async (asset) => {
-        const { token, symbol } = asset
+      await getManager().transaction(async (manager: EntityManager) => {
+        await bluebird.mapSeries(assets, async (asset) => {
+          const { token, symbol } = asset
 
-        logger.info(`collect ${symbol} daily`)
+          logger.info(`collect ${symbol} daily`)
 
-        const latestDaily = await ethStatisticService().getDailyStatistic(
-          { token }, { order: { id: 'DESC' }}
-        )
-        const fromDaily = latestDaily?.datetime.getTime() || 1606953600000
-        await ethStatisticService().collectStatistic(asset.token, true, fromDaily, Date.now())
+          const latestDaily = await ethStatisticService().getDailyStatistic(
+            { token }, { order: { id: 'DESC' }}
+          )
+          const fromDaily = latestDaily?.datetime.getTime() || 1606953600000
+          await ethStatisticService().collectStatistic(manager, asset.token, true, fromDaily, Date.now())
 
-        logger.info(`collect ${symbol} hourly`)
-        await bluebird.delay(1000)
+          logger.info(`collect ${symbol} hourly`)
+          await bluebird.delay(1000)
 
-        const latestHourly = await ethStatisticService().getHourlyStatistic(
-          { token }, { order: { id: 'DESC' }}
-        )
-        const fromHourly = latestHourly?.datetime.getTime() || 1606953600000
-        await ethStatisticService().collectStatistic(asset.token, false, fromHourly, Date.now())
+          const latestHourly = await ethStatisticService().getHourlyStatistic(
+            { token }, { order: { id: 'DESC' }}
+          )
+          const fromHourly = latestHourly?.datetime.getTime() || 1606953600000
+          await ethStatisticService().collectStatistic(manager, asset.token, false, fromHourly, Date.now())
 
-        await bluebird.delay(1000)
+          await bluebird.delay(1000)
+        })
       })
 
       logger.info('completed')

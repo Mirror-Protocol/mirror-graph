@@ -1,7 +1,7 @@
 import { Repository, FindConditions, FindOneOptions, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
-import { lcd } from 'lib/terra'
+import { lcd, isNativeToken, getContractStore } from 'lib/terra'
 import { num, BigNumber } from 'lib/num'
 import * as logger from 'lib/logger'
 import { AssetBalance, ValueAt } from 'graphql/schema'
@@ -59,7 +59,7 @@ export class AccountService {
   }
 
   async getBalance(address: string, token: string): Promise<AssetBalance> {
-    if (token === 'uusd') {
+    if (isNativeToken(token)) {
       const coin = (await lcd.bank.balance(address)).get(token)
       return { token, balance: coin?.amount?.toString() || '0', averagePrice: '1' }
     }
@@ -68,13 +68,17 @@ export class AccountService {
       { address, token },
       { select: ['balance', 'averagePrice'], order: { id: 'DESC' } }
     )
-    if (!balanceEntity) return
-
-    return {
-      token,
-      balance: balanceEntity.balance,
-      averagePrice: balanceEntity.averagePrice,
+    if (balanceEntity) {
+      return {
+        token,
+        balance: balanceEntity.balance,
+        averagePrice: balanceEntity.averagePrice,
+      }
     }
+
+    const { balance } = await getContractStore(token, { balance: { address } })
+
+    return { token, balance, averagePrice: '1' }
   }
 
   async getBalances(address: string, repo = this.balanceRepo): Promise<AssetBalance[]> {

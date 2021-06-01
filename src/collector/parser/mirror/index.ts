@@ -1,5 +1,8 @@
+
+import * as bluebird from 'bluebird'
 import { TxInfo, MsgExecuteContract, TxLog } from '@terra-money/terra.js'
 import { EntityManager } from 'typeorm'
+import { parseContractEvents } from 'lib/terra'
 import { contractService } from 'services'
 import { ContractType } from 'types'
 import { ContractEntity } from 'orm'
@@ -13,16 +16,18 @@ import * as mint from './mint'
 import * as staking from './staking'
 import * as gov from './gov'
 import * as collector from './collector'
-import * as tokenTransfer from './tokenTransfer'
 import * as uusdTransfer from './uusdTransfer'
 import * as fee from './fee'
 import * as airdrop from './airdrop'
 
 export async function parseMirrorMsg(
-  manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, log: TxLog
+  manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, index: number, log: TxLog
 ): Promise<void> {
   const contractRepo = manager.getRepository(ContractEntity)
-  const contract = await contractService().get({ address: msg.contract }, undefined, contractRepo)
+  const contractEvents = parseContractEvents(log.events)
+  if (!contractEvents) {
+    return
+  }
 
   const args: ParseArgs = {
     manager,
@@ -34,10 +39,21 @@ export async function parseMirrorMsg(
     coins: msg.coins,
     msg: msg.execute_msg,
     log,
-    contract,
+    contract: undefined,
+    contractEvent: undefined,
+    contractEvents,
   }
 
-  if (contract) {
+  await bluebird.mapSeries(contractEvents, async (event) => {
+    const contract = await contractService().get({ address: event.address }, undefined, contractRepo)
+    if (!contract) {
+      return
+    }
+
+    args.contract = contract
+    args.contractEvent = event
+    args.sender = event.sender
+
     switch (contract.type) {
       case ContractType.GOV:
         await gov.parse(args)
@@ -80,10 +96,12 @@ export async function parseMirrorMsg(
         await limitOrder.parse(args)
         break
     }
-  }
+  })
 
-  // tracking token balance
-  await tokenTransfer.parse(args)
+  args.contract = undefined
+  args.contractEvent = undefined
+  args.sender = msg.sender
+
   // tracking uusd balance
   await uusdTransfer.parse(manager, txInfo, log)
   // tracking fee

@@ -3,9 +3,9 @@ import * as Koa from 'koa'
 import * as bluebird from 'bluebird'
 import { KoaController, Controller, Validator, Validate, Get } from 'koa-joi-controllers'
 import { success } from 'lib/response'
-import { num } from 'lib/num'
 import { assetService, statisticService, priceService, ethService } from 'services'
-import { AssetStatus, Network } from 'types'
+import { Network } from 'types'
+import { num, aprToApy } from 'lib/num'
 
 const Joi = Validator.Joi
 
@@ -28,7 +28,7 @@ async function getStatistic(): Promise<{
 
 async function getPools(format: string): Promise<unknown> {
   if (format === 'cmc-dex') {
-    const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
+    const assets = await assetService().getListedAssets()
     const pools = {}
     await bluebird.map(assets, async (asset) => {
       const price = await priceService().getPrice(asset.token)
@@ -74,7 +74,7 @@ async function getPools(format: string): Promise<unknown> {
 
     return pools
   } else if (format === 'cmc-yield-farming') {
-    const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
+    const assets = await assetService().getListedAssets()
 
     const pools = [
       ...await bluebird.map(assets, async (asset) => ({
@@ -83,7 +83,7 @@ async function getPools(format: string): Promise<unknown> {
         pairLink: 'https://terra.mirror.finance/stake',
         logo: `https://whitelist.mirror.finance/icon/MIR/100x100.png`,
         poolRewards: ['MIR'],
-        apr: +(await statisticService().getAssetAPY(Network.TERRA, asset.token)), // APY, 1.1 means 110%
+        apr: +(aprToApy((await statisticService().getAssetAPR(Network.TERRA, asset.token)).long)), // APY, 1.1 means 110%
         totalStaked: +num(await statisticService().getAssetLiquidity(Network.TERRA, asset.token))
           .dividedBy(1000000)
           .toFixed(2), // Total valued lock in USD 
@@ -94,7 +94,7 @@ async function getPools(format: string): Promise<unknown> {
         pairLink: 'https://eth.mirror.finance/',
         logo: `https://whitelist.mirror.finance/icon/MIR/100x100.png`,
         poolRewards: ['MIR'],
-        apr: +(await statisticService().getAssetAPY(Network.ETH, asset.token)), // APY, 1.1 means 110%
+        apr: +(aprToApy((await statisticService().getAssetAPR(Network.ETH, asset.token)).long)), // APY, 1.1 means 110%
         totalStaked: +num(await statisticService().getAssetLiquidity(Network.ETH, asset.token))
           .dividedBy(1000000)
           .toFixed(2), // Total valued lock in USD 
@@ -114,11 +114,11 @@ async function getPools(format: string): Promise<unknown> {
       pools,
     }
   } else if (format === 'coingecko') {
-    const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
+    const assets = await assetService().getListedAssets()
     const pools = {}
     await bluebird.map(assets, async (asset) => {
       pools[`Terra ${asset.symbol}-UST`] = {
-        poolAPY: +(await statisticService().getAssetAPY(Network.TERRA, asset.token)),
+        poolAPY: +(aprToApy((await statisticService().getAssetAPR(Network.TERRA, asset.token)).long)),
         totalLockedVal: +num(await statisticService().getAssetLiquidity(Network.TERRA, asset.token))
           .dividedBy(1000000)
           .toFixed(2)
@@ -126,7 +126,7 @@ async function getPools(format: string): Promise<unknown> {
     })
     await bluebird.map(assets, async (asset) => {
       pools[`Ethereum ${asset.symbol}-UST`] = {
-        poolAPY: +(await statisticService().getAssetAPY(Network.ETH, asset.token)),
+        poolAPY: +(aprToApy((await statisticService().getAssetAPR(Network.ETH, asset.token)).long)),
         totalLockedVal: +num(await statisticService().getAssetLiquidity(Network.ETH, asset.token))
           .dividedBy(1000000)
           .toFixed(2)

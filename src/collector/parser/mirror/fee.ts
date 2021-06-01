@@ -25,7 +25,7 @@ export async function parse(
     }
   })
 
-  await accountService().addBalance(
+  uusdChange !== '0' && await accountService().addBalance(
     sender, 'uusd', '1', uusdChange, datetime, manager.getRepository(BalanceEntity)
   )
 }

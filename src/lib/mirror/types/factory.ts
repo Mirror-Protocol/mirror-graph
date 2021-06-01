@@ -1,4 +1,4 @@
 export interface DistributionInfo {
   lastDistributed: number
-  weights: string[][]
+  weights: [string, number][]
 }

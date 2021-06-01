@@ -1,13 +1,13 @@
-import { findAttributes, findAttribute } from 'lib/terra'
+import { findContractAction, isNativeToken } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
-import { assetService, accountService, cdpService, oracleService, txService } from 'services'
+import { assetService, accountService, cdpService, oracleService, txService, collateralService } from 'services'
 import { CdpEntity, AssetPositionsEntity, BalanceEntity, OraclePriceEntity } from 'orm'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
-  { manager, height, txHash, timestamp, sender, msg, log, contract, fee }: ParseArgs
+  { manager, height, txHash, timestamp, sender, contract, contractEvent, contractEvents, fee, log }: ParseArgs
 ): Promise<void> {
   const cdpRepo = manager.getRepository(CdpEntity)
   const positionsRepo = manager.getRepository(AssetPositionsEntity)
@@ -21,15 +21,23 @@ export async function parse(
   let tx = {}
   let address = sender
 
-  const attributes = findAttributes(log.events, 'from_contract')
-  const positionIdx = findAttribute(attributes, 'position_idx')
+  const actionType = contractEvent.action?.actionType
+  if (!actionType) {
+    return
+  }
 
-  if (msg['open_position']) {
-    const mintAmount = findAttribute(attributes, 'mint_amount')
-    const collateralAmount = findAttribute(attributes, 'collateral_amount')
+  if (actionType === 'open_position') {
+    const { positionIdx, mintAmount, collateralAmount } = contractEvent.action
+    const isShort = contractEvent.action?.isShort === 'true'
 
     const mint = splitTokenAmount(mintAmount)
     const collateral = splitTokenAmount(collateralAmount)
+
+    if (!isNativeToken(collateral.token)) {
+      address = findContractAction(contractEvents, collateral.token, {
+        actionType: 'send', to: contract.address, amount: collateral.amount
+      }).action.from
+    }
 
     // create cdp
     cdp = new CdpEntity({
@@ -39,42 +47,46 @@ export async function parse(
       mintAmount: mint.amount,
       collateralToken: collateral.token,
       collateralAmount: collateral.amount,
+      isShort
     })
 
-    // add mint/asCollateral position
+    // add mint position
     await assetService().addMintPosition(mint.token, mint.amount, positionsRepo)
-    await assetService().addAsCollateralPosition(collateral.token, collateral.amount, positionsRepo)
 
-    // add account balance
-    const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
-    await accountService().addBalance(sender, mint.token, price, mint.amount, datetime, balanceRepo)
+    if (!isShort) {
+      // add minted amount to account balance
+      const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
+      await accountService().addBalance(address, mint.token, price, mint.amount, datetime, balanceRepo)
+    }
 
     tx = {
       type: TxType.OPEN_POSITION,
-      data: { positionIdx, mintAmount, collateralAmount },
+      data: { positionIdx, mintAmount, collateralAmount, isShort },
       token: mint.token,
       tags: [mint.token, collateral.token],
     }
-  } else if (msg['deposit']) {
-    const depositAmount = findAttribute(attributes, 'deposit_amount')
+  } else if (actionType === 'deposit') {
+    const { positionIdx, depositAmount } = contractEvent.action
     const deposit = splitTokenAmount(depositAmount)
+
+    if (!isNativeToken(deposit.token)) {
+      address = findContractAction(contractEvents, deposit.token, {
+        actionType: 'send', to: contract.address, amount: deposit.amount
+      }).action.from
+    }
 
     // add cdp collateral
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).plus(deposit.amount).toString()
 
-    // add asset's asCollateral position
-    await assetService().addAsCollateralPosition(deposit.token, deposit.amount, positionsRepo)
-
     tx = {
       type: TxType.DEPOSIT_COLLATERAL,
       data: { positionIdx, depositAmount },
-      token: deposit.token,
+      token: cdp.token,
       tags: [deposit.token],
     }
-  } else if (msg['withdraw']) {
-    const withdrawAmount = findAttribute(attributes, 'withdraw_amount')
-    const protocolFeeAmount = findAttribute(attributes, 'protocol_fee')
+  } else if (actionType === 'withdraw') {
+    const { positionIdx, withdrawAmount, protocolFee: protocolFeeAmount, taxAmount } = contractEvent.action
     const withdraw = splitTokenAmount(withdrawAmount)
     const protocolFee = splitTokenAmount(protocolFeeAmount)
 
@@ -84,22 +96,19 @@ export async function parse(
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).minus(totalWithdraw).toString()
 
-    // remove asset's asCollateral position
-    await assetService().addAsCollateralPosition(withdraw.token, `-${totalWithdraw}`, positionsRepo)
-
     tx = {
       type: TxType.WITHDRAW_COLLATERAL,
       data: {
         positionIdx,
         withdrawAmount,
-        taxAmount: findAttribute(attributes, 'tax_amount'),
+        taxAmount,
         protocolFeeAmount
       },
-      token: withdraw.token,
+      token: cdp.token,
       tags: [withdraw.token],
     }
-  } else if (msg['mint']) {
-    const mintAmount = findAttribute(attributes, 'mint_amount')
+  } else if (actionType === 'mint') {
+    const { positionIdx, mintAmount } = contractEvent.action
     const mint = splitTokenAmount(mintAmount)
 
     // add cdp mint
@@ -111,7 +120,7 @@ export async function parse(
 
     // add account balance
     const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
-    await accountService().addBalance(sender, mint.token, price, mint.amount, datetime, balanceRepo)
+    await accountService().addBalance(address, mint.token, price, mint.amount, datetime, balanceRepo)
 
     tx = {
       type: TxType.MINT,
@@ -119,9 +128,13 @@ export async function parse(
       token: mint.token,
       tags: [mint.token],
     }
-  } else if (msg['burn']) {
-    const burnAmount = findAttribute(attributes, 'burn_amount')
+  } else if (actionType === 'burn') {
+    const { positionIdx, burnAmount } = contractEvent.action
     const burn = splitTokenAmount(burnAmount)
+
+    address = findContractAction(contractEvents, burn.token, {
+      actionType: 'send', to: contract.address, amount: burn.amount
+    }).action.from
 
     // remove cdp mint
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
@@ -136,15 +149,16 @@ export async function parse(
       token: burn.token,
       tags: [burn.token],
     }
-  } else if (msg['auction']) {
-    const liquidatedAmount = findAttribute(attributes, 'liquidated_amount')
-    const returnCollateralAmount = findAttribute(attributes, 'return_collateral_amount')
-    const protocolFeeAmount = findAttribute(attributes, 'protocol_fee')
-    const taxAmount = findAttribute(attributes, 'tax_amount')
+  } else if (actionType === 'auction') {
+    const { positionIdx, liquidatedAmount, returnCollateralAmount, protocolFee: protocolFeeAmount, taxAmount } = contractEvent.action
 
     const liquidated = splitTokenAmount(liquidatedAmount)
     const returnCollateral = splitTokenAmount(returnCollateralAmount)
     const protocolFee = splitTokenAmount(protocolFeeAmount)
+
+    address = findContractAction(contractEvents, liquidated.token, {
+      actionType: 'send', to: contract.address
+    }).action.from
 
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).minus(liquidated.amount).toString()
@@ -157,23 +171,17 @@ export async function parse(
       // remove asset's mint position
       await assetService().addMintPosition(liquidated.token, `-${cdp.mintAmount}`, positionsRepo)
 
-      // remove asset's asCollateral position
-      await assetService().addAsCollateralPosition(returnCollateral.token, `-${cdp.collateralAmount}`, positionsRepo)
-
       cdp.mintAmount = '0'
       cdp.collateralAmount = '0'
       cdp.collateralRatio = '0'
     } else {
       // remove asset's mint position
       await assetService().addMintPosition(liquidated.token, `-${liquidated.amount}`, positionsRepo)
-
-      // remove asset's asCollateral position
-      await assetService().addAsCollateralPosition(returnCollateral.token, `-${returnCollateral.amount}`, positionsRepo)
     }
 
     tx = {
       type: TxType.AUCTION,
-      data: { positionIdx, liquidatedAmount, returnCollateralAmount, taxAmount, protocolFeeAmount, liquidator: sender },
+      data: { positionIdx, liquidatedAmount, returnCollateralAmount, taxAmount, protocolFeeAmount, liquidator: address },
       token: liquidated.token,
       tags: [liquidated.token, returnCollateral.token],
     }
@@ -192,9 +200,7 @@ export async function parse(
   // calculate collateral ratio
   const { token, collateralToken } = cdp
   const tokenPrice = await oracleService().getPrice(token, datetime.getTime(), oracleRepo)
-  const collateralPrice = collateralToken !== 'uusd'
-    ? await oracleService().getPrice(collateralToken, datetime.getTime(), oracleRepo)
-    : '1'
+  const collateralPrice = await collateralService().getPrice(collateralToken)
 
   if (tokenPrice && collateralPrice) {
     const { mintAmount, collateralAmount } = cdp

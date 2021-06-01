@@ -8,8 +8,9 @@ import {
 } from 'typeorm'
 import { Container, Service } from 'typedi'
 import { addMonths } from 'date-fns'
-import { num, BigNumber } from 'lib/num'
+import { num } from 'lib/num'
 import { AssetEntity, AssetPositionsEntity, AssetNewsEntity, PriceEntity } from 'orm'
+import { AssetStatus } from 'types'
 
 @Service()
 export class AssetService {
@@ -31,6 +32,14 @@ export class AssetService {
 
   async getAll(options?: FindManyOptions<AssetEntity>, repo = this.repo): Promise<AssetEntity[]> {
     return repo.find(options)
+  }
+
+  async getListedAssets(where?: FindConditions<AssetEntity>): Promise<AssetEntity[]> {
+    return this.getAll({ where: { status: AssetStatus.LISTED, ...where }})
+  }
+
+  async getCollateralAssets(where?: FindConditions<AssetEntity>): Promise<AssetEntity[]> {
+    return this.getAll({ where: { status: AssetStatus.COLLATERAL, ...where }})
   }
 
   async getPositions(
@@ -70,23 +79,7 @@ export class AssetService {
       repo
     )
 
-    positions.lpShares = BigNumber.max(num(positions.lpShares).plus(lpShares), 0).toString()
-
-    return repo.save(positions)
-  }
-
-  async addAsCollateralPosition(
-    token: string,
-    amount: string,
-    repo = this.positionsRepo
-  ): Promise<AssetPositionsEntity> {
-    const positions = await this.getPositions(
-      { token },
-      { select: ['token', 'asCollateral'] },
-      repo
-    )
-
-    positions.asCollateral = BigNumber.max(num(positions.asCollateral).plus(amount), 0).toString()
+    positions.lpShares = num(positions.lpShares).plus(lpShares).toString()
 
     return repo.save(positions)
   }
@@ -98,7 +91,7 @@ export class AssetService {
   ): Promise<AssetPositionsEntity> {
     const positions = await this.getPositions({ token }, { select: ['token', 'lpStaked'] }, repo)
 
-    positions.lpStaked = BigNumber.max(num(positions.lpStaked).plus(stakeAmount), 0).toString()
+    positions.lpStaked = num(positions.lpStaked).plus(stakeAmount).toString()
 
     return repo.save(positions)
   }

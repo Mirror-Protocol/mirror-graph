@@ -5,7 +5,6 @@ import { toSnakeCase } from 'lib/caseStyles'
 import * as logger from 'lib/logger'
 import { getTokenBalance, getDistributionInfo } from 'lib/mirror'
 import { govService, assetService, accountService } from 'services'
-import { AssetStatus } from 'types'
 import { num } from 'lib/num'
 import { Updater } from 'lib/Updater'
 
@@ -17,17 +16,17 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
   }
 
   const { factory, collector, mirrorToken } = govService().get()
-  const assets = await assetService().getAll({ where: { status: AssetStatus.LISTED }})
+  const assets = await assetService().getListedAssets()
   const sender = wallet.key.accAddress
 
   // MIR inflation distribute every 1hour
   const distributionInfo = await getDistributionInfo(factory)
-  if (Date.now() - (+distributionInfo.lastDistributed*1000) >= 60000 * 60) {
+  if (Date.now() - (+distributionInfo.lastDistributed * 1000) >= 60000 * 60) {
     await wallet.execute(
       factory,
       { distribute: {} },
       new Coins([]),
-      new StdFee(3500000, { uusd: 550000 })
+      new StdFee(4000000, { uusd: 600000 })
     )
   }
 
@@ -54,7 +53,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
 
   if (convertMsgs.length > 0) {
     // execute convert fee
-    await wallet.executeMsgs(convertMsgs, new StdFee(3000000, { uusd: 450000 }))
+    await wallet.executeMsgs(convertMsgs, new StdFee(4000000, { uusd: 600000 }))
 
     // execute distribute converted fee
     await wallet.execute(collector, { distribute: {} })
