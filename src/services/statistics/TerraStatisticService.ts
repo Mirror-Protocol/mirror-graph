@@ -15,7 +15,7 @@ import {
   OracleService,
   ContractService,
   ethStatisticService,
-  bscStatisticService,
+  // bscStatisticService,
 } from 'services'
 import { DailyStatisticEntity, TxEntity } from 'orm'
 import { ContractType, AssetStatus } from 'types'
@@ -42,15 +42,16 @@ export class TerraStatisticService {
       where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }]
     })
 
+    // add collateral value
     let totalValueLocked = num(await this.collateralValue())
 
-    // add liquidity value to tvl
+    // add liquidity value
     await bluebird.map(assets, async (asset) => {
       const liquidity = await this.getAssetLiquidity(asset.token)
       totalValueLocked = totalValueLocked.plus(liquidity)
     })
 
-    // add MIR gov staked value to tvl
+    // add MIR gov staked value
     const mirBalance = await getTokenBalance(mirrorToken, gov)
     const mirPrice = await this.priceService.getPrice(mirrorToken)
     if (mirPrice && mirBalance) {
@@ -107,7 +108,7 @@ export class TerraStatisticService {
     // decrease eth,bsc market cap
     assetMarketCap = assetMarketCap
       .minus(await ethStatisticService().assetMarketCap())
-      .minus(await bscStatisticService().assetMarketCap())
+      // .minus(await bscStatisticService().assetMarketCap())
 
     return assetMarketCap.toFixed(0)
   }

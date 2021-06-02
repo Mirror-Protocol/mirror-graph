@@ -11,7 +11,7 @@ import {
   AssetService,
   TerraStatisticService,
   EthStatisticService,
-  BscStatisticService,
+  // BscStatisticService,
 } from 'services'
 import { DailyStatisticEntity, RewardEntity } from 'orm'
 import { Statistic, PeriodStatistic, ValueAt, AccountBalance, APR } from 'graphql/schema'
@@ -24,7 +24,7 @@ export class StatisticService {
     @Inject((type) => AssetService) private readonly assetService: AssetService,
     @Inject((type) => TerraStatisticService) private readonly terraStatisticService: TerraStatisticService,
     @Inject((type) => EthStatisticService) private readonly ethStatisticService: EthStatisticService,
-    @Inject((type) => BscStatisticService) private readonly bscStatisticService: BscStatisticService,
+    // @Inject((type) => BscStatisticService) private readonly bscStatisticService: BscStatisticService,
     @InjectRepository(DailyStatisticEntity)
     private readonly dailyRepo: Repository<DailyStatisticEntity>,
     @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>
@@ -53,22 +53,22 @@ export class StatisticService {
         totalValueLocked: await this.ethStatisticService.totalValueLocked(),
         assetMarketCap: await this.ethStatisticService.assetMarketCap(),
       }
-    } else if (network === Network.BSC) {
-      return {
-        totalValueLocked: await this.bscStatisticService.totalValueLocked(),
-        assetMarketCap: await this.bscStatisticService.assetMarketCap(),
-        ...stat,
-      }
+    // } else if (network === Network.BSC) {
+    //   return {
+    //     totalValueLocked: await this.bscStatisticService.totalValueLocked(),
+    //     assetMarketCap: await this.bscStatisticService.assetMarketCap(),
+    //     ...stat,
+    //   }
     } else if (network === Network.COMBINE) {
       const tvls = [
         await this.terraStatisticService.totalValueLocked(),
         await this.ethStatisticService.totalValueLocked(),
-        await this.bscStatisticService.totalValueLocked(),
+        // await this.bscStatisticService.totalValueLocked(),
       ]
       const assetMarketCaps = [
         await this.terraStatisticService.assetMarketCap(),
         await this.ethStatisticService.assetMarketCap(),
-        await this.bscStatisticService.assetMarketCap(),
+        // await this.bscStatisticService.assetMarketCap(),
       ]
 
       return {
@@ -84,13 +84,13 @@ export class StatisticService {
       return this.terraStatisticService.today()
     } else if (network === Network.ETH) {
       return this.ethStatisticService.today()
-    } else if (network === Network.BSC) {
-      return this.bscStatisticService.today()
+    // } else if (network === Network.BSC) {
+    //   return this.bscStatisticService.today()
     } else if (network === Network.COMBINE) {
       const statistics = [
         await this.terraStatisticService.today(),
         await this.ethStatisticService.today(),
-        await this.bscStatisticService.today(),
+        // await this.bscStatisticService.today(),
       ]
 
       return {
@@ -108,18 +108,21 @@ export class StatisticService {
       return this.terraStatisticService.latest24h()
     } else if (network === Network.ETH) {
       return this.ethStatisticService.latest24h()
-    } else if (network === Network.BSC) {
-      return this.bscStatisticService.latest24h()
+    // } else if (network === Network.BSC) {
+    //   return this.bscStatisticService.latest24h()
     } else if (network === Network.COMBINE) {
-      const terra = await this.terraStatisticService.latest24h()
-      const eth = await this.ethStatisticService.latest24h()
+      const statistics = [
+        await this.terraStatisticService.latest24h(),
+        await this.ethStatisticService.latest24h(),
+        // await this.bscStatisticService.latest24h(),
+      ]
 
       return {
-        transactions: num(terra.transactions).plus(eth.transactions).toString(),
-        volume: num(terra.volume).plus(eth.volume).toString(),
-        feeVolume: num(terra.feeVolume).plus(eth.feeVolume).toString(),
-        mirVolume: num(terra.mirVolume).plus(eth.mirVolume).toString(),
-        activeUsers: num(terra.activeUsers).plus(eth.activeUsers).toString(),
+        transactions: statistics.reduce((result, stat) => result.plus(stat.transactions), num(0)).toString(),
+        volume: statistics.reduce((result, stat) => result.plus(stat.volume), num(0)).toString(),
+        feeVolume: statistics.reduce((result, stat) => result.plus(stat.feeVolume), num(0)).toString(),
+        mirVolume: statistics.reduce((result, stat) => result.plus(stat.mirVolume), num(0)).toString(),
+        activeUsers: statistics.reduce((result, stat) => result.plus(stat.activeUsers), num(0)).toString(),
       }
     }
   }
@@ -210,19 +213,19 @@ export class StatisticService {
       return this.terraStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC)
     } else if (network === Network.ETH) {
       return this.ethStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC)
-    } else if (network === Network.BSC) {
-      return this.bscStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC)
+    // } else if (network === Network.BSC) {
+    //   return this.bscStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC)
     } else if (network === Network.COMBINE) {
       const terra = (await this.terraStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
         .sort((a, b) => +b.timestamp - +a.timestamp)
       const eth = (await this.ethStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
         .sort((a, b) => +b.timestamp - +a.timestamp)
-      const bsc = (await this.bscStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
-        .sort((a, b) => +b.timestamp - +a.timestamp)
+      // const bsc = (await this.bscStatisticService.getLiquidityHistory(fromDayUTC, toDayUTC))
+      //   .sort((a, b) => +b.timestamp - +a.timestamp)
       const timestamps = uniq([
         ...terra.map((data) => +data.timestamp),
         ...eth.map((data) => +data.timestamp),
-        ...bsc.map((data) => +data.timestamp)
+        // ...bsc.map((data) => +data.timestamp)
       ]).sort((a, b) => a - b)
       const findLatestValue = (array, timestamp) => array.find((data) => +data.timestamp <= +timestamp)?.value || 0
 
@@ -242,18 +245,18 @@ export class StatisticService {
       return this.terraStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
     } else if (network === Network.ETH) {
       return this.ethStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
-    } else if (network === Network.BSC) {
-      return this.bscStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
+    // } else if (network === Network.BSC) {
+    //   return this.bscStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
     } else if (network === Network.COMBINE) {
       const terra = await this.terraStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
       const eth = await this.ethStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
-      const bsc = await this.bscStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
+      // const bsc = await this.bscStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
 
       return bluebird.mapSeries(terra, (data) => ({
         timestamp: +data.timestamp,
         value: num(data.value)
           .plus(eth.find((ethData) => +ethData.timestamp === +data.timestamp)?.value || 0)
-          .plus(bsc.find((bscData) => +bscData.timestamp === +data.timestamp)?.value || 0)
+          // .plus(bsc.find((bscData) => +bscData.timestamp === +data.timestamp)?.value || 0)
           .toString()
       }))
     }
@@ -269,16 +272,18 @@ export class StatisticService {
       values = await this.terraStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
     } else if (network === Network.ETH) {
       values = await this.ethStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
+    // } else if (network === Network.BSC) {
+    //   values = await this.bscStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
     } else if (network === Network.COMBINE) {
       const terra = await this.terraStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
       const eth = await this.ethStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
-      const bsc = await this.bscStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
+      // const bsc = await this.bscStatisticService.getTradingVolumeHistory(fromDayUTC, toDayUTC)
 
       values = await bluebird.mapSeries(terra, (data) => ({
         timestamp: +data.timestamp,
         value: num(data.value)
           .plus(eth.find((ethData) => +ethData.timestamp === +data.timestamp)?.value || 0)
-          .plus(bsc.find((bscData) => +bscData.timestamp === +data.timestamp)?.value || 0)
+          // .plus(bsc.find((bscData) => +bscData.timestamp === +data.timestamp)?.value || 0)
           .toString()
       }))
     }
@@ -296,13 +301,13 @@ export class StatisticService {
       return this.terraStatisticService.getAssetDayVolume(token, dayUTC)
     } else if (network === Network.ETH) {
       return this.ethStatisticService.getAssetDayVolume(token, dayUTC)
-    } else if (network === Network.BSC) {
-      return this.bscStatisticService.getAssetDayVolume(token, dayUTC)
+    // } else if (network === Network.BSC) {
+    //   return this.bscStatisticService.getAssetDayVolume(token, dayUTC)
     } else if (network === Network.COMBINE) {
       const statistics = [
         await this.terraStatisticService.getAssetDayVolume(token, dayUTC),
         await this.ethStatisticService.getAssetDayVolume(token, dayUTC),
-        await this.bscStatisticService.getAssetDayVolume(token, dayUTC),
+        // await this.bscStatisticService.getAssetDayVolume(token, dayUTC),
       ]
 
       return statistics.reduce((result, stat) => result.plus(stat), num(0)).toString()
@@ -314,13 +319,13 @@ export class StatisticService {
       return this.terraStatisticService.getAsset24h(token)
     } else if (network === Network.ETH) {
       return this.ethStatisticService.getAsset24h(token)
-    } else if (network === Network.BSC) {
-      return this.bscStatisticService.getAsset24h(token)
+    // } else if (network === Network.BSC) {
+    //   return this.bscStatisticService.getAsset24h(token)
     } else if (network === Network.COMBINE) {
       const statistics = [
         await this.terraStatisticService.getAsset24h(token),
         await this.ethStatisticService.getAsset24h(token),
-        await this.bscStatisticService.getAsset24h(token),
+        // await this.bscStatisticService.getAsset24h(token),
       ]
 
       return {
@@ -335,13 +340,13 @@ export class StatisticService {
       return this.terraStatisticService.getAssetLiquidity(token)
     } else if (network === Network.ETH) {
       return this.ethStatisticService.getAssetLiquidity(token)
-    } else if (network === Network.BSC) {
-      return this.bscStatisticService.getAssetLiquidity(token)
+    // } else if (network === Network.BSC) {
+    //   return this.bscStatisticService.getAssetLiquidity(token)
     } else if (network === Network.COMBINE) {
       const statistics = [
         await this.terraStatisticService.getAssetLiquidity(token),
         await this.ethStatisticService.getAssetLiquidity(token),
-        await this.bscStatisticService.getAssetLiquidity(token),
+        // await this.bscStatisticService.getAssetLiquidity(token),
       ]
 
       return statistics.reduce((result, stat) => result.plus(stat), num(0)).toString()
