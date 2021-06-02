@@ -38,7 +38,7 @@ export class StatisticService {
     const stat = {
       network,
       collateralRatio,
-      ...await this.terraStatisticService.mirSupply(),
+      mirSupply: await this.terraStatisticService.mirSupply(),
     }
 
     if (network === Network.TERRA) {

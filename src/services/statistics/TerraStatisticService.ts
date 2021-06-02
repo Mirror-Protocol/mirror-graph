@@ -129,7 +129,7 @@ export class TerraStatisticService {
     const airdropBalance = await getTokenBalance(mirrorToken, airdrop)
     const factoryBalance = await getTokenBalance(mirrorToken, factory)
     const communityBalance = await getTokenBalance(mirrorToken, community)
-    const methBalance = await getMethMirTokenBalance()
+    const methBalance = await getMethMirTokenBalance().catch((error) => '0')
 
     const { totalSupply } = await getContractStore(mirrorToken, { tokenInfo: {} })
     const circulating = num(totalSupply)
