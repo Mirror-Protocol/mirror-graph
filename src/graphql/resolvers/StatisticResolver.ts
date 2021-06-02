@@ -39,12 +39,7 @@ export class StatisticResolver {
 
   @FieldResolver((type) => String)
   async govAPR(): Promise<string> {
-    return this.statisticService.getGovAPY()
-  }
-
-  @FieldResolver((type) => String)
-  async govAPY(): Promise<string> {
-    return this.statisticService.getGovAPY()
+    return this.statisticService.getGovAPR()
   }
 
   @FieldResolver((type) => [ValueAt])

@@ -19,7 +19,7 @@ import {
 } from 'services'
 import { DailyStatisticEntity, TxEntity } from 'orm'
 import { ContractType, AssetStatus } from 'types'
-import { PeriodStatistic, ValueAt, Statistic, APR } from 'graphql/schema'
+import { PeriodStatistic, ValueAt, APR, TVL, MirSupply } from 'graphql/schema'
 
 @Service()
 export class TerraStatisticService {
@@ -36,29 +36,32 @@ export class TerraStatisticService {
   ) {}
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
-  async totalValueLocked(): Promise<string> {
+  async totalValueLocked(): Promise<TVL> {
     const { mirrorToken, gov } = this.govService.get()
     const assets = await this.assetService.getAll({
       where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }]
     })
 
-    // add collateral value
-    let totalValueLocked = num(await this.collateralValue())
+    const collateral = await this.collateralValue()
 
-    // add liquidity value
+    let liquidity = '0'
     await bluebird.map(assets, async (asset) => {
-      const liquidity = await this.getAssetLiquidity(asset.token)
-      totalValueLocked = totalValueLocked.plus(liquidity)
+      const assetLiquidity = (await this.getAssetLiquidity(asset.token)) || '0'
+      liquidity = num(liquidity).plus(assetLiquidity).toFixed(0)
     })
 
-    // add MIR gov staked value
     const mirBalance = await getTokenBalance(mirrorToken, gov)
     const mirPrice = await this.priceService.getPrice(mirrorToken)
-    if (mirPrice && mirBalance) {
-      totalValueLocked = totalValueLocked.plus(num(mirBalance).multipliedBy(mirPrice))
-    }
+    const stakedMir = (mirPrice && mirBalance)
+      ? num(mirBalance).multipliedBy(mirPrice).toFixed(0)
+      : '0'
 
-    return totalValueLocked.toFixed(0)
+    return {
+      total: num(collateral).plus(liquidity).plus(stakedMir).toFixed(0),
+      collateral,
+      liquidity,
+      stakedMir
+    }
   }
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
@@ -114,32 +117,32 @@ export class TerraStatisticService {
   }
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
-  async mirSupply(): Promise<Partial<Statistic>> {
-    const gov = this.govService.get()
-    const mirrorToken = gov.mirrorToken
-    const airdropContract = (await this.contractService.get({ type: ContractType.AIRDROP, gov }))
+  async mirSupply(): Promise<MirSupply> {
+    const govEntity = this.govService.get()
+    const { mirrorToken, factory } = govEntity
+    const airdrop = (await this.contractService.get({ type: ContractType.AIRDROP, gov: govEntity }))
       .address
-    const factoryContract = (await this.contractService.get({ type: ContractType.FACTORY, gov }))
-      .address
-    const communityContract = (
-      await this.contractService.get({ type: ContractType.COMMUNITY, gov })
+    const community = (
+      await this.contractService.get({ type: ContractType.COMMUNITY, gov: govEntity })
     ).address
 
-    const airdropBalance = await getTokenBalance(mirrorToken, airdropContract)
-    const factoryBalance = await getTokenBalance(mirrorToken, factoryContract)
-    const communityBalance = await getTokenBalance(mirrorToken, communityContract)
+    const airdropBalance = await getTokenBalance(mirrorToken, airdrop)
+    const factoryBalance = await getTokenBalance(mirrorToken, factory)
+    const communityBalance = await getTokenBalance(mirrorToken, community)
     const methBalance = await getMethMirTokenBalance()
 
     const { totalSupply } = await getContractStore(mirrorToken, { tokenInfo: {} })
-    const mirCirculatingSupply = num(totalSupply)
+    const circulating = num(totalSupply)
       .minus(airdropBalance)
       .minus(factoryBalance)
       .minus(communityBalance)
       .minus(methBalance)
+      .toFixed(0)
 
     return {
-      mirTotalSupply: totalSupply,
-      mirCirculatingSupply: mirCirculatingSupply.toFixed(0),
+      circulating,
+      liquidity: (await this.assetService.get({ token: mirrorToken })).positions.pool,
+      staked: await getTokenBalance(mirrorToken, govEntity.gov),
     }
   }
 

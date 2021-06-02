@@ -19,7 +19,7 @@ async function getStatistic(): Promise<{
   const latest24h = await statisticService().latest24h(Network.COMBINE)
 
   return {
-    totalValueLocked: num(statistic.totalValueLocked).dividedBy(1000000).toFixed(6),
+    totalValueLocked: num(statistic.totalValueLocked.total).dividedBy(1000000).toFixed(6),
     users24h: latest24h.activeUsers,
     transactions24h: latest24h.transactions,
     volume24h: num(latest24h.volume).dividedBy(1000000).toFixed(6),

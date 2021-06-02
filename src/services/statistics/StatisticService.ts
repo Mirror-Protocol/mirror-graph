@@ -73,7 +73,12 @@ export class StatisticService {
 
       return {
         ...stat,
-        totalValueLocked: tvls.reduce((result, tvl) => result.plus(tvl), num(0)).toString(),
+        totalValueLocked: {
+          total: tvls.reduce((result, tvl) => result.plus(tvl.total), num(0)).toString(),
+          liquidity: tvls.reduce((result, tvl) => result.plus(tvl.liquidity), num(0)).toString(),
+          collateral: tvls.reduce((result, tvl) => result.plus(tvl.collateral), num(0)).toString(),
+          stakedMir: tvls.reduce((result, tvl) => result.plus(tvl.stakedMir), num(0)).toString(),
+        },
         assetMarketCap: assetMarketCaps.reduce((result, assetMarketCap) => result.plus(assetMarketCap), num(0)).toString(),
       }
     }
@@ -128,7 +133,7 @@ export class StatisticService {
   }
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
-  async getGovAPY(): Promise<string> {
+  async getGovAPR(): Promise<string> {
     const period = 15 // days
     const to = Date.now()
     const from = Date.now() - (60000 * 60 * 24 * period) // 15days ago
@@ -148,9 +153,9 @@ export class StatisticService {
         .getRawOne()
     )?.amount
     const govStakedMir = await getTokenBalance(govEntity.mirrorToken, govEntity.gov)
-    const govAPY = num(reward).dividedBy(period).multipliedBy(365).dividedBy(govStakedMir)
+    const govAPR = num(reward).dividedBy(period).multipliedBy(365).dividedBy(govStakedMir)
 
-    return !govAPY.isNaN() ? govAPY.toString() : '0'
+    return !govAPR.isNaN() ? govAPR.toString() : '0'
   }
 
   async addDailyTradingVolume(

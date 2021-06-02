@@ -1,5 +1,5 @@
 import { ObjectType, Field } from 'type-graphql'
-import { ValueAt } from './common'
+import { ValueAt, TVL, MirSupply } from './common'
 import { Network } from 'types'
 
 @ObjectType({ simpleResolvers: true })
@@ -29,7 +29,7 @@ export class Statistic {
   assetMarketCap: string
 
   @Field()
-  totalValueLocked: string
+  totalValueLocked: TVL
 
   @Field()
   collateralRatio: string
@@ -38,16 +38,10 @@ export class Statistic {
   latest24h: PeriodStatistic
 
   @Field()
-  mirCirculatingSupply: string
-
-  @Field()
-  mirTotalSupply: string
+  mirSupply: MirSupply
 
   @Field()
   govAPR: string
-
-  @Field()
-  govAPY: string
 
   @Field((type) => [ValueAt], { nullable: true })
   liquidityHistory: ValueAt[]

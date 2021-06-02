@@ -6,7 +6,7 @@ import { num } from 'lib/num'
 import { EthPairStatisticData } from 'lib/eth'
 import { govService } from 'services'
 import { AssetDailyEntity, AssetHourlyEntity } from 'orm'
-import { PeriodStatistic, ValueAt } from 'graphql/schema'
+import { PeriodStatistic, TVL, ValueAt } from 'graphql/schema'
 import { Network, EthAssets, EthAsset, EthAssetInfos } from 'types'
 
 export class EthBaseStatistic {
@@ -65,18 +65,23 @@ export class EthBaseStatistic {
   }
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
-  async totalValueLocked(): Promise<string> {
+  async totalValueLocked(): Promise<TVL> {
     const assets = this.getAssets()
-    let totalValueLocked = num(0)
+    let liquidity = '0'
 
     await bluebird.map(Object.keys(assets), async (ethToken) => {
       const terraToken = assets[ethToken].terraToken
-      const liquidity = await this.getAssetLiquidity(terraToken)
+      const assetLiquidity = await this.getAssetLiquidity(terraToken)
 
-      totalValueLocked = totalValueLocked.plus(liquidity)
+      liquidity = num(liquidity).plus(assetLiquidity).toFixed(0)
     })
 
-    return totalValueLocked.toFixed(0)
+    return {
+      total: liquidity,
+      liquidity: liquidity,
+      collateral: '0',
+      stakedMir: '0',
+    }
   }
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
