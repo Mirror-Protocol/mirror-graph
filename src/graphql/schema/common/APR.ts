@@ -2,9 +2,9 @@ import { ObjectType, Field } from 'type-graphql'
 
 @ObjectType({ simpleResolvers: true })
 export class APR {
-  @Field()
+  @Field({ description: 'long farm apr'})
   long: string
 
-  @Field()
+  @Field({ description: 'short farm apr'})
   short: string
 }
