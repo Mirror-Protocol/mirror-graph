@@ -20,27 +20,26 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
 
   let polls = await getGovPolls(gov, 'in_progress', 100)
   await bluebird.mapSeries(polls, async (poll) => {
-    // end poll
-    if (latestHeight > poll.endHeight) {
-      await wallet.execute(gov, { endPoll: { pollId: poll.id } })
+    const { id: pollId, endHeight, stakedAmount } = poll
 
-      logger.info(`end poll(${poll.id})`)
-    }
-    // snapshot poll
-    else if (poll.stakedAmount == null && snapshotPeriod) {
-      const snapHeight = poll.endHeight - snapshotPeriod
+    if (latestHeight > endHeight) { // end poll
+      await wallet.execute(gov, { endPoll: { pollId } })
+
+      logger.info(`end poll(${pollId})`)
+    } else if (!stakedAmount && snapshotPeriod) { // snapshot poll
+      const snapHeight = endHeight - snapshotPeriod
       if (latestHeight > snapHeight) {
-        await wallet.execute(gov, { snapshotPoll: { pollId: poll.id } })
+        await wallet.execute(gov, { snapshotPoll: { pollId } })
 
-        logger.info(`snapshot poll(${poll.id})`)
+        logger.info(`snapshot poll(${pollId})`)
       }
     }
   })
 
   polls = (await getGovPolls(gov, 'passed', 100)).filter((poll) => poll.executeData)
   await bluebird.mapSeries(polls, async (poll) => {
-    // execute poll
     const executeHeight = poll.endHeight + effectiveDelay
+
     // try execute only 1 hour(600 blocks)
     if (latestHeight > executeHeight && latestHeight - executeHeight < 10 * 60) {
       await wallet.execute(gov, { executePoll: { pollId: poll.id } })
