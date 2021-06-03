@@ -33,7 +33,7 @@ export async function adjustPremium(wallet: TxWallet): Promise<void> {
       return (
         !pool.premiumUpdatedTime ||
         pool.premiumUpdatedTime == 0 ||
-        now > ((pool.premiumUpdatedTime + premiumMinUpdateInterval) * 1000)
+        now > ((pool.premiumUpdatedTime + premiumMinUpdateInterval + 10) * 1000)
       )
     })
 
