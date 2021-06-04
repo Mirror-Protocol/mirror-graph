@@ -351,14 +351,17 @@ export class TerraStatisticService {
       return { long: '0', short: '0' }
     }
 
-    const { shortRewardWeight } = await getStakingPool(staking, token)
+    const { shortRewardWeight, totalShortAmount } = await getStakingPool(staking, token)
     const longReward = num(annualReward).multipliedBy(num(1).minus(shortRewardWeight || 0))
     const shortReward = num(annualReward).multipliedBy(shortRewardWeight)
 
-    // (Annual MIR reward * MIR price) / (liquidity value * (staked lp share/total lp share))
+    const sLPValue = num(totalShortAmount).multipliedBy(await this.priceService.getPrice(token))
+
     return {
+      // long: (annual long reward * MIR price) / (liquidity value * (staked lp share/total lp share))
       long: longReward.multipliedBy(mirPrice).dividedBy(poolValue).toFixed(3),
-      short: shortReward.multipliedBy(mirPrice).dividedBy(poolValue).toFixed(3),
+      // short: (annual short reward * MIR price) / (sLP amount * terraswap price)
+      short: shortReward.multipliedBy(mirPrice).dividedBy(sLPValue).toFixed(3),
     }
   }
 }
