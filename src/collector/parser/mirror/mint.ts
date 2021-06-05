@@ -2,8 +2,8 @@ import { findContractAction, isNativeToken } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
 import { assetService, accountService, cdpService, oracleService, txService, collateralService } from 'services'
-import { CdpEntity, AssetPositionsEntity, BalanceEntity, OraclePriceEntity } from 'orm'
-import { TxType } from 'types'
+import { CdpEntity, AssetEntity, AssetPositionsEntity, BalanceEntity, OraclePriceEntity } from 'orm'
+import { TxType, AssetStatus } from 'types'
 import { ParseArgs } from './parseArgs'
 
 export async function parse(
@@ -193,6 +193,20 @@ export async function parse(
 
     // change address to cdp owner's address for tx
     address = cdp.address
+  } else if (actionType === 'trigger_i_p_o') {
+    const { assetToken: token } = contractEvent.action
+
+    // listing pre-ipo asset
+    const asset = await assetService().get({ token }, undefined, manager.getRepository(AssetEntity))
+    if (asset.status !== AssetStatus.PRE_IPO) {
+      throw new Error(`triggered to not pre-ipo asset`)
+    }
+
+    asset.status = AssetStatus.LISTED
+
+    await manager.save(asset)
+
+    return
   } else {
     return
   }

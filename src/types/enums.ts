@@ -5,6 +5,7 @@ export enum AssetStatus {
   LISTED = 'LISTED',
   DELISTED = 'DELISTED',
   COLLATERAL = 'COLLATERAL',
+  PRE_IPO = 'PRE_IPO',
 }
 
 registerEnumType(AssetStatus, { name: 'AssetStatus' })

@@ -39,7 +39,7 @@ export class TerraStatisticService {
   async totalValueLocked(): Promise<TVL> {
     const { mirrorToken, gov } = this.govService.get()
     const assets = await this.assetService.getAll({
-      where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }]
+      where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }, { status: AssetStatus.PRE_IPO }]
     })
 
     const collateral = await this.collateralValue()
@@ -95,7 +95,7 @@ export class TerraStatisticService {
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
   async assetMarketCap(): Promise<string> {
     const assets = (await this.assetService.getAll({
-      where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }]
+      where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }, { status: AssetStatus.PRE_IPO }]
     })).filter((asset) => asset.symbol !== 'MIR')
     let assetMarketCap = num(0)
 

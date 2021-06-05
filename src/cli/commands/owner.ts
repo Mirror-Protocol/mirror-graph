@@ -10,7 +10,7 @@ export function ownerCommands(): void {
     .description('export assets.json')
     .action(async () => {
       const assetList = await assetService().getAll({
-        where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }],
+        where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }, { status: AssetStatus.PRE_IPO }],
         order: { symbol: 'ASC' },
       })
       const assets: Assets = {}

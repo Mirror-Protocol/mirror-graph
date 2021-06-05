@@ -123,7 +123,8 @@ export class GovService {
     name: string,
     token: string,
     pair: string,
-    lpToken: string
+    lpToken: string,
+    isPreIPO = false
   ): unknown[] {
     if (!token || !pair || !lpToken) {
       throw new Error(`whitelisting failed. token(${token}), lpToken(${lpToken}), pair(${pair})`)
@@ -139,7 +140,7 @@ export class GovService {
       token,
       pair,
       lpToken,
-      status: AssetStatus.LISTED,
+      status: !isPreIPO ? AssetStatus.LISTED : AssetStatus.PRE_IPO,
     })
 
     const entities = [
