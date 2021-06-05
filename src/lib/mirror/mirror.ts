@@ -5,6 +5,7 @@ import {
   OraclePrice,
   GovConfig,
   GovPoll,
+  GovStaker,
   MintAssetConfig,
   TokenInfo,
   StakingConfig,
@@ -66,6 +67,10 @@ export async function getGovConfig(gov: string): Promise<GovConfig> {
 export async function getGovPolls(gov: string, filter: string, limit: number): Promise<GovPoll[]> {
   const { polls } = await getContractStore(gov, { polls: { filter, limit } })
   return polls
+}
+
+export async function getGovStaker(gov: string, address: string): Promise<GovStaker> {
+  return getContractStore<GovStaker>(gov, { staker: { address } })
 }
 
 export async function getMintAssetConfig(mint: string, token: string): Promise<MintAssetConfig> {

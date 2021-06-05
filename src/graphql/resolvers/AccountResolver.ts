@@ -46,9 +46,7 @@ export class AccountResolver {
     @Arg('from', { description: 'timestamp' }) from: number,
     @Arg('to', { description: 'timestamp' }) to: number,
   ): Promise<string> {
-    // fix: hardcoded timestamp
-    return this.txService.getTradingVolume(address, 1608213600000, 1609423200000)
-    // return this.txService.getTradingVolume(address, from, to)
+    return this.txService.getTradingVolume(address, from, to)
   }
 
   @Query((returns) => GraphQLJSON, { nullable: true })
@@ -79,5 +77,10 @@ export class AccountResolver {
   @FieldResolver()
   async haveBalanceHistory(@Root() account: AccountEntity): Promise<boolean> {
     return this.accountService.haveBalanceHistory(account.address)
+  }
+
+  @FieldResolver()
+  async accumulatedGovReward(@Root() account: AccountEntity): Promise<string> {
+    return this.txService.getAccumulatedGovReward(account.address)
   }
 }

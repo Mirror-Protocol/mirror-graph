@@ -14,4 +14,7 @@ export class Account {
 
   @Field((type) => [AssetBalance], { nullable: true, description: 'all asset balances' })
   balances?: AssetBalance[]
+
+  @Field({ nullable: true })
+  accumulatedGovReward?: string
 }

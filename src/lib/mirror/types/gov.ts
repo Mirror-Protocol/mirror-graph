@@ -24,3 +24,9 @@ export interface GovPoll {
   title: string
   yesVotes: string
 }
+
+export interface GovStaker {
+  balance: string
+  share: string
+  pendingVotingRewards: string
+}
