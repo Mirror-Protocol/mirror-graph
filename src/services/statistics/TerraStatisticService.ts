@@ -284,16 +284,28 @@ export class TerraStatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000, preFetch: true }) // 1 minute
   async getAssetLiquidity(token: string): Promise<string> {
     const asset = await this.assetService.get({ token })
     const price = await this.priceService.getPrice(token)
     if (!asset || !price || asset.positions.uusdPool === '0' || asset.positions.pool === '0') {
       return '0'
     }
+
     return num(asset.positions.uusdPool).dividedBy(asset.positions.pool).multipliedBy(asset.positions.pool)
       .plus(asset.positions.uusdPool)
       .toFixed(0)
+  }
+
+  @memoize({ promise: true, maxAge: 60000, preFetch: true }) // 1 minute
+  async getAssetShortLiquidity(token: string): Promise<string> {
+    const { staking } = this.govService.get()
+    const { totalShortAmount } = await getStakingPool(staking, token)
+    const price = await this.priceService.getPrice(token)
+
+    return (+totalShortAmount > 0 && +price > 0)
+      ? num(totalShortAmount).multipliedBy(price).toFixed(0)
+      : '0'
   }
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
@@ -334,34 +346,31 @@ export class TerraStatisticService {
   async getAssetAPR(token: string): Promise<APR> {
     const asset = await this.assetService.get({ token })
     const { mirrorToken, staking } = this.govService.get()
-    const { positions } = asset
-
     const mirPrice = await this.priceService.getPrice(mirrorToken)
-    const liquidityValue = num(positions.uusdPool)
-      .dividedBy(positions.pool)
-      .multipliedBy(positions.pool)
-      .plus(positions.uusdPool)
-    const poolValue = liquidityValue
-      .multipliedBy(num(positions.lpStaked).dividedBy(positions.lpShares))
  
-    const annualReward = (await this.getAnnualRewardTable())[token]
-    if (
-      !annualReward || annualReward === '0' || !mirPrice || mirPrice === '0' || poolValue.isNaN() || liquidityValue.isNaN()
-    ) {
+    const annualReward = (await this.getAnnualRewardTable())?.[token]
+    if (!annualReward || annualReward === '0' || !mirPrice || mirPrice === '0') {
       return { long: '0', short: '0' }
     }
 
-    const { shortRewardWeight, totalShortAmount } = await getStakingPool(staking, token)
+    const { shortRewardWeight } = await getStakingPool(staking, token)
+    const { pool, uusdPool, lpStaked, lpShares } = asset.positions
+    const liquidityValue = num(uusdPool).dividedBy(pool).multipliedBy(pool).plus(uusdPool)
+    const stakedLiquidityValue = liquidityValue.multipliedBy(num(lpStaked).dividedBy(lpShares))
+    const shortLiquidityValue = await this.getAssetShortLiquidity(token)
+
     const longReward = num(annualReward).multipliedBy(num(1).minus(shortRewardWeight || 0))
     const shortReward = num(annualReward).multipliedBy(shortRewardWeight)
 
-    const sLPValue = num(totalShortAmount).multipliedBy(await this.priceService.getPrice(token))
-
     return {
       // long: (annual long reward * MIR price) / (liquidity value * (staked lp share/total lp share))
-      long: longReward.multipliedBy(mirPrice).dividedBy(poolValue).toFixed(3),
+      long: +stakedLiquidityValue > 0
+        ? longReward.multipliedBy(mirPrice).dividedBy(stakedLiquidityValue).toFixed(3)
+        : '0',
       // short: (annual short reward * MIR price) / (sLP amount * terraswap price)
-      short: shortReward.multipliedBy(mirPrice).dividedBy(sLPValue).toFixed(3),
+      short: +shortLiquidityValue > 0
+        ? shortReward.multipliedBy(mirPrice).dividedBy(shortLiquidityValue).toFixed(3)
+        : '0',
     }
   }
 }

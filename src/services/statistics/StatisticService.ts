@@ -358,6 +358,14 @@ export class StatisticService {
     }
   }
 
+  async getAssetShortLiquidity(network: Network, token: string): Promise<string> {
+    if (network === Network.TERRA || network === Network.COMBINE) {
+      return this.terraStatisticService.getAssetShortLiquidity(token)
+    }
+
+    return '0'
+  }
+
   async getAssetAPR(network: Network, token: string): Promise<APR> {
     if (network === Network.TERRA) {
       return this.terraStatisticService.getAssetAPR(token)
@@ -367,6 +375,8 @@ export class StatisticService {
         short: '0'
       }
     }
+
+    return { long: '0', short: '0' }
   }
 
   @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes

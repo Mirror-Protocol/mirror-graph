@@ -19,6 +19,14 @@ export class AssetStatisticResolver {
   }
 
   @FieldResolver()
+  async shortLiquidity(
+    @Root() asset: AssetEntity,
+    @Arg('network', (type) => Network, { defaultValue: Network.COMBINE }) network: Network
+  ): Promise<string> {
+    return this.statisticService.getAssetShortLiquidity(network, asset.token)
+  }
+
+  @FieldResolver()
   async volume(
     @Root() asset: AssetEntity,
     @Arg('network', (type) => Network, { defaultValue: Network.COMBINE }) network: Network
