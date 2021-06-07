@@ -9,6 +9,11 @@ import { Updater } from 'lib/Updater'
 const updater = new Updater(60 * 60000) // 1hour
 
 export async function updateNews(): Promise<void> {
+  // update only columbus
+  if (!process.env.TERRA_CHAIN_ID.includes('columbus')) {
+    return
+  }
+
   if (!updater.needUpdate(Date.now())) {
     return
   }
