@@ -6,8 +6,8 @@ export class AssetStatistic {
   @Field({ nullable: true, description: 'liquidity value for long' })
   liquidity?: string
 
-  @Field({ nullable: true, description: 'liquidity value for short' })
-  shortLiquidity?: string
+  @Field({ nullable: true, description: 'short value' })
+  shortValue?: string
 
   @Field({ nullable: true, description: 'trading volume of latest 24h' })
   volume?: string

@@ -360,9 +360,9 @@ export class StatisticService {
     }
   }
 
-  async getAssetShortLiquidity(network: Network, token: string): Promise<string> {
+  async getAssetShortValue(network: Network, token: string): Promise<string> {
     if (network === Network.TERRA || network === Network.COMBINE) {
-      return this.terraStatisticService.getAssetShortLiquidity(token)
+      return this.terraStatisticService.getAssetShortValue(token)
     }
 
     return '0'

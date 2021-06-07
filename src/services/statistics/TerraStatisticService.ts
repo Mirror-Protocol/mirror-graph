@@ -298,7 +298,7 @@ export class TerraStatisticService {
   }
 
   @memoize({ promise: true, maxAge: 60000, preFetch: true }) // 1 minute
-  async getAssetShortLiquidity(token: string): Promise<string> {
+  async getAssetShortValue(token: string): Promise<string> {
     const { staking } = this.govService.get()
     const { totalShortAmount } = await getStakingPool(staking, token)
     const price = await this.priceService.getPrice(token)
@@ -357,7 +357,7 @@ export class TerraStatisticService {
     const { pool, uusdPool, lpStaked, lpShares } = asset.positions
     const liquidityValue = num(uusdPool).dividedBy(pool).multipliedBy(pool).plus(uusdPool)
     const stakedLiquidityValue = liquidityValue.multipliedBy(num(lpStaked).dividedBy(lpShares))
-    const shortLiquidityValue = await this.getAssetShortLiquidity(token)
+    const shortValue = await this.getAssetShortValue(token)
 
     const longReward = num(annualReward).multipliedBy(num(1).minus(shortRewardWeight || 0))
     const shortReward = num(annualReward).multipliedBy(shortRewardWeight)
@@ -368,8 +368,8 @@ export class TerraStatisticService {
         ? longReward.multipliedBy(mirPrice).dividedBy(stakedLiquidityValue).toFixed(3)
         : '0',
       // short: (annual short reward * MIR price) / (sLP amount * terraswap price)
-      short: +shortLiquidityValue > 0
-        ? shortReward.multipliedBy(mirPrice).dividedBy(shortLiquidityValue).toFixed(3)
+      short: +shortValue > 0
+        ? shortReward.multipliedBy(mirPrice).dividedBy(shortValue).toFixed(3)
         : '0',
     }
   }
