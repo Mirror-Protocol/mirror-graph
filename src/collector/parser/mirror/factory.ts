@@ -53,5 +53,18 @@ export async function parse(
     const entities = await govService().whitelisting(govId, asset.symbol, asset.name, token, pair, lpToken)
 
     await manager.save(entities)
+  } else if (actionType === 'revoke_asset') {
+    const { assetToken: token, endPrice } = contractEvent.action
+    const timestamp = new Date(txTimestamp).getTime()
+
+    // delisting asset
+    const asset = await assetService().get({ token }, undefined, manager.getRepository(AssetEntity))
+
+    asset.status = AssetStatus.DELISTED
+
+    // save end price
+    const oraclePrice = await oracleService().setOHLC(token, timestamp, endPrice, manager.getRepository(OraclePriceEntity), false)
+
+    await manager.save([asset, oraclePrice])
   }
 }
