@@ -1,4 +1,5 @@
 import * as bluebird from 'bluebird'
+import { Not } from 'typeorm'
 import { Coins, MsgExecuteContract, StdFee } from '@terra-money/terra.js'
 import { TxWallet } from 'lib/terra'
 import { toSnakeCase } from 'lib/caseStyles'
@@ -16,7 +17,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
   }
 
   const { factory, collector, mirrorToken } = govService().get()
-  const assets = await assetService().getListedAssets()
+  const assets = await assetService().getListedAssets({ symbol: Not('MIR')})
   const sender = wallet.key.accAddress
 
   // MIR inflation distribute every 1hour
