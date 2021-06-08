@@ -86,23 +86,19 @@ export async function parse(
       tags: [deposit.token],
     }
   } else if (actionType === 'withdraw') {
-    const { positionIdx, withdrawAmount, protocolFee: protocolFeeAmount, taxAmount } = contractEvent.action
+    const { positionIdx, withdrawAmount, taxAmount } = contractEvent.action
     const withdraw = splitTokenAmount(withdrawAmount)
-    const protocolFee = splitTokenAmount(protocolFeeAmount)
-
-    const totalWithdraw = num(withdraw.amount).plus(protocolFee.amount).toString()
 
     // remove cdp collateral
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
-    cdp.collateralAmount = num(cdp.collateralAmount).minus(totalWithdraw).toString()
+    cdp.collateralAmount = num(cdp.collateralAmount).minus(withdraw.amount).toString()
 
     tx = {
       type: TxType.WITHDRAW_COLLATERAL,
       data: {
         positionIdx,
         withdrawAmount,
-        taxAmount,
-        protocolFeeAmount
+        taxAmount
       },
       token: cdp.token,
       tags: [withdraw.token],
@@ -129,23 +125,26 @@ export async function parse(
       tags: [mint.token],
     }
   } else if (actionType === 'burn') {
-    const { positionIdx, burnAmount } = contractEvent.action
+    const { positionIdx, burnAmount, protocolFee: protocolFeeAmount } = contractEvent.action
     const burn = splitTokenAmount(burnAmount)
+    const protocolFee = splitTokenAmount(protocolFeeAmount)
 
     address = findContractAction(contractEvents, burn.token, {
       actionType: 'send', to: contract.address, amount: burn.amount
     }).action.from
 
-    // remove cdp mint
+    // remove cdp's mint amount
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).minus(burn.amount).toString()
+    // remove protocol_fee from cdp's collateral
+    cdp.collateralAmount = num(cdp.collateralAmount).minus(protocolFee.amount).toString()
 
     // remove asset's mint position
     await assetService().addMintPosition(burn.token, `-${burn.amount}`, positionsRepo)
 
     tx = {
       type: TxType.BURN,
-      data: { positionIdx, burnAmount },
+      data: { positionIdx, burnAmount, protocolFeeAmount },
       token: burn.token,
       tags: [burn.token],
     }
