@@ -127,7 +127,6 @@ export async function parse(
   } else if (actionType === 'burn') {
     const { positionIdx, burnAmount, protocolFee: protocolFeeAmount } = contractEvent.action
     const burn = splitTokenAmount(burnAmount)
-    const protocolFee = splitTokenAmount(protocolFeeAmount)
 
     address = findContractAction(contractEvents, burn.token, {
       actionType: 'send', to: contract.address, amount: burn.amount
@@ -136,8 +135,13 @@ export async function parse(
     // remove cdp's mint amount
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).minus(burn.amount).toString()
-    // remove protocol_fee from cdp's collateral
-    cdp.collateralAmount = num(cdp.collateralAmount).minus(protocolFee.amount).toString()
+
+    if (protocolFeeAmount) {
+      const protocolFee = splitTokenAmount(protocolFeeAmount)
+
+      // remove protocol_fee from cdp's collateral
+      cdp.collateralAmount = num(cdp.collateralAmount).minus(protocolFee.amount).toString()
+    }
 
     // remove asset's mint position
     await assetService().addMintPosition(burn.token, `-${burn.amount}`, positionsRepo)
