@@ -1,4 +1,5 @@
 import * as bluebird from 'bluebird'
+import { errorHandler } from 'lib/error'
 import { TxWallet, getLatestBlockHeight } from 'lib/terra'
 import { getGovPolls, getGovConfig } from 'lib/mirror'
 import * as logger from 'lib/logger'
@@ -41,7 +42,7 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
     const executeHeight = poll.endHeight + effectiveDelay
 
     if (latestHeight > executeHeight && latestHeight - executeHeight < expirationPeriod) {
-      await wallet.execute(gov, { executePoll: { pollId: poll.id } })
+      await wallet.execute(gov, { executePoll: { pollId: poll.id } }).catch(errorHandler)
 
       logger.info(`execute poll(${poll.id})`)
     }
