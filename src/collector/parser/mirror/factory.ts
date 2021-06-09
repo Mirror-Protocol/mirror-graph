@@ -62,9 +62,11 @@ export async function parse(
 
     asset.status = AssetStatus.DELISTED
 
-    // save end price
-    const oraclePrice = await oracleService().setOHLC(token, timestamp, endPrice, manager.getRepository(OraclePriceEntity), false)
+    if (endPrice) {
+      const oraclePrice = await oracleService().setOHLC(token, timestamp, endPrice, manager.getRepository(OraclePriceEntity), false)
+      await manager.save(oraclePrice)
+    }
 
-    await manager.save([asset, oraclePrice])
+    await manager.save(asset)
   }
 }
