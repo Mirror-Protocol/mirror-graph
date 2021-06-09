@@ -125,7 +125,12 @@ export async function parse(
       tags: [mint.token],
     }
   } else if (actionType === 'burn') {
-    const { positionIdx, burnAmount, protocolFee: protocolFeeAmount } = contractEvent.action
+    const {
+      positionIdx,
+      burnAmount,
+      protocolFee: protocolFeeAmount,
+      refundCollateralAmount
+    } = contractEvent.action
     const burn = splitTokenAmount(burnAmount)
 
     address = findContractAction(contractEvents, burn.token, {
@@ -136,10 +141,15 @@ export async function parse(
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).minus(burn.amount).toString()
 
+    if (refundCollateralAmount) {
+      const refundCollateral = splitTokenAmount(refundCollateralAmount)
+
+      cdp.collateralAmount = num(cdp.collateralAmount).minus(refundCollateral.amount).toString()
+    }
+
     if (protocolFeeAmount) {
       const protocolFee = splitTokenAmount(protocolFeeAmount)
 
-      // remove protocol_fee from cdp's collateral
       cdp.collateralAmount = num(cdp.collateralAmount).minus(protocolFee.amount).toString()
     }
 
@@ -148,7 +158,7 @@ export async function parse(
 
     tx = {
       type: TxType.BURN,
-      data: { positionIdx, burnAmount, protocolFeeAmount },
+      data: { positionIdx, burnAmount, refundCollateralAmount, protocolFeeAmount },
       token: burn.token,
       tags: [burn.token],
     }
