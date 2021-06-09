@@ -11,8 +11,11 @@ export class TxResolver {
     @Arg('account') account: string,
     @Arg('tag', { nullable: true, defaultValue: undefined }) tag: string,
     @Arg('offset', { defaultValue: 0 }) offset: number,
-    @Arg('limit', { defaultValue: 100 }) limit: number,
+    @Arg('limit', { defaultValue: 100 }) limit: number
   ): Promise<Tx[]> {
+    if (limit > 10000) {
+      throw new Error('limit is too high')
+    }
     return this.txService.getHistory(account, tag, offset, limit)
   }
 }

@@ -10,7 +10,7 @@ export class AccountResolver {
   constructor(
     private readonly accountService: AccountService,
     private readonly airdropService: AirdropService,
-    private readonly txService: TxService,
+    private readonly txService: TxService
   ) {}
 
   @Query((returns) => Account, { nullable: true })
@@ -20,7 +20,8 @@ export class AccountResolver {
 
   @Query((returns) => AssetBalance, { nullable: true })
   async balance(
-    @Arg('address') address: string, @Arg('token') token: string
+    @Arg('address') address: string,
+    @Arg('token') token: string
   ): Promise<AssetBalance> {
     return this.accountService.getBalance(address, token)
   }
@@ -35,7 +36,7 @@ export class AccountResolver {
     @Arg('address') address: string,
     @Arg('from', { description: 'timestamp' }) from: number,
     @Arg('to', { description: 'timestamp' }) to: number,
-    @Arg('interval', { description: 'unit is minute' }) interval: number,
+    @Arg('interval', { description: 'unit is minute' }) interval: number
   ): Promise<ValueAt[]> {
     return this.accountService.getBalanceHistory(address, from, to, interval)
   }
@@ -44,7 +45,7 @@ export class AccountResolver {
   async tradingVolume(
     @Arg('address') address: string,
     @Arg('from', { description: 'timestamp' }) from: number,
-    @Arg('to', { description: 'timestamp' }) to: number,
+    @Arg('to', { description: 'timestamp' }) to: number
   ): Promise<string> {
     return this.txService.getTradingVolume(address, from, to)
   }
@@ -52,15 +53,18 @@ export class AccountResolver {
   @Query((returns) => GraphQLJSON, { nullable: true })
   async moonpayHistory(
     @Arg('transactionId') transactionId: string,
-    @Arg('limit', { defaultValue: 1 }) limit?: number,
+    @Arg('limit', { defaultValue: 1 }) limit?: number
   ): Promise<unknown | null> {
+    if (limit > 10000) {
+      throw new Error('limit is too high')
+    }
     return moonpayHistory(transactionId, limit)
   }
 
   @Query((returns) => GraphQLJSON, { nullable: true })
   async airdrop(
     @Arg('network', { defaultValue: 'TERRA', description: 'TERRA or ETH' }) network: string,
-    @Arg('address') address: string,
+    @Arg('address') address: string
   ): Promise<unknown | null> {
     return this.airdropService.getAirdrop(network, address)
   }
@@ -69,7 +73,7 @@ export class AccountResolver {
   async connect(
     @Arg('address') address: string,
     @Arg('isAppUser', { defaultValue: false }) isAppUser: boolean,
-    @Arg('email', { nullable: true }) email?: string,
+    @Arg('email', { nullable: true }) email?: string
   ): Promise<Account | null> {
     return this.accountService.newAccount({ address, isAppUser, email })
   }
