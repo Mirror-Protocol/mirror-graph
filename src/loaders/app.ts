@@ -62,7 +62,7 @@ export async function initApp(): Promise<Koa> {
     .use(
       bodyParser({
         multipart: true,
-        jsonLimit: '56kb',
+        jsonLimit: '112kb',
         onError: (error) => {
           throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR, undefined, error.message)
         },
