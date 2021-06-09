@@ -1,7 +1,7 @@
 import * as bluebird from 'bluebird'
 import { Not } from 'typeorm'
 import { Coins, MsgExecuteContract, StdFee } from '@terra-money/terra.js'
-import { TxWallet } from 'lib/terra'
+import { TxWallet, getBlunaToken, getAustToken } from 'lib/terra'
 import { toSnakeCase } from 'lib/caseStyles'
 import * as logger from 'lib/logger'
 import { getTokenBalance, getDistributionInfo } from 'lib/mirror'
@@ -31,7 +31,7 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
     )
   }
 
-  // cdp close fee(mAsset) > convert mir
+  // collector has mAsset(fee) > convert mir
   const convertMsgs = await bluebird
     .map(assets, async (asset) => {
       const balance = await getTokenBalance(asset.token, collector)
@@ -44,11 +44,32 @@ export async function distributeRewards(wallet: TxWallet): Promise<void> {
     })
     .filter(Boolean)
 
-  // cdp close fee(uusd) > convert mir
+  // collector has uusd > convert mir
   const { balance: uusdBalance } = await accountService().getBalance(collector, 'uusd')
   if (num(uusdBalance).isGreaterThan(10000000)) {
     convertMsgs.push(new MsgExecuteContract(
       sender, collector, toSnakeCase({ convert: { assetToken: mirrorToken } }), new Coins([])
+    ))
+  }
+
+  // collector has uluna or bluna > convert mir
+  const bLunaToken = getBlunaToken()
+  if (bLunaToken) {
+    const bLunaBalance = await getTokenBalance(bLunaToken, collector)
+    const { balance: lunaBalance } = await accountService().getBalance(collector, 'uluna')
+
+    if (num(lunaBalance).isGreaterThan(10000000) || num(bLunaBalance).isGreaterThan(10000000)) {
+      convertMsgs.push(new MsgExecuteContract(
+        sender, collector, toSnakeCase({ convert: { assetToken: bLunaToken } }), new Coins([])
+      ))
+    }
+  }
+
+  // collector has aust > convert mir
+  const aUstToken = getAustToken()
+  if (aUstToken && num(await getTokenBalance(aUstToken, collector)).isGreaterThan(10000000)) {
+    convertMsgs.push(new MsgExecuteContract(
+      sender, collector, toSnakeCase({ convert: { assetToken: aUstToken } }), new Coins([])
     ))
   }
 
