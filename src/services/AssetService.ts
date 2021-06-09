@@ -5,6 +5,7 @@ import {
   FindOneOptions,
   FindManyOptions,
   MoreThanOrEqual,
+  In
 } from 'typeorm'
 import { Container, Service } from 'typedi'
 import { addMonths } from 'date-fns'
@@ -35,7 +36,7 @@ export class AssetService {
   }
 
   async getListedAssets(where?: FindConditions<AssetEntity>): Promise<AssetEntity[]> {
-    return this.getAll({ where: { status: AssetStatus.LISTED, ...where }})
+    return this.getAll({ where: { status: In([AssetStatus.LISTED, AssetStatus.PRE_IPO]), ...where }})
   }
 
   async getCollateralAssets(where?: FindConditions<AssetEntity>): Promise<AssetEntity[]> {
