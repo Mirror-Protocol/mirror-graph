@@ -4,6 +4,7 @@ import * as path from 'path'
 import { Container } from 'typedi'
 import { ApolloServer } from 'apollo-server-koa'
 import * as Koa from 'koa'
+import * as depthLimit from 'graphql-depth-limit'
 import { errorHandler } from 'lib/error'
 import { GraphQLLogger } from 'lib/graphqlLogger'
 
@@ -34,6 +35,7 @@ export async function initGraphQL(app: Koa): Promise<void> {
     playground: true,
     introspection: true,
     plugins: [GraphQLLogger],
+    validationRules: [depthLimit(10)],
   })
 
   server.applyMiddleware({ app, path: '/graphql' })

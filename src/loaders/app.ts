@@ -9,7 +9,8 @@ import { apiErrorHandler, APIError, ErrorTypes } from 'lib/error'
 import { error } from 'lib/response'
 
 const API_VERSION_PREFIX = '/v1'
-const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}mirror\.finance(?::\d{4,5})?(?:\/|$)/
+const CORS_REGEXP =
+  /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}mirror\.finance(?::\d{4,5})?(?:\/|$)/
 
 export async function initApp(): Promise<Koa> {
   const app = new Koa()
@@ -61,6 +62,7 @@ export async function initApp(): Promise<Koa> {
     .use(
       bodyParser({
         multipart: true,
+        jsonLimit: '56kb',
         onError: (error) => {
           throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR, undefined, error.message)
         },
