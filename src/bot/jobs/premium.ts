@@ -1,7 +1,7 @@
 import * as bluebird from 'bluebird'
 import { Not, In } from 'typeorm'
 import { Coins, StdFee } from '@terra-money/terra.js'
-import { TxWallet, getLatestBlockHeight, getGasAmount } from 'lib/terra'
+import { TxWallet, getGasAmount } from 'lib/terra'
 import { getStakingConfig, getStakingPool } from 'lib/mirror'
 import * as logger from 'lib/logger'
 import { Updater } from 'lib/Updater'
@@ -12,11 +12,6 @@ const updater = new Updater(60000) // 1min
 export async function adjustPremium(wallet: TxWallet): Promise<void> {
   const now = Date.now()
   if (!updater.needUpdate(now)) {
-    return
-  }
-
-  const latestHeight = await getLatestBlockHeight()
-  if (!latestHeight) {
     return
   }
 
