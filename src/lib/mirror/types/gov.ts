@@ -14,7 +14,7 @@ export interface GovPoll {
   creator: string
   depositAmount: string
   description: string
-  endHeight: number
+  endTime: number
   executeData: unknown[]
   stakedAmount: string
   id: number
