@@ -37,9 +37,9 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
 
   polls = (await getGovPolls(gov, 'passed', 100)).filter((poll) => poll.executeData)
   await bluebird.mapSeries(polls, async (poll) => {
-    const executeTime = (poll.endTime + effectiveDelay) * 1000
+    const executeTime = (poll.endTime * 1000) + (effectiveDelay * 1000)
 
-    if (now > executeTime && now - executeTime < expirationPeriod) {
+    if (now > executeTime && now - executeTime < expirationPeriod * 1000) {
       await wallet.execute(gov, { executePoll: { pollId: poll.id } }).catch(errorHandler)
 
       logger.info(`execute poll(${poll.id})`)
