@@ -84,7 +84,7 @@ export class TxService {
   }
 
   async getAccumulatedGovReward(address: string): Promise<string> {
-    const { balance } = await getGovStaker(this.govService.get().gov, address)
+    const { balance, pendingVotingRewards } = await getGovStaker(this.govService.get().gov, address)
 
     const values = await this.repo
       .createQueryBuilder()
@@ -94,7 +94,7 @@ export class TxService {
       .getRawOne()
 
     const staked = num(values.stakedAmount).minus(values.unstakedAmount)
-    return num(balance).minus(staked).plus(values.withdrawnAmount).toFixed(0)
+    return num(balance).plus(pendingVotingRewards).minus(staked).plus(values.withdrawnAmount).toFixed(0)
   }
 }
 
