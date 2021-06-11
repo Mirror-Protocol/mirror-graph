@@ -206,7 +206,7 @@ export async function parse(
 
     // change address to cdp owner's address for tx
     address = cdp.address
-  } else if (actionType === 'trigger_i_p_o') {
+  } else if (actionType === 'trigger_ipo') {
     const { assetToken: token } = contractEvent.action
 
     // listing pre-ipo asset
