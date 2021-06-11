@@ -23,13 +23,13 @@ export async function parse(
     const govId = contract.govId
 
     const entities = await govService().whitelisting(govId, symbol, name, token, pair, lpToken, isPreIPO)
-    // if (isPreIPO) {
-    //   const price = findAttribute(attributes, 'pre_ipo_price')
-    //   const timestamp = new Date(txTimestamp).getTime()
-    //   const repo = manager.getRepository(OraclePriceEntity)
+    if (isPreIPO) {
+      const price = findAttribute(attributes, 'pre_ipo_price')
+      const timestamp = new Date(txTimestamp).getTime()
+      const repo = manager.getRepository(OraclePriceEntity)
 
-    //   entities.push(await oracleService().setOHLC(token, timestamp, price, repo, false))
-    // }
+      entities.push(await oracleService().setOHLC(token, timestamp, price, repo, false))
+    }
 
     await manager.save(entities)
   } else if (actionType === 'migration') {
