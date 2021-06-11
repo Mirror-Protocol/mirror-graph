@@ -21,17 +21,16 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
   await bluebird.mapSeries(polls, async (poll) => {
     const { id: pollId, endTime, stakedAmount } = poll
 
+    const snapshotTime = (endTime * 1000) - (snapshotPeriod * 1000)
+    if (!stakedAmount && now > snapshotTime) { // snapshot poll
+      await wallet.execute(gov, { snapshotPoll: { pollId } })
+
+      logger.info(`snapshot poll(${pollId})`)
+    }
     if (now > endTime * 1000) { // end poll
       await wallet.execute(gov, { endPoll: { pollId } })
 
       logger.info(`end poll(${pollId})`)
-    } else if (!stakedAmount && snapshotPeriod) { // snapshot poll
-        const snapshotTime = (endTime * 1000) - (snapshotPeriod * 1000)
-        if (now > snapshotTime) {
-          await wallet.execute(gov, { snapshotPoll: { pollId } })
-
-        logger.info(`snapshot poll(${pollId})`)
-      }
     }
   })
 
