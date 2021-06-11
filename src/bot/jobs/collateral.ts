@@ -1,5 +1,4 @@
 import * as bluebird from 'bluebird'
-import * as logger from 'lib/logger'
 import { Updater } from 'lib/Updater'
 import { BlockUpdater, getOraclePrice } from 'lib/terra'
 import { getPairPrice } from 'lib/mirror'
@@ -51,6 +50,4 @@ export async function updateCollateralPrice(): Promise<void> {
 
     price && await oracleService().setOHLC(token, Date.now(), price)
   })
-
-  logger.info('collateral prices updated')
 }
