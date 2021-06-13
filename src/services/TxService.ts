@@ -4,7 +4,9 @@ import { Container, Service, Inject } from 'typedi'
 import { num } from 'lib/num'
 import { getGovStaker } from 'lib/mirror'
 import { GovService, AccountService } from 'services'
+import { TxType } from 'types'
 import { TxEntity } from 'orm'
+import { AccountVoted } from 'graphql/schema'
 
 @Service()
 export class TxService {
@@ -95,6 +97,17 @@ export class TxService {
 
     const staked = num(values.stakedAmount).minus(values.unstakedAmount)
     return num(balance).plus(pendingVotingRewards).minus(staked).plus(values.withdrawnAmount).toFixed(0)
+  }
+
+  async getVoteHistory(address: string): Promise<AccountVoted[]> {
+    return this.repo
+      .createQueryBuilder()
+      .select(`data->>'pollId'`, 'pollId')
+      .addSelect(`data->>'amount'`, 'amount')
+      .addSelect(`data->>'voteOption'`, 'voteOption')
+      .where(`address='${address}' AND type='${TxType.GOV_CAST_POLL}'`)
+      .orderBy('id', 'DESC')
+      .getRawMany()
   }
 }
 
