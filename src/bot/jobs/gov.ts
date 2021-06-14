@@ -22,11 +22,12 @@ export async function updatePolls(wallet: TxWallet): Promise<void> {
     const { id: pollId, endTime, stakedAmount } = poll
 
     const snapshotTime = (endTime * 1000) - (snapshotPeriod * 1000)
-    if (!stakedAmount && now > snapshotTime) { // snapshot poll
+    if (!stakedAmount && now > snapshotTime && now < endTime * 1000) { // snapshot poll
       await wallet.execute(gov, { snapshotPoll: { pollId } })
 
       logger.info(`snapshot poll(${pollId})`)
     }
+
     if (now > endTime * 1000) { // end poll
       await wallet.execute(gov, { endPoll: { pollId } })
 
