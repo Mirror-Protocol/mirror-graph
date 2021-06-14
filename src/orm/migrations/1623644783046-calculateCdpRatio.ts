@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class CalculateCdpRatio1622434470526 implements MigrationInterface {
+export class CalculateCdpRatio1623644783046 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query('DROP FUNCTION IF EXISTS public.calculateCdpRatio;')
     await queryRunner.query(`

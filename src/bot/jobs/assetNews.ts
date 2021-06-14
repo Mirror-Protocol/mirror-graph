@@ -9,6 +9,11 @@ import { Updater } from 'lib/Updater'
 const updater = new Updater(60 * 60000) // 1hour
 
 export async function updateNews(): Promise<void> {
+  // update only columbus
+  if (!process.env.TERRA_CHAIN_ID.includes('columbus')) {
+    return
+  }
+
   if (!updater.needUpdate(Date.now())) {
     return
   }
@@ -20,13 +25,17 @@ export async function updateNews(): Promise<void> {
     const { symbol, token } = asset
 
     const latestNews = await getRepository(AssetNewsEntity).findOne(
-      { token }, { order: { datetime: 'DESC' } }
+      { token },
+      { order: { datetime: 'DESC' } }
     )
 
-    const newsList = (await fetchNews(
-      symbol.substring(1), latestNews?.datetime.getTime() || 0, latestNews ? 50 : 1000)
-    )
-      .map((news => ({ ...news, token })))
+    const newsList = (
+      await fetchNews(
+        symbol.substring(1),
+        latestNews?.datetime.getTime() || 0,
+        latestNews ? 50 : 1000
+      )
+    ).map((news) => ({ ...news, token }))
 
     await getRepository(AssetNewsEntity).save(newsList)
   })

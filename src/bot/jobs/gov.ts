@@ -1,5 +1,6 @@
 import * as bluebird from 'bluebird'
-import { TxWallet, getLatestBlockHeight } from 'lib/terra'
+import { errorHandler } from 'lib/error'
+import { TxWallet } from 'lib/terra'
 import { getGovPolls, getGovConfig } from 'lib/mirror'
 import * as logger from 'lib/logger'
 import { govService } from 'services'
@@ -8,40 +9,40 @@ import { Updater } from 'lib/Updater'
 const updater = new Updater(60000) // 1min
 
 export async function updatePolls(wallet: TxWallet): Promise<void> {
+  const now = Date.now()
   if (!updater.needUpdate(Date.now())) {
     return
   }
-
-  const latestHeight = await getLatestBlockHeight()
-  if (!latestHeight) return
 
   const { gov } = govService().get()
   const { effectiveDelay, snapshotPeriod, expirationPeriod } = await getGovConfig(gov)
 
   let polls = await getGovPolls(gov, 'in_progress', 100)
   await bluebird.mapSeries(polls, async (poll) => {
-    const { id: pollId, endHeight, stakedAmount } = poll
+    const { id: pollId, endTime, stakedAmount } = poll
 
-    if (latestHeight > endHeight) { // end poll
+    const snapshotTime = endTime * 1000 - snapshotPeriod * 1000
+    if (!stakedAmount && now > snapshotTime && now < endTime * 1000) {
+      // snapshot poll
+      await wallet.execute(gov, { snapshotPoll: { pollId } })
+
+      logger.info(`snapshot poll(${pollId})`)
+    }
+
+    if (now > endTime * 1000) {
+      // end poll
       await wallet.execute(gov, { endPoll: { pollId } })
 
       logger.info(`end poll(${pollId})`)
-    } else if (!stakedAmount && snapshotPeriod) { // snapshot poll
-      const snapHeight = endHeight - snapshotPeriod
-      if (latestHeight > snapHeight) {
-        await wallet.execute(gov, { snapshotPoll: { pollId } })
-
-        logger.info(`snapshot poll(${pollId})`)
-      }
     }
   })
 
   polls = (await getGovPolls(gov, 'passed', 100)).filter((poll) => poll.executeData)
   await bluebird.mapSeries(polls, async (poll) => {
-    const executeHeight = poll.endHeight + effectiveDelay
+    const executeTime = poll.endTime * 1000 + effectiveDelay * 1000
 
-    if (latestHeight > executeHeight && latestHeight - executeHeight < expirationPeriod) {
-      await wallet.execute(gov, { executePoll: { pollId: poll.id } })
+    if (now > executeTime && now - executeTime < expirationPeriod * 1000) {
+      await wallet.execute(gov, { executePoll: { pollId: poll.id } }).catch(errorHandler)
 
       logger.info(`execute poll(${poll.id})`)
     }

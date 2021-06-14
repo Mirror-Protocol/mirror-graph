@@ -2,7 +2,7 @@ import { Resolver, Query, Mutation, Root, Arg, FieldResolver } from 'type-graphq
 import GraphQLJSON from 'graphql-type-json'
 import { history as moonpayHistory } from 'lib/moonpay'
 import { AccountService, AirdropService, TxService } from 'services'
-import { Account, AssetBalance, ValueAt } from 'graphql/schema'
+import { Account, AccountVoted, AssetBalance, ValueAt } from 'graphql/schema'
 import { AccountEntity } from 'orm'
 
 @Resolver((of) => Account)
@@ -86,5 +86,10 @@ export class AccountResolver {
   @FieldResolver()
   async accumulatedGovReward(@Root() account: AccountEntity): Promise<string> {
     return this.txService.getAccumulatedGovReward(account.address)
+  }
+
+  @FieldResolver()
+  async voteHistory(@Root() account: AccountEntity): Promise<AccountVoted[]> {
+    return this.txService.getVoteHistory(account.address)
   }
 }

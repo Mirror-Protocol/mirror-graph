@@ -4,7 +4,9 @@ import { Container, Service, Inject } from 'typedi'
 import { num } from 'lib/num'
 import { getGovStaker } from 'lib/mirror'
 import { GovService, AccountService } from 'services'
+import { TxType } from 'types'
 import { TxEntity } from 'orm'
+import { AccountVoted } from 'graphql/schema'
 
 @Service()
 export class TxService {
@@ -60,10 +62,10 @@ export class TxService {
       .createQueryBuilder()
       .select(`sum(coalesce((data->>'offerAmount')::numeric, 0))`, 'volume')
       .where(`address = :address AND type='BUY'`, { address: account })
-      .andWhere(
-        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
-        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
-      )
+      .andWhere('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', {
+        from: Math.floor(from / 1000),
+        to: Math.floor(to / 1000),
+      })
       .getRawOne()
     const sellVolume = await this.repo
       .createQueryBuilder()
@@ -72,10 +74,10 @@ export class TxService {
         'volume'
       )
       .where(`address = :address AND type='SELL'`, { address: account })
-      .andWhere(
-        'datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)',
-        { from: Math.floor(from / 1000), to: Math.floor(to / 1000) }
-      )
+      .andWhere('datetime BETWEEN to_timestamp(:from) AND to_timestamp(:to)', {
+        from: Math.floor(from / 1000),
+        to: Math.floor(to / 1000),
+      })
       .getRawOne()
 
     return num(buyVolume?.volume ?? '0')
@@ -84,17 +86,41 @@ export class TxService {
   }
 
   async getAccumulatedGovReward(address: string): Promise<string> {
-    const { balance } = await getGovStaker(this.govService.get().gov, address)
+    const { balance, pendingVotingRewards } = await getGovStaker(this.govService.get().gov, address)
 
     const values = await this.repo
       .createQueryBuilder()
-      .select(`(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_STAKE')`, 'stakedAmount')
-      .addSelect(`(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_UNSTAKE')`, 'unstakedAmount')
-      .addSelect(`(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_WITHDRAW_VOTING_REWARDS')`, 'withdrawnAmount')
+      .select(
+        `(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_STAKE')`,
+        'stakedAmount'
+      )
+      .addSelect(
+        `(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_UNSTAKE')`,
+        'unstakedAmount'
+      )
+      .addSelect(
+        `(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_WITHDRAW_VOTING_REWARDS')`,
+        'withdrawnAmount'
+      )
       .getRawOne()
 
     const staked = num(values.stakedAmount).minus(values.unstakedAmount)
-    return num(balance).minus(staked).plus(values.withdrawnAmount).toFixed(0)
+    return num(balance)
+      .plus(pendingVotingRewards)
+      .minus(staked)
+      .plus(values.withdrawnAmount)
+      .toFixed(0)
+  }
+
+  async getVoteHistory(address: string): Promise<AccountVoted[]> {
+    return this.repo
+      .createQueryBuilder()
+      .select(`data->>'pollId'`, 'pollId')
+      .addSelect(`data->>'amount'`, 'amount')
+      .addSelect(`data->>'voteOption'`, 'voteOption')
+      .where(`address='${address}' AND type='${TxType.GOV_CAST_POLL}'`)
+      .orderBy('id', 'DESC')
+      .getRawMany()
   }
 }
 
