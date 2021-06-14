@@ -19,6 +19,7 @@ import * as collector from './collector'
 import * as uusdTransfer from './uusdTransfer'
 import * as fee from './fee'
 import * as airdrop from './airdrop'
+import * as lock from './lock'
 
 export async function parseMirrorMsg(
   manager: EntityManager, txInfo: TxInfo, msg: MsgExecuteContract, index: number, log: TxLog
@@ -94,6 +95,10 @@ export async function parseMirrorMsg(
 
       case ContractType.LIMIT_ORDER:
         await limitOrder.parse(args)
+        break
+
+      case ContractType.LOCK:
+        await lock.parse(args)
         break
     }
   })
