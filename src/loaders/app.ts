@@ -8,6 +8,7 @@ import { configureRoutes } from 'koa-joi-controllers'
 import controllers from 'endpoints'
 import { apiErrorHandler, APIError, ErrorTypes } from 'lib/error'
 import { error } from 'lib/response'
+import { getMetricsContent } from '../lib/metrics'
 
 const API_VERSION_PREFIX = '/v1'
 const CORS_REGEXP =
@@ -86,6 +87,13 @@ export async function initApp(): Promise<Koa> {
   router.get('/health', async (ctx) => {
     ctx.status = 200
     ctx.body = 'OK'
+  })
+
+  router.get('/metrics', async (ctx) => {
+    const { data, type } = await getMetricsContent()
+    ctx.status = 200
+    ctx.response.headers['Content-Type'] = type
+    ctx.response.body = data
   })
 
   configureRoutes(app, controllers, API_VERSION_PREFIX)
