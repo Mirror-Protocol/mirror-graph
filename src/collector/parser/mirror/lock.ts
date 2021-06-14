@@ -15,12 +15,12 @@ export async function parse(
     return
   }
 
-  if (actionType === 'unlock_position_funds') {
-    const { positionIdx } = contractEvent.action
+  if (actionType === 'unlock_shorting_funds') {
+    const { positionIdx, unlockedAmount, taxAmount } = contractEvent.action
 
     tx = {
       type: TxType.WITHDRAW_UNLOCKED_UST,
-      data: { positionIdx },
+      data: { positionIdx, unlockedAmount, taxAmount },
       tags: ['uusd'],
     }
   } else {
