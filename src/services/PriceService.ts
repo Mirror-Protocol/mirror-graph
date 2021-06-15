@@ -20,7 +20,19 @@ export class PriceService {
     return repo.findOne(conditions, options)
   }
 
-  async getPrice(token: string, timestamp: number = Date.now(), repo = this.repo): Promise<string> {
+  async getPrice(token: string, repo = this.repo): Promise<string> {
+    const price = await repo.findOne(
+      { token },
+      {
+        select: ['close', 'datetime'],
+        order: { datetime: 'DESC' },
+      }
+    )
+    return price?.close
+  }
+
+  @memoize({ promise: true, maxAge: 60000, preFetch: true }) // 1 minute
+  async getPriceAt(token: string, timestamp: number = Date.now(), repo = this.repo): Promise<string> {
     const price = await repo.findOne(
       { token, datetime: LessThanOrEqual(new Date(timestamp)) },
       {

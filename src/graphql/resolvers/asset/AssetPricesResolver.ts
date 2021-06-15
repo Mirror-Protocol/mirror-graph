@@ -21,7 +21,7 @@ export class AssetPricesResolver {
   async priceAt(
     @Root() asset: AssetEntity, @Arg('timestamp') timestamp: number
   ): Promise<string> {
-    return this.priceService.getPrice(asset.token, timestamp)
+    return this.priceService.getPriceAt(asset.token, timestamp)
   }
 
   @FieldResolver()
@@ -59,7 +59,7 @@ export class AssetPricesResolver {
   async oraclePriceAt(
     @Root() asset: AssetEntity, @Arg('timestamp') timestamp: number
   ): Promise<string> {
-    return this.oracleService.getPrice(asset.token, timestamp)
+    return this.oracleService.getPriceAt(asset.token, timestamp)
   }
 
   @FieldResolver()

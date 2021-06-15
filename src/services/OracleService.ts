@@ -23,7 +23,19 @@ export class OracleService {
     return repo.findOne(conditions)
   }
 
-  async getPrice(token: string, timestamp: number = Date.now(), repo = this.repo): Promise<string> {
+  async getPrice(token: string, repo = this.repo): Promise<string> {
+    const price = await repo.findOne(
+      { token },
+      {
+        select: ['close', 'datetime'],
+        order: { datetime: 'DESC' },
+      }
+    )
+    return price?.close
+  }
+
+  @memoize({ promise: true, maxAge: 60000, preFetch: true }) // 1 minute
+  async getPriceAt(token: string, timestamp: number = Date.now(), repo = this.repo): Promise<string> {
     const price = await repo.findOne(
       { token, datetime: LessThanOrEqual(new Date(timestamp)) },
       {
@@ -85,7 +97,7 @@ export class OracleService {
     return getOHLC<OraclePriceEntity>(repo, token, from, to)
   }
 
-  @memoize({ promise: true, maxAge: 60000 }) // 1 minute
+  @memoize({ promise: true, maxAge: 60000, preFetch: true }) // 1 minute
   async getHistory(
     token: string,
     from: number,

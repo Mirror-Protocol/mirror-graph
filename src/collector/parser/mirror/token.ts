@@ -27,7 +27,7 @@ async function getReceivePrice(
   const priceEntity = manager.getRepository(PriceEntity)
   const datetime = new Date(timestamp)
 
-  return (await priceService().getPrice(token, datetime.getTime(), priceEntity)) || '0'
+  return (await priceService().getPriceAt(token, datetime.getTime(), priceEntity)) || '0'
 }
 
 async function contractTransfer(
