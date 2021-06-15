@@ -33,7 +33,12 @@ export class AssetPricesResolver {
   ): Promise<PriceAt[]> {
     const { to: limitedTo } = limitedRange(from, to, interval * 60000, 500)
 
-    return this.priceService.getHistory(asset.token, from, limitedTo, interval)
+    return this.priceService.getHistory(
+      asset.token,
+      from - (from % 60000),
+      limitedTo - (limitedTo % 60000),
+      interval
+    )
   }
 
   @FieldResolver()
@@ -69,6 +74,11 @@ export class AssetPricesResolver {
     }
 
     const { to: limitedTo } = limitedRange(from, to, interval * 60000, 500)
-    return this.oracleService.getHistory(asset.token, from, limitedTo, interval)
+    return this.oracleService.getHistory(
+      asset.token,
+      from - (from % 60000),
+      limitedTo - (limitedTo % 60000),
+      interval
+    )
   }
 }
