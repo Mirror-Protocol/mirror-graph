@@ -38,6 +38,9 @@ export class Statistic {
   latest24h: PeriodStatistic
 
   @Field()
+  mirPrice: string
+
+  @Field()
   mirSupply: MirSupply
 
   @Field()

@@ -9,6 +9,7 @@ import { getTokenBalance } from 'lib/mirror'
 import {
   GovService,
   AssetService,
+  PriceService,
   TerraStatisticService,
   EthStatisticService,
   // BscStatisticService,
@@ -22,6 +23,7 @@ export class StatisticService {
   constructor(
     @Inject((type) => GovService) private readonly govService: GovService,
     @Inject((type) => AssetService) private readonly assetService: AssetService,
+    @Inject((type) => PriceService) private readonly priceService: PriceService,
     @Inject((type) => TerraStatisticService) private readonly terraStatisticService: TerraStatisticService,
     @Inject((type) => EthStatisticService) private readonly ethStatisticService: EthStatisticService,
     // @Inject((type) => BscStatisticService) private readonly bscStatisticService: BscStatisticService,
@@ -38,6 +40,7 @@ export class StatisticService {
     const stat = {
       network,
       collateralRatio,
+      mirPrice: await this.priceService.getPrice(this.govService.get().mirrorToken),
       mirSupply: await this.terraStatisticService.mirSupply(),
     }
 
