@@ -1,5 +1,6 @@
 import { ObjectType, Field } from 'type-graphql'
 import { AssetPositions, AssetPrices, AssetStatistic, AssetNews } from 'graphql/schema'
+import { AssetStatus } from 'types'
 
 @ObjectType({ simpleResolvers: true })
 export class Asset {
@@ -20,6 +21,9 @@ export class Asset {
 
   @Field()
   lpToken: string
+
+  @Field((type) => AssetStatus)
+  status: AssetStatus
 
   @Field((type) => AssetPositions)
   positions: AssetPositions

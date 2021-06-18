@@ -73,7 +73,7 @@ export async function parse({
 
     if (!isShort) {
       // add minted amount to account balance
-      const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
+      const price = await oracleService().getPriceAt(mint.token, datetime.getTime(), oracleRepo)
       await accountService().addBalance(
         address,
         mint.token,
@@ -142,7 +142,7 @@ export async function parse({
     await assetService().addMintPosition(mint.token, mint.amount, positionsRepo)
 
     // add account balance
-    const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
+    const price = await oracleService().getPriceAt(mint.token, datetime.getTime(), oracleRepo)
     await accountService().addBalance(
       address,
       mint.token,
@@ -286,7 +286,7 @@ export async function parse({
 
   // calculate collateral ratio
   const { token, collateralToken } = cdp
-  const tokenPrice = await oracleService().getPrice(token, datetime.getTime(), oracleRepo)
+  const tokenPrice = await oracleService().getPriceAt(token, datetime.getTime(), oracleRepo)
   const collateralPrice = await collateralService().getPrice(collateralToken)
 
   if (tokenPrice && collateralPrice) {

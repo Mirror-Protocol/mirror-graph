@@ -12,14 +12,14 @@ export class StatisticResolver {
   async statistic(
     @Arg('network', (type) => Network, { defaultValue: Network.COMBINE }) network: Network
   ): Promise<Statistic> {
-    return await this.statisticService.statistic(network) as Statistic
+    return (await this.statisticService.statistic(network)) as Statistic
   }
 
   @Query((returns) => [AccountBalance])
   async richlist(
     @Arg('token') token: string,
     @Arg('offset', { defaultValue: 0 }) offset: number,
-    @Arg('limit', { defaultValue: 1000 }) limit: number,
+    @Arg('limit', { defaultValue: 1000 }) limit: number
   ): Promise<AccountBalance[]> {
     if (limit > 10000) {
       throw new Error('limit is too high')
@@ -50,7 +50,11 @@ export class StatisticResolver {
   ): Promise<ValueAt[]> {
     const { to: limitedTo } = limitedRange(from, to, 86400000, 365) // limit 365days
 
-    return this.statisticService.getLiquidityHistory(statistic.network, from, limitedTo)
+    return this.statisticService.getLiquidityHistory(
+      statistic.network,
+      from - (from % 86400000),
+      limitedTo - (limitedTo % 86400000)
+    )
   }
 
   @FieldResolver((type) => [ValueAt])
@@ -61,7 +65,11 @@ export class StatisticResolver {
   ): Promise<ValueAt[]> {
     const { to: limitedTo } = limitedRange(from, to, 86400000, 365) // limit 365days
 
-    return this.statisticService.getFeeHistory(statistic.network, from, limitedTo)
+    return this.statisticService.getFeeHistory(
+      statistic.network,
+      from - (from % 86400000),
+      limitedTo - (limitedTo % 86400000)
+    )
   }
 
   @FieldResolver((type) => [ValueAt])
@@ -72,6 +80,10 @@ export class StatisticResolver {
   ): Promise<ValueAt[]> {
     const { to: limitedTo } = limitedRange(from, to, 86400000, 365) // limit 365days
 
-    return this.statisticService.getTradingVolumeHistory(statistic.network, from, limitedTo)
+    return this.statisticService.getTradingVolumeHistory(
+      statistic.network,
+      from - (from % 86400000),
+      limitedTo - (limitedTo % 86400000)
+    )
   }
 }
