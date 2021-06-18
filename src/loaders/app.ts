@@ -2,10 +2,10 @@ import * as Koa from 'koa'
 import * as bodyParser from 'koa-body'
 import * as Router from 'koa-router'
 import * as helmet from 'koa-helmet'
-import * as ratelimit from 'koa-ratelimit'
 import * as cors from '@koa/cors'
 import { configureRoutes } from 'koa-joi-controllers'
 import controllers from 'endpoints'
+import { ratelimit } from '../lib/ratelimit'
 import { apiErrorHandler, APIError, ErrorTypes } from 'lib/error'
 import { error } from 'lib/response'
 import { getMetricsContent } from '../lib/metrics'
@@ -72,13 +72,16 @@ export async function initApp(): Promise<Koa> {
     )
     .use(
       ratelimit({
-        driver: 'memory',
         db: new Map(),
         id: (ctx) => ctx.ip,
-        duration: 10 * 1000,
-        max: 100,
-        errorMessage: 'too many requests, please try again after 10 seconds',
-        disableHeader: true,
+        status: 429,
+        operations: [
+          { name: 'assets', duration: 10 * 1000, max: 30 },
+          { name: 'statistic', duration: 10 * 1000, max: 20 },
+          { name: 'txs', duration: 10 * 1000, max: 20 },
+          { name: 'connect', duration: 10 * 1000, max: 10 },
+          { duration: 10 * 1000, max: 100 },
+        ],
       })
     )
 
