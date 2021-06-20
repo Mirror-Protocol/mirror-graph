@@ -27,4 +27,13 @@ export class CdpResolver {
       take: 100
     })
   }
+
+  @Query((returns) => [Cdp], { description: 'Get liquidation target cdps' })
+  async liquidations(): Promise<Cdp[]> {
+    return this.cdpService.getAll({
+      where: { collateralRatio: Raw((alias) => `${alias} < minCollateralRatio`) },
+      order: { mintValue: 'DESC' },
+      take: 100
+    })
+  }
 }
