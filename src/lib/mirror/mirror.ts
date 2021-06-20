@@ -11,6 +11,7 @@ import {
   StakingConfig,
   StakingPool,
   DistributionInfo,
+  CollateralAssetInfo,
 } from './types'
 
 export async function getPairPool(
@@ -79,4 +80,8 @@ export async function getMintAssetConfig(mint: string, token: string): Promise<M
 
 export async function getDistributionInfo(factory: string): Promise<DistributionInfo> {
   return getContractStore<DistributionInfo>(factory, { distributionInfo: {} })
+}
+
+export async function getCollateralAssetInfo(collateralOracle: string, token: string): Promise<CollateralAssetInfo> {
+  return getContractStore<CollateralAssetInfo>(collateralOracle, { collateralAssetInfo: { asset: token } })
 }

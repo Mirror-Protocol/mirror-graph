@@ -32,14 +32,25 @@ export class CdpEntity extends HaveAsset {
   @Column('numeric', { precision: 40, default: 0 })
   mintAmount: string
 
+  @Column('numeric', { precision: 40, default: 0 })
+  mintValue: string
+
   @Column()
   collateralToken: string
 
   @Column('numeric', { precision: 40, default: 0 })
   collateralAmount: string
 
+  @Column('numeric', { precision: 40, default: 0 })
+  collateralValue: string
+
   @Column('decimal', { precision: 40, scale: 6, default: 0 })
+  @Index()
   collateralRatio: string
+
+  @Column('decimal', { precision: 40, scale: 6, default: 2 })
+  @Index()
+  minCollateralRatio: string
 
   @Column({ default: false })
   isShort: boolean
