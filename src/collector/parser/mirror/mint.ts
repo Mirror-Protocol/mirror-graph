@@ -154,6 +154,9 @@ export async function parse(
 
     // remove cdp's mint amount
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
+    if (!cdp) {
+      throw new Error(`cdp ${positionIdx} is not exists`)
+    }
     cdp.mintAmount = num(cdp.mintAmount).minus(burn.amount).toString()
 
     if (refundCollateralAmount) {
@@ -189,6 +192,9 @@ export async function parse(
     }).action.from
 
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
+    if (!cdp) {
+      throw new Error(`cdp ${positionIdx} is not exists`)
+    }
     cdp.mintAmount = num(cdp.mintAmount).minus(liquidated.amount).toString()
     cdp.collateralAmount = num(cdp.collateralAmount)
       .minus(returnCollateral.amount)
