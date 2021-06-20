@@ -50,7 +50,7 @@ export async function parse(
 
     const { mint: mintContract, collateralOracle } = govService().get()
     const assetConfig = await getMintAssetConfig(mintContract, mint.token)
-    const collateralInfo = await getCollateralAssetInfo(collateralOracle, collateral.token)
+    const collateralInfo = collateral.token !== 'uusd' && await getCollateralAssetInfo(collateralOracle, collateral.token)
     const multiplier = collateralInfo?.multiplier || '1'
 
     // create cdp
