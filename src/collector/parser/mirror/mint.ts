@@ -1,6 +1,7 @@
 import { findContractAction, isNativeToken } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
+import { getMintAssetConfig, getCollateralAssetInfo } from 'lib/mirror'
 import {
   assetService,
   accountService,
@@ -8,6 +9,7 @@ import {
   oracleService,
   txService,
   collateralService,
+  govService,
 } from 'services'
 import { CdpEntity, AssetEntity, AssetPositionsEntity, BalanceEntity, OraclePriceEntity } from 'orm'
 import { TxType, AssetStatus } from 'types'
@@ -57,6 +59,13 @@ export async function parse({
       }).action.from
     }
 
+    const { mint: mintContract, collateralOracle } = govService().get()
+    const assetConfig = await getMintAssetConfig(mintContract, mint.token)
+    const collateralInfo =
+      collateral.token !== 'uusd' &&
+      (await getCollateralAssetInfo(collateralOracle, collateral.token))
+    const multiplier = collateralInfo?.multiplier || '1'
+
     // create cdp
     cdp = new CdpEntity({
       id: positionIdx,
@@ -65,6 +74,7 @@ export async function parse({
       mintAmount: mint.amount,
       collateralToken: collateral.token,
       collateralAmount: collateral.amount,
+      minCollateralRatio: num(assetConfig.minCollateralRatio).multipliedBy(multiplier).toString(),
       isShort,
     })
 
@@ -73,7 +83,7 @@ export async function parse({
 
     if (!isShort) {
       // add minted amount to account balance
-      const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
+      const price = await oracleService().getPriceAt(mint.token, datetime.getTime(), oracleRepo)
       await accountService().addBalance(
         address,
         mint.token,
@@ -142,7 +152,7 @@ export async function parse({
     await assetService().addMintPosition(mint.token, mint.amount, positionsRepo)
 
     // add account balance
-    const price = await oracleService().getPrice(mint.token, datetime.getTime(), oracleRepo)
+    const price = await oracleService().getPriceAt(mint.token, datetime.getTime(), oracleRepo)
     await accountService().addBalance(
       address,
       mint.token,
@@ -175,6 +185,9 @@ export async function parse({
 
     // remove cdp's mint amount
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
+    if (!cdp) {
+      throw new Error(`cdp ${positionIdx} is not exists`)
+    }
     cdp.mintAmount = num(cdp.mintAmount).minus(burn.amount).toString()
 
     if (refundCollateralAmount) {
@@ -217,6 +230,9 @@ export async function parse({
     }).action.from
 
     cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
+    if (!cdp) {
+      throw new Error(`cdp ${positionIdx} is not exists`)
+    }
     cdp.mintAmount = num(cdp.mintAmount).minus(liquidated.amount).toString()
     cdp.collateralAmount = num(cdp.collateralAmount)
       .minus(returnCollateral.amount)
@@ -229,6 +245,8 @@ export async function parse({
 
       cdp.mintAmount = '0'
       cdp.collateralAmount = '0'
+      cdp.mintValue = '0'
+      cdp.collateralValue = '0'
       cdp.collateralRatio = '0'
     } else {
       // remove asset's mint position
@@ -286,7 +304,7 @@ export async function parse({
 
   // calculate collateral ratio
   const { token, collateralToken } = cdp
-  const tokenPrice = await oracleService().getPrice(token, datetime.getTime(), oracleRepo)
+  const tokenPrice = await oracleService().getPriceAt(token, datetime.getTime(), oracleRepo)
   const collateralPrice = await collateralService().getPrice(collateralToken)
 
   if (tokenPrice && collateralPrice) {
@@ -294,6 +312,8 @@ export async function parse({
     const mintValue = num(tokenPrice).multipliedBy(mintAmount)
     const collateralValue = num(collateralPrice).multipliedBy(collateralAmount)
 
+    cdp.mintValue = mintValue.toString()
+    cdp.collateralValue = collateralValue.toString()
     cdp.collateralRatio =
       mintValue.isGreaterThan(0) && collateralValue.isGreaterThan(0)
         ? collateralValue.dividedBy(mintValue).toString()

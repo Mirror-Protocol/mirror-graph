@@ -15,11 +15,20 @@ export class Cdp {
   mintAmount: string
 
   @Field()
+  mintValue: string
+
+  @Field()
   collateralToken: string
 
   @Field()
   collateralAmount: string
 
   @Field()
+  collateralValue: string
+
+  @Field()
   collateralRatio: string
+
+  @Field()
+  minCollateralRatio: string
 }

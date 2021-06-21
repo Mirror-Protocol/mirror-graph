@@ -11,7 +11,7 @@ export class CdpResolver {
   async cdps(
     @Arg('maxRatio') maxRatio: number,
     @Arg('tokens', (type) => [String], { nullable: true }) tokens?: string[],
-    @Arg('address', { nullable: true }) address?: string,
+    @Arg('address', { nullable: true }) address?: string
   ): Promise<Cdp[]> {
     const addressCondition = address ? { address } : {}
     const tokensCondition = tokens ? { token: In(tokens) } : {}
@@ -24,7 +24,16 @@ export class CdpResolver {
         ...tokensCondition,
       },
       order: { collateralRatio: 'ASC' },
-      take: 100
+      take: 100,
+    })
+  }
+
+  @Query((returns) => [Cdp], { description: 'Get liquidation target cdps' })
+  async liquidations(): Promise<Cdp[]> {
+    return this.cdpService.getAll({
+      where: { collateralRatio: Raw((alias) => `${alias} < minCollateralRatio`) },
+      order: { mintValue: 'DESC' },
+      take: 100,
     })
   }
 }

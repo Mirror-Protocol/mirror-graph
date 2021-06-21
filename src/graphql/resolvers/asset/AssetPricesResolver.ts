@@ -8,7 +8,7 @@ import { PriceService, OracleService } from 'services'
 export class AssetPricesResolver {
   constructor(
     private readonly priceService: PriceService,
-    private readonly oracleService: OracleService,
+    private readonly oracleService: OracleService
   ) {}
 
   @FieldResolver()
@@ -18,10 +18,8 @@ export class AssetPricesResolver {
   }
 
   @FieldResolver()
-  async priceAt(
-    @Root() asset: AssetEntity, @Arg('timestamp') timestamp: number
-  ): Promise<string> {
-    return this.priceService.getPrice(asset.token, timestamp)
+  async priceAt(@Root() asset: AssetEntity, @Arg('timestamp') timestamp: number): Promise<string> {
+    return this.priceService.getPriceAt(asset.token, timestamp)
   }
 
   @FieldResolver()
@@ -29,11 +27,16 @@ export class AssetPricesResolver {
     @Root() asset: AssetEntity,
     @Arg('from', { description: 'timestamp' }) from: number,
     @Arg('to', { description: 'timestamp' }) to: number,
-    @Arg('interval', { description: 'unit is minute' }) interval: number,
+    @Arg('interval', { description: 'unit is minute' }) interval: number
   ): Promise<PriceAt[]> {
     const { to: limitedTo } = limitedRange(from, to, interval * 60000, 500)
 
-    return this.priceService.getHistory(asset.token, from, limitedTo, interval)
+    return this.priceService.getHistory(
+      asset.token,
+      from - (from % 60000),
+      limitedTo - (limitedTo % 60000),
+      interval
+    )
   }
 
   @FieldResolver()
@@ -52,9 +55,10 @@ export class AssetPricesResolver {
 
   @FieldResolver()
   async oraclePriceAt(
-    @Root() asset: AssetEntity, @Arg('timestamp') timestamp: number
+    @Root() asset: AssetEntity,
+    @Arg('timestamp') timestamp: number
   ): Promise<string> {
-    return this.oracleService.getPrice(asset.token, timestamp)
+    return this.oracleService.getPriceAt(asset.token, timestamp)
   }
 
   @FieldResolver()
@@ -62,13 +66,18 @@ export class AssetPricesResolver {
     @Root() asset: AssetEntity,
     @Arg('from', { description: 'timestamp' }) from: number,
     @Arg('to', { description: 'timestamp' }) to: number,
-    @Arg('interval', { description: 'unit is minute' }) interval: number,
+    @Arg('interval', { description: 'unit is minute' }) interval: number
   ): Promise<PriceAt[]> {
     if (interval < 1 || interval > 43200) {
       throw new Error('interval range must be 1-43200')
     }
 
     const { to: limitedTo } = limitedRange(from, to, interval * 60000, 500)
-    return this.oracleService.getHistory(asset.token, from, limitedTo, interval)
+    return this.oracleService.getHistory(
+      asset.token,
+      from - (from % 60000),
+      limitedTo - (limitedTo % 60000),
+      interval
+    )
   }
 }
