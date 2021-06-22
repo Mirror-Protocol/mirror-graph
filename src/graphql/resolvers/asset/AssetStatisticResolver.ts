@@ -49,4 +49,14 @@ export class AssetStatisticResolver {
   ): Promise<string> {
     return this.statisticService.getAssetMarketCap(network, asset.token)
   }
+
+  @FieldResolver()
+  async collateralValue(@Root() asset: AssetEntity): Promise<string> {
+    return this.statisticService.getAssetCollateralValue(asset.token)
+  }
+
+  @FieldResolver()
+  async minCollateralRatio(@Root() asset: AssetEntity): Promise<string> {
+    return this.statisticService.getAssetMinCollateralRatio(asset.token)
+  }
 }

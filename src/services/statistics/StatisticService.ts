@@ -14,7 +14,7 @@ import {
   EthStatisticService,
   // BscStatisticService,
 } from 'services'
-import { DailyStatisticEntity, RewardEntity } from 'orm'
+import { DailyStatisticEntity, RewardEntity, CdpEntity } from 'orm'
 import { Statistic, PeriodStatistic, ValueAt, AccountBalance, APR } from 'graphql/schema'
 import { Network, AssetStatus } from 'types'
 
@@ -29,7 +29,8 @@ export class StatisticService {
     // @Inject((type) => BscStatisticService) private readonly bscStatisticService: BscStatisticService,
     @InjectRepository(DailyStatisticEntity)
     private readonly dailyRepo: Repository<DailyStatisticEntity>,
-    @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>
+    @InjectRepository(RewardEntity) private readonly rewardRepo: Repository<RewardEntity>,
+    @InjectRepository(CdpEntity) private readonly cdpRepo: Repository<CdpEntity>,
   ) {}
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
@@ -434,6 +435,21 @@ export class StatisticService {
 
       return assetMarketCaps.reduce((result, assetMarketCap) => result.plus(assetMarketCap), num(0)).toString()
     }
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  async getAssetCollateralValue(token: string): Promise<string> {
+    return (await this.cdpRepo
+      .createQueryBuilder()
+      .select('SUM(collateral_value)', 'collateralValue')
+      .andWhere('token = :token', { token })
+      .getRawOne()
+    )?.collateralValue || '0'
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 30, preFetch: true }) // 30 minutes
+  async getAssetMinCollateralRatio(token: string): Promise<string> {
+    return this.assetService.getMinCollateralRatio(token, 'uusd')
   }
 }
 

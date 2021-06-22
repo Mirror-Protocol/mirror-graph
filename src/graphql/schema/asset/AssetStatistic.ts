@@ -14,4 +14,13 @@ export class AssetStatistic {
 
   @Field((type) => APR, { nullable: true, description: 'asset long/short apr' })
   apr?: APR
+
+  @Field({ nullable: true, description: 'asset market cap' })
+  marketCap?: string
+
+  @Field({ nullable: true, description: 'locked collateral value' })
+  collateralValue?: string
+
+  @Field({ nullable: true, description: 'min collateral ratio' })
+  minCollateralRatio?: string
 }

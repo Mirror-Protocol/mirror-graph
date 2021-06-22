@@ -9,7 +9,9 @@ import {
 } from 'typeorm'
 import { Container, Service } from 'typedi'
 import { addMonths } from 'date-fns'
+import { getMintAssetConfig, getCollateralAssetInfo } from 'lib/mirror'
 import { num } from 'lib/num'
+import { govService } from 'services'
 import { AssetEntity, AssetPositionsEntity, AssetNewsEntity, PriceEntity } from 'orm'
 import { AssetStatus } from 'types'
 
@@ -57,6 +59,19 @@ export class AssetService {
       order: { datetime: 'DESC' },
       take: 5,
     })
+  }
+
+  async getMinCollateralRatio(token: string, collateralToken = 'uusd'): Promise<string> {
+    const { mint, collateralOracle, mirrorToken } = govService().get()
+    if (token === mirrorToken) {
+      return '0'
+    }
+
+    const assetConfig = await getMintAssetConfig(mint, token)
+    const collateralInfo = collateralToken !== 'uusd' && await getCollateralAssetInfo(collateralOracle, collateralToken)
+    const multiplier = collateralInfo?.multiplier || '1'
+
+    return num(assetConfig.minCollateralRatio).multipliedBy(multiplier).toString()
   }
 
   async addMintPosition(

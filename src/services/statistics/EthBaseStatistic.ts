@@ -101,6 +101,10 @@ export class EthBaseStatistic {
       })
     } else {
       const asset = this.getAsset(token)
+      if (!asset) {
+        return '0'
+      }
+
       const { terraToken } = asset
 
       const price = await this.getAssetPrice(terraToken)
