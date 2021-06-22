@@ -343,6 +343,8 @@ export class StatisticService {
         transactions: statistics.reduce((result, stat) => result.plus(stat.transactions), num(0)).toString(),
       }
     }
+
+    return { volume: '0', transactions: '0' }
   }
 
   async getAssetLiquidity(network: Network, token: string): Promise<string> {
@@ -361,6 +363,8 @@ export class StatisticService {
 
       return statistics.reduce((result, stat) => result.plus(stat), num(0)).toString()
     }
+
+    return '0'
   }
 
   async getAssetShortValue(network: Network, token: string): Promise<string> {
@@ -413,6 +417,23 @@ export class StatisticService {
       .skip(offset)
       .take(limit)
       .getRawMany()
+  }
+
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  async getAssetMarketCap(network: Network, token: string): Promise<string> {
+    if (network === Network.TERRA) {
+      return this.terraStatisticService.assetMarketCap(token)
+    } else if (network === Network.ETH) {
+      return this.ethStatisticService.assetMarketCap(token)
+    } else if (network === Network.COMBINE) {
+      const assetMarketCaps = [
+        await this.terraStatisticService.assetMarketCap(token),
+        await this.ethStatisticService.assetMarketCap(token),
+        // await this.bscStatisticService.assetMarketCap(token),
+      ]
+
+      return assetMarketCaps.reduce((result, assetMarketCap) => result.plus(assetMarketCap), num(0)).toString()
+    }
   }
 }
 

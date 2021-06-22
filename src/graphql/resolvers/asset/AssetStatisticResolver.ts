@@ -31,7 +31,7 @@ export class AssetStatisticResolver {
     @Root() asset: AssetEntity,
     @Arg('network', (type) => Network, { defaultValue: Network.COMBINE }) network: Network
   ): Promise<string> {
-    return (await this.statisticService.getAsset24h(network, asset.token)).volume
+    return (await this.statisticService.getAsset24h(network, asset.token))?.volume
   }
 
   @FieldResolver()
@@ -40,5 +40,13 @@ export class AssetStatisticResolver {
     @Arg('network', (type) => Network, { defaultValue: Network.TERRA }) network: Network
   ): Promise<APR> {
     return this.statisticService.getAssetAPR(network, asset.token)
+  }
+
+  @FieldResolver()
+  async marketCap(
+    @Root() asset: AssetEntity,
+    @Arg('network', (type) => Network, { defaultValue: Network.COMBINE }) network: Network
+  ): Promise<string> {
+    return this.statisticService.getAssetMarketCap(network, asset.token)
   }
 }

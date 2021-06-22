@@ -40,7 +40,7 @@ export class BscStatisticService extends EthBaseStatistic {
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
   async getAssetSupply(token: string): Promise<string> {
-    const asset = await this.getAsset(token)
+    const asset = this.getAsset(token)
 
     return asset
       ? num(ethers.utils.formatEther(await totalSupply(asset.token))).multipliedBy(1000000).toFixed(0)

@@ -93,25 +93,39 @@ export class TerraStatisticService {
   }
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
-  async assetMarketCap(): Promise<string> {
-    const assets = (await this.assetService.getAll({
-      where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }, { status: AssetStatus.PRE_IPO }]
-    })).filter((asset) => asset.symbol !== 'MIR')
+  async assetMarketCap(token?: string): Promise<string> {
     let assetMarketCap = num(0)
 
-    await bluebird.map(assets, async (asset) => {
-      const price = await this.priceService.getPrice(asset.token)
-      if (!price) return
+    if (!token) {
+      const assets = (await this.assetService.getAll({
+        where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }, { status: AssetStatus.PRE_IPO }]
+      })).filter((asset) => asset.symbol !== 'MIR')
 
-      const { totalSupply } = await getTokenInfo(asset.token)
+      await bluebird.map(assets, async (asset) => {
+        const price = await this.priceService.getPrice(asset.token)
+        if (!price) {
+          return
+        }
+
+        const { totalSupply } = await getTokenInfo(asset.token)
+
+        assetMarketCap = assetMarketCap.plus(num(totalSupply).multipliedBy(price))
+      })
+    } else {
+      const price = await this.priceService.getPrice(token)
+      if (!price) {
+        return '0'
+      }
+
+      const { totalSupply } = await getTokenInfo(token)
 
       assetMarketCap = assetMarketCap.plus(num(totalSupply).multipliedBy(price))
-    })
+    }
 
     // decrease eth,bsc market cap
     assetMarketCap = assetMarketCap
-      .minus(await ethStatisticService().assetMarketCap())
-      // .minus(await bscStatisticService().assetMarketCap())
+      .minus(await ethStatisticService().assetMarketCap(token))
+      // .minus(await bscStatisticService().assetMarketCap(token))
 
     return assetMarketCap.toFixed(0)
   }

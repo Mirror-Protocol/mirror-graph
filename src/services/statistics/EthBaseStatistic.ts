@@ -40,7 +40,7 @@ export class EthBaseStatistic {
     return undefined
   }
 
-  async getAsset(token: string): Promise<EthAsset> {
+  getAsset(token: string): EthAsset {
     return find(this.getAssets(), (ethAsset) => ethAsset.terraToken === token)
   }
 
@@ -85,18 +85,29 @@ export class EthBaseStatistic {
   }
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
-  async assetMarketCap(): Promise<string> {
-    const assets = this.getAssets()
+  async assetMarketCap(token?: string): Promise<string> {
     let assetMarketCap = num(0)
 
-    await bluebird.map(Object.keys(assets).filter((token) => assets[token]?.symbol !== 'MIR'), async (token) => {
-      const { terraToken } = assets[token]
+    if (!token) {
+      const assets = this.getAssets()
+
+      await bluebird.map(Object.keys(assets).filter((token) => assets[token]?.symbol !== 'MIR'), async (token) => {
+        const { terraToken } = assets[token]
+
+        const price = await this.getAssetPrice(terraToken)
+        const supply = num(await this.getAssetSupply(terraToken))
+
+        assetMarketCap = assetMarketCap.plus(supply.multipliedBy(price))
+      })
+    } else {
+      const asset = this.getAsset(token)
+      const { terraToken } = asset
 
       const price = await this.getAssetPrice(terraToken)
       const supply = num(await this.getAssetSupply(terraToken))
 
       assetMarketCap = assetMarketCap.plus(supply.multipliedBy(price))
-    })
+    }
 
     return assetMarketCap.toFixed(0)
   }
@@ -264,7 +275,7 @@ export class EthBaseStatistic {
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
   async getAssetAPR(token: string): Promise<string> {
-    const asset = await this.getAsset(token)
+    const asset = this.getAsset(token)
     const assetInfos = await this.getAssetInfos()
 
     return assetInfos[asset?.token]?.apr || '0'
@@ -279,7 +290,7 @@ export class EthBaseStatistic {
     const fromUTC = Math.min(from - (from % unit), currentUTC)
     const toUTC = Math.min(to - (to % unit), currentUTC)
 
-    const ethAsset = await this.getAsset(token)
+    const ethAsset = this.getAsset(token)
     const pair = ethAsset?.pair
     if (!pair) {
       return
