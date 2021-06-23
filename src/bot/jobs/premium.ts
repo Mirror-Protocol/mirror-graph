@@ -36,7 +36,7 @@ export async function adjustPremium(wallet: TxWallet): Promise<void> {
     return
   }
 
-  const gas = 300000 + 200000 * (assetTokens.length - 1)
+  const gas = 300000 + 250000 * (assetTokens.length - 1)
   await wallet.execute(
     staking,
     { adjustPremium: { assetTokens } },
