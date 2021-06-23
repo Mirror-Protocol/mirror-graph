@@ -14,4 +14,5 @@ export enum ContractType {
   AIRDROP = 'airdrop',
   COLLATERAL_ORACLE = 'collateralOracle',
   LOCK = 'lock',
+  SHORT_REWARD = 'shortReward',
 }
