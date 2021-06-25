@@ -49,6 +49,9 @@ export const GraphQLLogger: ApolloServerPlugin  = {
         const size = JSON.stringify(context.response).length * 2
 
         logger.info(`${queryHash.substr(-6)} ${operation?.operation} response: duration=${elapsed}ms bytes=${size}`)
+        if (+elapsed > 10000) {
+          logger.info(`${queryHash.substr(-6)} ${JSON.stringify(context.request.query)}`)
+        }
       }
     }
   },
