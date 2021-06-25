@@ -86,6 +86,7 @@ export class TxService {
   }
 
   async getAccumulatedGovReward(address: string): Promise<string> {
+    return '0'
     const { balance, pendingVotingRewards } = await getGovStaker(this.govService.get().gov, address)
 
     const values = await this.repo
