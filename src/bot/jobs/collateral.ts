@@ -10,7 +10,7 @@ import { AssetEntity } from 'orm'
 const updater = new Updater(200)
 const blockUpdater = new BlockUpdater()
 
-async function getPrice(asset: AssetEntity): Promise<string> {
+async function getPrice(asset: AssetEntity, lastBlockHeight: number): Promise<string> {
   const { symbol } = asset
 
   switch (symbol) {
@@ -18,7 +18,7 @@ async function getPrice(asset: AssetEntity): Promise<string> {
       return getOraclePrice('uusd')
 
     case 'aUST':
-      return getaUSTPrice()
+      return getaUSTPrice(lastBlockHeight + 1)
 
     case 'ANC':
       return getPairPrice(asset.pair)
@@ -37,7 +37,7 @@ export async function updateCollateralPrice(): Promise<void> {
   }
 
   // run at every block updated
-  const { isBlockUpdated } = await blockUpdater.updateBlockHeight()
+  const { isBlockUpdated, lastBlockHeight } = await blockUpdater.updateBlockHeight()
   if (!isBlockUpdated) {
     return
   }
@@ -46,7 +46,7 @@ export async function updateCollateralPrice(): Promise<void> {
 
   await bluebird.map(assets, async (asset) => {
     const { token } = asset
-    const price = await getPrice(asset)
+    const price = await getPrice(asset, lastBlockHeight)
 
     price && await oracleService().setOHLC(token, Date.now(), price)
   })
