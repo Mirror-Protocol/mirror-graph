@@ -379,11 +379,11 @@ export class TerraStatisticService {
     return {
       // long: (annual long reward * MIR price) / (liquidity value * (staked lp share/total lp share))
       long: +stakedLiquidityValue > 0
-        ? longReward.multipliedBy(mirPrice).dividedBy(stakedLiquidityValue).toFixed(3)
+        ? longReward.multipliedBy(mirPrice).dividedBy(stakedLiquidityValue).toFixed(4)
         : '0',
       // short: (annual short reward * MIR price) / (sLP amount * terraswap price)
       short: +shortValue > 0
-        ? shortReward.multipliedBy(mirPrice).dividedBy(shortValue).toFixed(3)
+        ? shortReward.multipliedBy(mirPrice).dividedBy(shortValue).toFixed(4)
         : '0',
     }
   }
