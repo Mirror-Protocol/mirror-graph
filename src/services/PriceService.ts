@@ -20,6 +20,7 @@ export class PriceService {
     return repo.findOne(conditions, options)
   }
 
+  @memoize({ promise: true, maxAge: 1000, preFetch: true, length: 1 }) // 1 sec
   async getPrice(token: string, repo = this.repo): Promise<string> {
     const price = await repo.findOne(
       { token },
@@ -28,6 +29,7 @@ export class PriceService {
         order: { datetime: 'DESC' },
       }
     )
+
     return price?.close
   }
 
@@ -40,6 +42,7 @@ export class PriceService {
         order: { datetime: 'DESC' },
       }
     )
+
     return price?.close
   }
 
