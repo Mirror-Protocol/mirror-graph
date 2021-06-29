@@ -84,7 +84,7 @@ export class EthBaseStatistic {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true, length: 1 }) // 5 minutes
   async assetMarketCap(token?: string): Promise<string> {
     let assetMarketCap = num(0)
 
@@ -164,7 +164,7 @@ export class EthBaseStatistic {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, length: 2, primitive: true }) // 5 minutes
   async getLiquidityHistory(from: number, to: number): Promise<ValueAt[]> {
     const history = await this.dailyRepo
       .createQueryBuilder()
@@ -195,7 +195,7 @@ export class EthBaseStatistic {
     }))
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, length: 2, primitive: true }) // 5 minutes
   async getTradingVolumeHistory(from: number, to: number): Promise<ValueAt[]> {
     return this.dailyRepo
       .createQueryBuilder()
@@ -211,7 +211,7 @@ export class EthBaseStatistic {
       .getRawMany()
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, length: 2, primitive: true }) // 5 minutes
   async getAssetDayVolume(token: string, timestamp: number): Promise<string> {
     const datetime = new Date(timestamp - (timestamp % 86400000))
     const latest = await this.getDailyStatistic(
@@ -225,7 +225,7 @@ export class EthBaseStatistic {
     return latest?.volume || '0'
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, length: 1, preFetch: true }) // 5 minutes
   async getAsset24h(token: string): Promise<{ volume: string; transactions: string }> {
     const now = Date.now()
     const to = now - (now % 3600000)
@@ -254,7 +254,7 @@ export class EthBaseStatistic {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, length: 1, preFetch: true }) // 5 minutes
   async getAssetLiquidity(token: string): Promise<string> {
     const latest = await this.getDailyStatistic(
       { token, network: this.network }, { order: { id: 'DESC' }}
@@ -263,7 +263,7 @@ export class EthBaseStatistic {
     return latest?.liquidity || '0'
   }
 
-  @memoize({ promise: true, maxAge: 60000 }) // 1 minute
+  @memoize({ promise: true, maxAge: 60000 , length: 1, preFetch: true }) // 1 min
   async getAssetPrice(token: string): Promise<string> {
     const latest = await this.getHourlyStatistic(
       { token, network: this.network }, { order: { id: 'DESC' }}
@@ -277,7 +277,7 @@ export class EthBaseStatistic {
     return num(uusdPool).dividedBy(pool).toString()
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, length: 1, preFetch: true }) // 5 minutes
   async getAssetAPR(token: string): Promise<string> {
     const asset = this.getAsset(token)
     const assetInfos = await this.getAssetInfos()

@@ -36,7 +36,7 @@ export class EthStatisticService extends EthBaseStatistic {
     return getPairHourDatas(pair, from, to, limit, orderDirection)
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, length: 1, preFetch: true }) // 5 minutes
   async getAssetSupply(token: string): Promise<string> {
     const asset = this.getAsset(token)
 

@@ -22,7 +22,7 @@ export class EthService {
     return find(this.getAssets(), (ethAsset) => ethAsset.terraToken === token)
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10 }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
   async getAssetInfos(): Promise<EthAssetInfos> {
     return queryAssetInfos()
   }

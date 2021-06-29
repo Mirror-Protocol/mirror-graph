@@ -31,6 +31,7 @@ export class PriceService {
     return price?.close
   }
 
+  @memoize({ promise: true, maxAge: 60000, primitive: true, length: 2 }) // 1 minute
   async getPriceAt(token: string, timestamp: number = Date.now(), repo = this.repo): Promise<string> {
     const price = await repo.findOne(
       { token, datetime: LessThanOrEqual(new Date(timestamp)) },
@@ -78,7 +79,7 @@ export class PriceService {
     return getOHLC<PriceEntity>(repo, token, from, to)
   }
 
-  @memoize({ promise: true, maxAge: 60000 }) // 1 minute
+  @memoize({ promise: true, maxAge: 60000, primitive: true, length: 4 }) // 1 minute
   async getHistory(
     token: string | string[],
     from: number,

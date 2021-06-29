@@ -33,7 +33,7 @@ export class StatisticService {
     @InjectRepository(CdpEntity) private readonly cdpRepo: Repository<CdpEntity>,
   ) {}
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, length: 1, preFetch: true }) // 5 minutes
   async statistic(network: Network): Promise<Partial<Statistic>> {
     const collateralRatio = num(await this.terraStatisticService.collateralValue())
       .dividedBy(await this.terraStatisticService.assetMarketCap())
@@ -215,7 +215,7 @@ export class StatisticService {
     return repo.save(daily)
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, length: 3, primitive: true }) // 5 minutes
   async getLiquidityHistory(network: Network, from: number, to: number): Promise<ValueAt[]> {
     const fromDayUTC = Math.max(from - (from % 86400000), 1606953600000)
     const toDayUTC = to - (to % 86400000)
@@ -247,7 +247,7 @@ export class StatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, length: 3, primitive: true }) // 5 minutes
   async getTradingVolumeHistory(network: Network, from: number, to: number): Promise<ValueAt[]> {
     const fromDayUTC = Math.max(from - (from % 86400000), 1606953600000)
     const toDayUTC = to - (to % 86400000)
@@ -273,7 +273,7 @@ export class StatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, length: 3, primitive: true }) // 5 minutes
   async getFeeHistory(network: Network, from: number, to: number): Promise<ValueAt[]> {
     const fromDayUTC = Math.max(from - (from % 86400000), 1606953600000)
     const toDayUTC = to - (to % 86400000)
@@ -389,7 +389,7 @@ export class StatisticService {
     return { long: '0', short: '0' }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 10, preFetch: true }) // 10 minutes
+  @memoize({ promise: true, maxAge: 60000 * 10, length: 3, primitive: true }) // 10 minutes
   async richlist(token: string, offset: number, limit: number): Promise<AccountBalance[]> {
     // SELECT * FROM (
     //   SELECT DISTINCT ON (address) address,token,balance
@@ -420,7 +420,7 @@ export class StatisticService {
       .getRawMany()
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, length: 2, preFetch: true }) // 5 minutes
   async getAssetMarketCap(network: Network, token: string): Promise<string> {
     if (network === Network.TERRA) {
       return this.terraStatisticService.assetMarketCap(token)
@@ -437,7 +437,7 @@ export class StatisticService {
     }
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
+  @memoize({ promise: true, maxAge: 60000 * 5, length: 1, preFetch: true }) // 5 minutes
   async getAssetCollateralValue(token: string): Promise<string> {
     return (await this.cdpRepo
       .createQueryBuilder()
@@ -447,7 +447,7 @@ export class StatisticService {
     )?.collateralValue || '0'
   }
 
-  @memoize({ promise: true, maxAge: 60000 * 30, preFetch: true }) // 30 minutes
+  @memoize({ promise: true, maxAge: 60000 * 30, length: 1, preFetch: true }) // 30 minutes
   async getAssetMinCollateralRatio(token: string): Promise<string> {
     return this.assetService.getMinCollateralRatio(token, 'uusd')
   }
