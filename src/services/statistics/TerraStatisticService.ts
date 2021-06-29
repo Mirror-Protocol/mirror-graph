@@ -37,7 +37,7 @@ export class TerraStatisticService {
 
   @memoize({ promise: true, maxAge: 60000 * 5, preFetch: true }) // 5 minutes
   async totalValueLocked(): Promise<TVL> {
-    const { mirrorToken, gov } = this.govService.get()
+    const { mirrorToken, lock, gov } = this.govService.get()
     const assets = await this.assetService.getAll({
       where: [{ status: AssetStatus.LISTED }, { status: AssetStatus.DELISTED }, { status: AssetStatus.PRE_IPO }]
     })
@@ -56,8 +56,10 @@ export class TerraStatisticService {
       ? num(mirBalance).multipliedBy(mirPrice).toFixed(0)
       : '0'
 
+    const lockedUst = (await this.accountService.getBalance(lock, 'uusd'))?.balance || '0'
+
     return {
-      total: num(collateral).plus(liquidity).plus(stakedMir).toFixed(0),
+      total: num(collateral).plus(liquidity).plus(stakedMir).plus(lockedUst).toFixed(0),
       collateral,
       liquidity,
       stakedMir
