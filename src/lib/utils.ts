@@ -1,4 +1,5 @@
 import { isNativeToken } from 'lib/terra'
+
 export function splitTokenAmount(tokenAmount: string): { token: string; amount: string } {
   const m = tokenAmount.match(/^([0-9]+(\.[0-9]+)?)([a-zA-Z0-9]+)$/)
   if (m === null) {
@@ -21,8 +22,9 @@ export function limitedRange(
   if (to < from || interval < 1000) {
     throw new Error('wrong range & interval')
   }
+
   const count = to !== from
-    ? Math.min(Math.floor((to - from) / interval))
+    ? Math.floor((to - from) / interval)
     : 0
 
   return {
