@@ -4,9 +4,6 @@ import {
 import { HaveAsset } from '../have/HaveAsset'
 
 @Entity('oracle_price')
-@Index('idx_oracle_price_datetime_asset', ['datetime', 'asset'], {
-  unique: true,
-})
 export class OraclePriceEntity extends HaveAsset {
   constructor(options: Partial<OraclePriceEntity>) {
     super()
@@ -23,6 +20,7 @@ export class OraclePriceEntity extends HaveAsset {
   id: number
 
   @Column()
+  @Index()
   datetime: Date
 
   @Column('decimal', { precision: 40, scale: 6 })

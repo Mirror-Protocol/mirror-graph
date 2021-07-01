@@ -4,7 +4,6 @@ import {
 import { HaveAsset } from '../have/HaveAsset'
 
 @Entity('price')
-@Index('idx_price_datetime_asset', ['datetime', 'asset'], { unique: true })
 export class PriceEntity extends HaveAsset {
   constructor(options: Partial<PriceEntity>) {
     super()
@@ -21,6 +20,7 @@ export class PriceEntity extends HaveAsset {
   id: number
 
   @Column()
+  @Index()
   datetime: Date
 
   @Column('decimal', { precision: 40, scale: 6 })

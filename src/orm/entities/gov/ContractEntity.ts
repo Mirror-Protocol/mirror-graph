@@ -3,7 +3,6 @@ import { ContractType } from 'types'
 import { HaveGovAndMaybeAsset } from '../have/HaveGovAndMaybeAsset'
 
 @Entity('contract')
-@Index('idx_contract_address_type_gov', ['address', 'type', 'gov'], { unique: true })
 export class ContractEntity extends HaveGovAndMaybeAsset {
   constructor(options: Partial<ContractEntity>) {
     super()
@@ -17,5 +16,6 @@ export class ContractEntity extends HaveGovAndMaybeAsset {
   address: string
 
   @Column({ type: 'enum', enum: ContractType })
+  @Index()
   type: ContractType
 }

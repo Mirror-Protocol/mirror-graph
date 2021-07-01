@@ -12,7 +12,6 @@ import { ContractEntity } from '../gov/ContractEntity'
 import { HaveGovAndMaybeAsset } from '../have/HaveGovAndMaybeAsset'
  
 @Entity('tx')
-@Index('idx_tx_address_datetime_gov', ['address', 'datetime', 'gov'])
 export class TxEntity extends HaveGovAndMaybeAsset {
   constructor(options: Partial<TxEntity>) {
     super()
@@ -32,9 +31,11 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   txHash: string
 
   @Column()
+  @Index()
   address: string
 
   @Column({ type: 'enum', enum: TxType })
+  @Index()
   type: TxType
 
   @Column({ type: 'jsonb' })
@@ -59,6 +60,7 @@ export class TxEntity extends HaveGovAndMaybeAsset {
   tags: string[]
 
   @Column()
+  @Index()
   datetime: Date
 
   @ManyToOne((type) => ContractEntity, { onDelete: 'CASCADE', nullable: true })
