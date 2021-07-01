@@ -2,7 +2,7 @@ import { Repository, FindConditions, FindOneOptions, getConnection } from 'typeo
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { lcd, isNativeToken, getContractStore } from 'lib/terra'
-import { num, BigNumber } from 'lib/num'
+import { num } from 'lib/num'
 import * as logger from 'lib/logger'
 import { AssetBalance, ValueAt } from 'graphql/schema'
 import { GovService } from 'services'
@@ -134,7 +134,7 @@ export class AccountService {
         govId: this.govService.get().id,
       })
 
-      const totalBalance = BigNumber.max(num(entity.balance).plus(amount), 0)
+      const totalBalance = num(entity.balance).plus(amount)
 
       if (totalBalance.isLessThanOrEqualTo(0)) {
         entity.averagePrice = '0'

@@ -129,9 +129,11 @@ export async function parse(
     // add asset's mint position
     await assetService().addMintPosition(mint.token, mint.amount, positionsRepo)
 
-    // add account balance
-    const price = await oracleService().getPriceAt(mint.token, datetime.getTime(), oracleRepo)
-    await accountService().addBalance(address, mint.token, price, mint.amount, datetime, balanceRepo)
+    if (!cdp.isShort) {
+      // add account balance
+      const price = await oracleService().getPriceAt(mint.token, datetime.getTime(), oracleRepo)
+      await accountService().addBalance(address, mint.token, price, mint.amount, datetime, balanceRepo)
+    }
 
     tx = {
       type: TxType.MINT,
