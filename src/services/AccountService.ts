@@ -1,17 +1,20 @@
-import { Repository, FindConditions, FindOneOptions, getConnection } from 'typeorm'
+import * as bluebird from 'bluebird'
+import { Repository, FindConditions, FindOneOptions, FindManyOptions, getConnection } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { lcd, isNativeToken, getContractStore } from 'lib/terra'
-import { num, BigNumber } from 'lib/num'
+import { getTokenBalance } from 'lib/mirror'
+import { num } from 'lib/num'
 import * as logger from 'lib/logger'
 import { AssetBalance, ValueAt } from 'graphql/schema'
-import { GovService } from 'services'
+import { GovService, PriceService } from 'services'
 import { AccountEntity, BalanceEntity } from 'orm'
 
 @Service()
 export class AccountService {
   constructor(
     @Inject((type) => GovService) private readonly govService: GovService,
+    @Inject((type) => PriceService) private readonly priceService: PriceService,
     @InjectRepository(AccountEntity) private readonly repo: Repository<AccountEntity>,
     @InjectRepository(BalanceEntity) private readonly balanceRepo: Repository<BalanceEntity>
   ) {}
@@ -22,24 +25,37 @@ export class AccountService {
 
     Object.assign(accountEntity, account)
 
-    if (accountEntity.isAppUser) {
-      const { address } = account
-
-      // adjust uusd balance (because unknown transaction)
-      const dbAmount = (await this.getBalanceEntity({ address, token: 'uusd' }, { order: { id: 'DESC' } }))?.balance || '0'
-      const { balance: chainAmount } = await this.getBalance(address, 'uusd')
-
-      const diff = num(chainAmount).minus(dbAmount).toString()
-      if (diff !== '0') {
-        await this.addBalance(address, 'uusd', '1', diff, new Date(Date.now()))
-      }
-    }
+    accountEntity.isAppUser && await this.syncBalance(account.address, 'uusd')
 
     return this.repo.save(accountEntity)
   }
 
-  async haveBalanceHistory(account: string): Promise<boolean> {
-    return (await this.balanceRepo.findOne({ address: account })) ? true : false
+  async syncBalance(address: string, token: string): Promise<void> {
+    const dbAmount = (await this.getBalanceEntity({ address, token }, { order: { id: 'DESC' } }))?.balance || '0'
+    const chainAmount = isNativeToken(token)
+      ? (await lcd.bank.balance(address)).get(token)?.amount?.toString() || '0'
+      : await getTokenBalance(token, address)
+    const diff = num(chainAmount).minus(dbAmount).toString()
+
+    if (diff !== '0') {
+      await this.addBalance(
+        address,
+        token,
+        dbAmount === '0' ? (await this.priceService.getPrice(token)) || '0' : '0',
+        diff,
+        new Date(Date.now())
+      )
+    }
+  }
+
+  async syncBalances(address: string): Promise<void> {
+    const assets = await this.getBalances(address)
+
+    await bluebird.mapSeries(assets, async (asset) => this.syncBalance(address, asset.token))
+  }
+
+  async haveBalanceHistory(address: string): Promise<boolean> {
+    return (await this.balanceRepo.findOne({ address })) ? true : false
   }
 
   async get(
@@ -48,6 +64,10 @@ export class AccountService {
     repo = this.repo
   ): Promise<AccountEntity> {
     return repo.findOne(conditions, options)
+  }
+
+  async getAll(options?: FindManyOptions<AccountEntity>, repo = this.repo): Promise<AccountEntity[]> {
+    return repo.find(options)
   }
 
   async getBalanceEntity(
@@ -134,7 +154,7 @@ export class AccountService {
         govId: this.govService.get().id,
       })
 
-      const totalBalance = BigNumber.max(num(entity.balance).plus(amount), 0)
+      const totalBalance = num(entity.balance).plus(amount)
 
       if (totalBalance.isLessThanOrEqualTo(0)) {
         entity.averagePrice = '0'
