@@ -1,9 +1,8 @@
 import {
-  Column, Entity, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, Index
+  Column, Entity, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn
 } from 'typeorm'
 
 @Entity('block')
-@Index('idx_block_chainid_height', ['chainId', 'height'], { unique: true })
 export class BlockEntity {
   constructor(options: Partial<BlockEntity>) {
     Object.assign(this, options)

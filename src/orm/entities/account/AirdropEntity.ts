@@ -1,7 +1,6 @@
 import { Entity, Index, PrimaryGeneratedColumn, CreateDateColumn, Column } from 'typeorm'
 
 @Entity('airdrop')
-@Index('idx_airdrop_stage_address', ['stage', 'address'], { unique: true })
 export class AirdropEntity {
   constructor(options: Partial<AirdropEntity>) {
     Object.assign(this, options)
@@ -17,9 +16,11 @@ export class AirdropEntity {
   network: string
 
   @Column()
+  @Index()
   stage: number
 
   @Column()
+  @Index()
   address: string
 
   @Column('numeric', { precision: 40, default: 0, comment: 'luna staked amount' })
