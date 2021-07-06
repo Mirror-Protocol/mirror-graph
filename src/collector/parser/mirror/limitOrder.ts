@@ -1,7 +1,7 @@
 import { findContractAction } from 'lib/terra'
 import { splitTokenAmount } from 'lib/utils'
 import { num } from 'lib/num'
-import { limitOrderService, statisticService, txService } from 'services'
+import { assetService, limitOrderService, statisticService, txService } from 'services'
 import { LimitOrderEntity, DailyStatisticEntity } from 'orm'
 import { TxType, LimitOrderType } from 'types'
 import { ParseArgs } from './parseArgs'
@@ -49,6 +49,11 @@ export async function parse(
       address = findContractAction(contractEvents, token, {
         actionType: 'send', to: contract.address, amount
       }).action.from
+    }
+
+    const asset = await assetService().get({ token })
+    if (!asset) {
+      return
     }
 
     // save limit order entity
