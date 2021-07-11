@@ -43,7 +43,7 @@ export class TxService {
       .orderBy('id', 'DESC')
 
     if (tag) {
-      qb = qb.andWhere(':tag = ANY(tags)', { tag })
+      qb = qb.andWhere(':tag = ANY(COALESCE(tags::text[], \'{}\'::text[]))', { tag })
     }
 
     return qb.getMany()
