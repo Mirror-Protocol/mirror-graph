@@ -1,5 +1,5 @@
 import * as bluebird from 'bluebird'
-import { Repository, FindConditions, FindOneOptions, FindManyOptions, getConnection } from 'typeorm'
+import { Repository, FindConditions, FindOneOptions, FindManyOptions, getConnection, EntityManager, getManager } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { lcd, isNativeToken, getContractStore } from 'lib/terra'
@@ -19,15 +19,37 @@ export class AccountService {
     @InjectRepository(BalanceEntity) private readonly balanceRepo: Repository<BalanceEntity>
   ) {}
 
-  async newAccount(account: Partial<AccountEntity>): Promise<AccountEntity | undefined> {
-    const accountEntity =
-      (await this.get({ address: account.address })) || new AccountEntity(account)
+  async newAccount(account: Partial<AccountEntity>, manager?: EntityManager): Promise<AccountEntity | undefined> {
+    const insertOrUpdate = async (account: Partial<AccountEntity>, manager?: EntityManager) => {
+      const repo = manager.getRepository(AccountEntity)
+      const accountEntity =
+        (
+          await this.get(
+            { address: account.address },
+            { lock: { mode: 'pessimistic_write' } },
+            repo
+          )
+        )
+        || new AccountEntity(account)
 
-    Object.assign(accountEntity, account)
+      Object.assign(accountEntity, account)
 
-    accountEntity.isAppUser && await this.syncBalance(account.address, 'uusd')
+      return repo.save(accountEntity)
+    }
 
-    return this.repo.save(accountEntity)
+    let accountEntity
+    if (manager) {
+      accountEntity = await insertOrUpdate(account, manager)
+    } else {
+      await getManager().transaction(async (manager: EntityManager) => {
+        accountEntity = await insertOrUpdate(account, manager)
+      })
+    }
+
+    // sync uusd balance
+    accountEntity?.isAppUser && await this.syncBalance(account.address, 'uusd')
+
+    return accountEntity
   }
 
   async syncBalance(address: string, token: string): Promise<void> {
