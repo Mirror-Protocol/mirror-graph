@@ -18,7 +18,7 @@ export async function updateNews(): Promise<void> {
     return
   }
 
-  const blacklist = ['MIR', 'mGLXY']
+  const blacklist = ['MIR', 'mGLXY', 'mDOT']
   const assets = await assetService().getListedAssets({ symbol: Not(In(blacklist)) })
 
   await bluebird.mapSeries(assets, async (asset) => {
