@@ -1,5 +1,5 @@
 import * as bluebird from 'bluebird'
-import { Repository, FindConditions, FindOneOptions, FindManyOptions, getConnection, EntityManager, getManager } from 'typeorm'
+import { Repository, FindConditions, FindOneOptions, FindManyOptions, getConnection, EntityManager, getManager, getRepository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { lcd, isNativeToken, getContractStore } from 'lib/terra'
@@ -232,7 +232,6 @@ export class AccountService {
   async updateGovStaked(address: string, stake: string, withdraw: string, manager?: EntityManager): Promise<AccountEntity> {
     const update = async (manager: EntityManager): Promise<AccountEntity> => {
       const repo = manager.getRepository(AccountEntity)
-      const txRepo = manager.getRepository(TxEntity)
 
       const accountEntity = await this.get({ address }, { lock: { mode: 'pessimistic_write' } }, repo)
       if (!accountEntity) {
@@ -240,15 +239,29 @@ export class AccountService {
       }
 
       if (!accountEntity.govStaked) {
-        const history = await txRepo
-          .createQueryBuilder()
-          .select(`(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_STAKE')`, 'staked')
-          .addSelect(`(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_UNSTAKE')`, 'unstaked')
-          .addSelect(`(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_WITHDRAW_VOTING_REWARDS')`, 'withdrawn')
-          .getRawOne()
+        const txRepo = manager.getRepository(TxEntity)
 
-        accountEntity.govStaked = num(history.staked).minus(history.unstaked).toFixed(0)
-        accountEntity.withdrawnGovRewards = history.withdrawn
+        const staked = await txRepo
+          .createQueryBuilder()
+          .select(`COALESCE(SUM((data->>'amount')::numeric), 0)`, 'staked')
+          .where(`address='${address}' AND type='GOV_STAKE'`)
+          .getRawOne()
+          .then(value => value.staked)
+        const unstaked = await txRepo
+          .createQueryBuilder()
+          .select(`COALESCE(SUM((data->>'amount')::numeric), 0)`, 'unstaked')
+          .where(`address='${address}' AND type='GOV_UNSTAKE'`)
+          .getRawOne()
+          .then(value => value.unstaked)
+        const withdrawn = await txRepo
+          .createQueryBuilder()
+          .select(`COALESCE(SUM((data->>'amount')::numeric), 0)`, 'withdrawn')
+          .where(`address='${address}' AND type='GOV_WITHDRAW_VOTING_REWARDS'`)
+          .getRawOne()
+          .then(value => value.withdrawn)
+
+        accountEntity.govStaked = num(staked).minus(unstaked).toFixed(0)
+        accountEntity.withdrawnGovRewards = withdrawn
       }
 
       accountEntity.govStaked = num(accountEntity.govStaked).plus(stake).toFixed(0)
