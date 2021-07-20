@@ -81,7 +81,7 @@ export class AccountResolver {
 
   @FieldResolver()
   async accumulatedGovReward(@Root() account: AccountEntity): Promise<string> {
-    return this.txService.getAccumulatedGovReward(account.address)
+    return this.accountService.getAccumulatedGovReward(account.address)
   }
 
   @FieldResolver()

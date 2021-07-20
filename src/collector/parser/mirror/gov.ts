@@ -1,4 +1,4 @@
-import { govService, txService } from 'services'
+import { accountService, govService, txService } from 'services'
 import { TxType } from 'types'
 import { ParseArgs } from './parseArgs'
 
@@ -37,6 +37,9 @@ export async function parse(args: ParseArgs): Promise<void> {
 
     address = sender
 
+    // update account.govStaked
+    await accountService().updateGovStaked(address, amount, '0', manager)
+
     parsed = {
       type: TxType.GOV_STAKE,
       data: { amount, share, sender },
@@ -47,13 +50,21 @@ export async function parse(args: ParseArgs): Promise<void> {
 
     address = recipient
 
+    // update account.govStaked
+    await accountService().updateGovStaked(address, `-${amount}`, '0', manager)
+
     parsed = {
       type: TxType.GOV_UNSTAKE,
       data: { amount, recipient },
       token: mirrorToken,
     }
   } else if (actionType === 'withdraw_voting_rewards') {
-    const { amount } = contractEvent.action
+    const { amount, recipient } = contractEvent.action
+
+    address = recipient
+
+    // update account.withdrawGovRewards
+    await accountService().updateGovStaked(address, '0', amount, manager)
 
     parsed = {
       type: TxType.GOV_WITHDRAW_VOTING_REWARDS,
