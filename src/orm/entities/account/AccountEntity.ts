@@ -17,4 +17,10 @@ export class AccountEntity {
 
   @Column({ nullable: true })
   email?: string
+
+  @Column('numeric', { precision: 40, nullable: true, default: null })
+  govStaked?: string
+
+  @Column('numeric', { precision: 40, nullable: true, default: null })
+  withdrawnGovRewards?: string
 }

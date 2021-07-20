@@ -3,12 +3,12 @@ import { Repository, FindConditions, FindOneOptions, FindManyOptions, getConnect
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { lcd, isNativeToken, getContractStore } from 'lib/terra'
-import { getTokenBalance } from 'lib/mirror'
+import { getTokenBalance, getGovStaker } from 'lib/mirror'
 import { num } from 'lib/num'
 import * as logger from 'lib/logger'
 import { AssetBalance, ValueAt } from 'graphql/schema'
 import { GovService, PriceService } from 'services'
-import { AccountEntity, BalanceEntity } from 'orm'
+import { AccountEntity, BalanceEntity, TxEntity } from 'orm'
 
 @Service()
 export class AccountService {
@@ -227,6 +227,54 @@ export class AccountService {
     })
 
     return repo.save(entity)
+  }
+
+  async updateGovStaked(address: string, stake: string, withdraw: string, manager?: EntityManager): Promise<AccountEntity> {
+    const update = async (manager: EntityManager): Promise<AccountEntity> => {
+      const repo = manager.getRepository(AccountEntity)
+      const txRepo = manager.getRepository(TxEntity)
+
+      const accountEntity = await this.get({ address }, { lock: { mode: 'pessimistic_write' } }, repo)
+      if (!accountEntity) {
+        return
+      }
+
+      if (!accountEntity.govStaked) {
+        const history = await txRepo
+          .createQueryBuilder()
+          .select(`(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_STAKE')`, 'staked')
+          .addSelect(`(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_UNSTAKE')`, 'unstaked')
+          .addSelect(`(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_WITHDRAW_VOTING_REWARDS')`, 'withdrawn')
+          .getRawOne()
+
+        accountEntity.govStaked = num(history.staked).minus(history.unstaked).toFixed(0)
+        accountEntity.withdrawnGovRewards = history.withdrawn
+      }
+
+      accountEntity.govStaked = num(accountEntity.govStaked).plus(stake).toFixed(0)
+      accountEntity.withdrawnGovRewards = num(accountEntity.withdrawnGovRewards).plus(withdraw).toFixed(0)
+
+      return repo.save(accountEntity)
+    }
+
+    return manager
+      ? update(manager)
+      : getManager().transaction(async (manager: EntityManager) => update(manager))
+  }
+
+  async getAccumulatedGovReward(address: string): Promise<string> {
+    const accountEntity = await this.get({ address })
+    if (!accountEntity || !accountEntity.govStaked) {
+      return '0'
+    }
+
+    const { balance, pendingVotingRewards } = await getGovStaker(this.govService.get().gov, address)
+
+    return num(balance)
+      .plus(pendingVotingRewards)
+      .plus(accountEntity.withdrawnGovRewards)
+      .minus(accountEntity.govStaked)
+      .toFixed(0)
   }
 }
 

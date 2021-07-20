@@ -2,8 +2,7 @@ import { Repository, FindConditions, FindOneOptions, FindManyOptions, EntityMana
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { num } from 'lib/num'
-import { getGovStaker } from 'lib/mirror'
-import { GovService, AccountService } from 'services'
+import { AccountService } from 'services'
 import { TxType } from 'types'
 import { TxEntity } from 'orm'
 import { AccountVoted } from 'graphql/schema'
@@ -11,7 +10,6 @@ import { AccountVoted } from 'graphql/schema'
 @Service()
 export class TxService {
   constructor(
-    @Inject((type) => GovService) private readonly govService: GovService,
     @Inject((type) => AccountService) private readonly accountService: AccountService,
     @InjectRepository(TxEntity) private readonly repo: Repository<TxEntity>
   ) {}
@@ -81,21 +79,6 @@ export class TxService {
     return num(buyVolume?.volume ?? '0')
       .plus(sellVolume?.volume ?? '0')
       .toFixed(0)
-  }
-
-  async getAccumulatedGovReward(address: string): Promise<string> {
-    return '0'
-    const { balance, pendingVotingRewards } = await getGovStaker(this.govService.get().gov, address)
-
-    const values = await this.repo
-      .createQueryBuilder()
-      .select(`(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_STAKE')`, 'stakedAmount')
-      .addSelect(`(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_UNSTAKE')`, 'unstakedAmount')
-      .addSelect(`(SELECT COALESCE(SUM((data->>'amount')::numeric), 0) FROM tx WHERE address='${address}' AND type='GOV_WITHDRAW_VOTING_REWARDS')`, 'withdrawnAmount')
-      .getRawOne()
-
-    const staked = num(values.stakedAmount).minus(values.unstakedAmount)
-    return num(balance).plus(pendingVotingRewards).minus(staked).plus(values.withdrawnAmount).toFixed(0)
   }
 
   async getVoteHistory(address: string): Promise<AccountVoted[]> {
