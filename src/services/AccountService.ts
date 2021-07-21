@@ -1,5 +1,5 @@
 import * as bluebird from 'bluebird'
-import { Repository, FindConditions, FindOneOptions, FindManyOptions, getConnection, EntityManager, getManager, getRepository } from 'typeorm'
+import { Repository, FindConditions, FindOneOptions, FindManyOptions, getConnection, EntityManager, getManager } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Container, Service, Inject } from 'typedi'
 import { lcd, isNativeToken, getContractStore } from 'lib/terra'
@@ -30,7 +30,7 @@ export class AccountService {
             repo
           )
         )
-        || new AccountEntity(account)
+        || new AccountEntity({ ...account, govStaked: '0', withdrawnGovRewards: '0' })
 
       Object.assign(accountEntity, account)
 
