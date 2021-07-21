@@ -91,7 +91,7 @@ export async function parse(
     }
 
     // add cdp collateral
-    cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
+    cdp = await cdpService().get({ id: positionIdx }, { lock: { mode: 'pessimistic_write' } }, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).plus(deposit.amount).toString()
 
     tx = {
@@ -105,7 +105,7 @@ export async function parse(
     const withdraw = splitTokenAmount(withdrawAmount)
 
     // remove cdp collateral
-    cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
+    cdp = await cdpService().get({ id: positionIdx }, { lock: { mode: 'pessimistic_write' } }, cdpRepo)
     cdp.collateralAmount = num(cdp.collateralAmount).minus(withdraw.amount).toString()
 
     tx = {
@@ -123,7 +123,7 @@ export async function parse(
     const mint = splitTokenAmount(mintAmount)
 
     // add cdp mint
-    cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
+    cdp = await cdpService().get({ id: positionIdx }, { lock: { mode: 'pessimistic_write' } }, cdpRepo)
     cdp.mintAmount = num(cdp.mintAmount).plus(mint.amount).toString()
 
     // add asset's mint position
@@ -155,7 +155,7 @@ export async function parse(
     }).action.from
 
     // remove cdp's mint amount
-    cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
+    cdp = await cdpService().get({ id: positionIdx }, { lock: { mode: 'pessimistic_write' } }, cdpRepo)
     if (!cdp) {
       throw new Error(`cdp ${positionIdx} is not exists`)
     }
@@ -193,7 +193,7 @@ export async function parse(
       actionType: 'send', to: contract.address
     }).action.from
 
-    cdp = await cdpService().get({ id: positionIdx }, undefined, cdpRepo)
+    cdp = await cdpService().get({ id: positionIdx }, { lock: { mode: 'pessimistic_write' } }, cdpRepo)
     if (!cdp) {
       throw new Error(`cdp ${positionIdx} is not exists`)
     }
