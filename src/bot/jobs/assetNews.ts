@@ -6,7 +6,7 @@ import { assetService } from 'services'
 import { AssetNewsEntity } from 'orm'
 import { Updater } from 'lib/Updater'
 
-const updater = new Updater(60 * 60000) // 1hour
+const updater = new Updater(60 * 60000 * 6) // 6 hours
 
 export async function updateNews(): Promise<void> {
   // update only columbus
